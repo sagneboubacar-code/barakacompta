@@ -1,13 +1,11 @@
 import "server-only";
 import type { SubscriptionPlan } from "@/types";
 
-// Association produit Chariow -> plan d'abonnement. Un seul produit existe
-// pour l'instant (Basic) ; Pro et Premium seront ajoutés ici une fois créés
-// sur Chariow.
+// Association produit Chariow -> plan d'abonnement.
 const CHARIOW_PRODUCT_PLAN: Record<string, SubscriptionPlan> = {
   prd_ogp6p6ln: "basic",
-  // prd_xxxxxxxx: "pro",
-  // prd_xxxxxxxx: "premium",
+  prd_0u16tl8e: "pro",
+  prd_pn6catq4: "premium",
 };
 
 interface ChariowLicense {
