@@ -42,11 +42,26 @@ export async function resolveChariowLicense(
     throw new ChariowError("Impossible de vérifier la licence auprès de Chariow.");
   }
 
-  const { data } = (await response.json()) as { data: ChariowLicense };
+  let { data } = (await response.json()) as { data: ChariowLicense };
 
   if (data.is_expired) {
     throw new ChariowError("Cette licence a expiré.");
   }
+
+  // Chariow émet les licences en "pending_activation" par défaut (pensé
+  // pour un contrôle par appareil). On ne fait pas de suivi par appareil
+  // ici — une licence correspond à une école — donc on l'active nous-mêmes
+  // dès la première vérification plutôt que d'exiger une étape en plus.
+  if (data.status === "pending_activation") {
+    const activateRes = await fetch(
+      `https://api.chariow.com/v1/licenses/${encodeURIComponent(licenseKey.trim())}/activate`,
+      { method: "POST", headers: { Authorization: `Bearer ${apiKey}` }, cache: "no-store" }
+    );
+    if (activateRes.ok) {
+      ({ data } = (await activateRes.json()) as { data: ChariowLicense });
+    }
+  }
+
   if (!data.is_active) {
     throw new ChariowError("Cette licence n'est pas active.");
   }
