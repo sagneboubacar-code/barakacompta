@@ -596,7 +596,7 @@ export interface Database {
           plan: "trial" | "basic" | "pro" | "premium";
           amount: number;
           currency: string;
-          payment_method: "wave" | "orange_money" | "card" | "manual";
+          payment_method: "wave" | "orange_money" | "card" | "manual" | "chariow";
           status: "pending" | "completed" | "failed" | "cancelled";
           external_reference: string | null;
           period_start: string;
@@ -611,7 +611,7 @@ export interface Database {
           plan: "trial" | "basic" | "pro" | "premium";
           amount: number;
           currency?: string;
-          payment_method: "wave" | "orange_money" | "card" | "manual";
+          payment_method: "wave" | "orange_money" | "card" | "manual" | "chariow";
           status?: "pending" | "completed" | "failed" | "cancelled";
           external_reference?: string | null;
           period_start: string;

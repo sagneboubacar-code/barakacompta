@@ -1,12 +1,14 @@
 import { requireUser } from "@/lib/auth/guard";
 import { createClient } from "@/lib/supabase/server";
-import { requestRenewal } from "@/lib/actions/subscription";
+import { requestRenewal, redeemChariowLicense } from "@/lib/actions/subscription";
 import { PLANS, getPlan, type GatedModule } from "@/lib/constants/plans";
 
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
   wave: "Wave",
   orange_money: "Orange Money",
   card: "Carte bancaire",
+  chariow: "Chariow",
+  manual: "Manuel",
 };
 
 const SUBSCRIPTION_PAYMENT_STATUS_LABELS: Record<string, string> = {
@@ -164,6 +166,29 @@ export default async function BillingPage({
             Si le paiement en ligne n&apos;est pas disponible, votre demande reste enregistrée et notre équipe
             vous contacte pour finaliser l&apos;activation.
           </p>
+
+          <section className="rounded-lg border border-slate-200 bg-white p-4">
+            <h2 className="text-sm font-semibold text-slate-900">J&apos;ai déjà une clé de licence Chariow</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Vous avez acheté votre abonnement sur notre boutique Chariow (Wave, Orange Money ou carte) ?
+              Collez la clé de licence reçue pour activer votre plan immédiatement.
+            </p>
+            <form action={redeemChariowLicense} className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <input
+                type="text"
+                name="license_key"
+                required
+                placeholder="ABC-123-XYZ-789"
+                className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+              />
+              <button
+                type="submit"
+                className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+              >
+                Activer avec cette licence
+              </button>
+            </form>
+          </section>
 
           <section className="rounded-lg border border-slate-200 bg-white p-4">
             <h2 className="text-sm font-semibold text-slate-900">Historique des demandes</h2>

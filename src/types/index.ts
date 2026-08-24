@@ -9,7 +9,7 @@ export type SchoolClassCycle = "prescolaire" | "elementaire" | "college" | "lyce
 
 export type SubscriptionPlan = "trial" | "basic" | "pro" | "premium";
 export type SubscriptionStatus = "active" | "cancelled";
-export type SubscriptionPaymentMethod = "wave" | "orange_money" | "card" | "manual";
+export type SubscriptionPaymentMethod = "wave" | "orange_money" | "card" | "manual" | "chariow";
 export type SubscriptionPaymentStatus = "pending" | "completed" | "failed" | "cancelled";
 
 export interface School {
