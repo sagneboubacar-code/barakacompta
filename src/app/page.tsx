@@ -42,7 +42,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <span className="font-semibold tracking-tight text-slate-900">
-            Baraka <span className="text-emerald-700">Gestion</span>
+            Baraka <span className="text-emerald-700">Compta</span>
           </span>
           <nav className="hidden items-center gap-7 text-sm text-slate-600 sm:flex">
             <a href="#fonctionnalites" className="hover:text-slate-900">Fonctionnalités</a>
@@ -68,7 +68,7 @@ export default function LandingPage() {
             La comptabilité de votre école, sans les cahiers ni les fichiers Excel.
           </h1>
           <p className="mt-5 max-w-lg text-balance text-base leading-relaxed text-slate-600">
-            Baraka Gestion centralise les élèves, les paiements, les dépenses et les rapports de votre
+            Baraka Compta centralise les élèves, les paiements, les dépenses et les rapports de votre
             établissement — pour savoir, à tout moment, où en est votre trésorerie.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -285,7 +285,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-slate-100">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-xs text-slate-400 sm:flex-row">
-          <p>© {new Date().getFullYear()} Baraka Gestion. Tous droits réservés.</p>
+          <p>© {new Date().getFullYear()} Baraka Compta. Tous droits réservés.</p>
           <div className="flex gap-4">
             <Link href="/login" className="hover:text-slate-600">Se connecter</Link>
             <Link href="/signup" className="hover:text-slate-600">Inscrire mon école</Link>
