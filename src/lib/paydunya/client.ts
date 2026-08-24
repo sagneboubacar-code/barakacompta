@@ -52,7 +52,7 @@ export async function createInvoice(params: CreateInvoiceParams): Promise<Create
         description: params.description,
       },
       store: {
-        name: "Baraka Gestion",
+        name: "Baraka Compta",
       },
       custom_data: {
         subscription_payment_id: params.externalId,

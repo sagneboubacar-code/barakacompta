@@ -33,7 +33,7 @@ export default async function DashboardLayout({
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <div>
             <p className="text-sm font-semibold text-slate-900">
-              {school?.name ?? "Baraka Gestion"}
+              {school?.name ?? "Baraka Compta"}
             </p>
             <p className="text-xs text-slate-500">
               {appUser.full_name ?? appUser.email} · {ROLE_LABELS[appUser.role] ?? appUser.role}

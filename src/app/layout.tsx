@@ -14,7 +14,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Baraka Gestion — Comptabilité scolaire",
+  title: "Baraka Compta — Comptabilité scolaire",
   description: "Gestion financière et comptable pour établissements scolaires.",
 };
 

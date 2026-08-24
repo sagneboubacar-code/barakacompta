@@ -76,7 +76,7 @@ export async function requestRenewal(formData: FormData) {
   try {
     const invoice = await createInvoice({
       amount: plan.priceXOF ?? 0,
-      description: `Abonnement Baraka Gestion — ${plan.label} — ${school?.name ?? ""}`,
+      description: `Abonnement Baraka Compta — ${plan.label} — ${school?.name ?? ""}`,
       externalId: inserted.id,
       returnUrl: `${siteUrl()}${BILLING_PATH}?success=${encodeURIComponent("Paiement reçu, activation en cours.")}`,
       cancelUrl: `${siteUrl()}${BILLING_PATH}?error=${encodeURIComponent("Paiement annulé.")}`,

@@ -82,7 +82,7 @@ export default async function ReportsPage({
       <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between print:border-slate-900">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            {school?.name ?? "Baraka Gestion"}
+            {school?.name ?? "Baraka Compta"}
             {school?.address ? ` · ${school.address}` : ""}
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Rapport financier</h1>

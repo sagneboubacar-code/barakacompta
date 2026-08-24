@@ -19,7 +19,7 @@ interface ChariowLicense {
 export class ChariowError extends Error {}
 
 // Interroge Chariow pour valider une clé de licence et renvoyer le plan
-// Baraka Gestion qu'elle correspond. Ne fait jamais confiance à l'app
+// Baraka Compta qu'elle correspond. Ne fait jamais confiance à l'app
 // cliente : cet appel côté serveur, avec la clé API secrète, est la seule
 // source de vérité sur la validité d'une licence.
 export async function resolveChariowLicense(
@@ -68,7 +68,7 @@ export async function resolveChariowLicense(
 
   const plan = CHARIOW_PRODUCT_PLAN[data.product.id];
   if (!plan) {
-    throw new ChariowError("Cette licence ne correspond à aucun plan Baraka Gestion.");
+    throw new ChariowError("Cette licence ne correspond à aucun plan Baraka Compta.");
   }
 
   return { plan, license: data };
