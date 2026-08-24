@@ -160,8 +160,9 @@ export default async function BillingPage({
           </div>
 
           <p className="text-xs text-slate-400">
-            Le paiement en ligne (Wave, Orange Money, carte bancaire) n&apos;est pas encore activé. Votre
-            demande est enregistrée et notre équipe vous contacte pour finaliser l&apos;activation.
+            Vous serez redirigé vers une page de paiement sécurisée (Wave, Orange Money ou carte bancaire).
+            Si le paiement en ligne n&apos;est pas disponible, votre demande reste enregistrée et notre équipe
+            vous contacte pour finaliser l&apos;activation.
           </p>
 
           <section className="rounded-lg border border-slate-200 bg-white p-4">
