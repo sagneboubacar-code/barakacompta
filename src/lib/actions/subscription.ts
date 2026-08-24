@@ -6,6 +6,7 @@ import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import { getPlan } from "@/lib/constants/plans";
 import { createInvoice } from "@/lib/paydunya/client";
 import { resolveChariowLicense, ChariowError } from "@/lib/chariow";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { SubscriptionPaymentMethod, SubscriptionPlan } from "@/types";
 
 const BILLING_PATH = "/dashboard/billing";
@@ -114,14 +115,21 @@ export async function requestRenewal(formData: FormData) {
 // une autre école.
 export async function redeemChariowLicense(formData: FormData) {
   const appUser = await requireRole(["owner"]);
-  const supabase = createServerSupabase();
 
   const licenseKey = String(formData.get("license_key") ?? "").trim();
   if (!licenseKey) {
     fail("Merci de renseigner votre clé de licence Chariow.");
   }
 
-  const { data: alreadyUsed } = await supabase
+  // service_role : l'activation d'un plan (status "completed") est un
+  // traitement de confiance, volontairement hors de portée de l'écriture
+  // normale (RLS) — la vérification qui précède, faite serveur-à-serveur
+  // auprès de Chariow, est ce qui la rend légitime ici. Nécessaire aussi
+  // pour repérer une licence déjà utilisée par une AUTRE école (RLS
+  // limiterait sinon la recherche à la seule école courante).
+  const admin = createAdminClient();
+
+  const { data: alreadyUsed } = await admin
     .from("subscription_payments")
     .select("id")
     .eq("payment_method", "chariow")
@@ -146,7 +154,7 @@ export async function redeemChariowLicense(formData: FormData) {
   periodEndDate.setMonth(periodEndDate.getMonth() + 1);
   const periodEnd = periodEndDate.toISOString().slice(0, 10);
 
-  const { error: insertError } = await supabase.from("subscription_payments").insert({
+  const { error: insertError } = await admin.from("subscription_payments").insert({
     school_id: appUser.school_id ?? "",
     plan: planDef.key,
     amount: planDef.priceXOF ?? 0,
@@ -163,7 +171,7 @@ export async function redeemChariowLicense(formData: FormData) {
     fail("Licence valide, mais l'enregistrement a échoué : " + insertError.message);
   }
 
-  const { error: schoolError } = await supabase
+  const { error: schoolError } = await admin
     .from("schools")
     .update({ plan: planDef.key, subscription_status: "active", subscription_expires_at: periodEnd })
     .eq("id", appUser.school_id ?? "");
