@@ -2,7 +2,6 @@ import Link from "next/link";
 import { PLANS } from "@/lib/constants/plans";
 import { formatCurrency } from "@/lib/format";
 import { Reveal } from "@/components/Reveal";
-import { LedgerPreview } from "@/components/LedgerPreview";
 
 const FEATURES = [
   {
@@ -82,20 +81,20 @@ export default function LandingPage() {
           className="pointer-events-none absolute -top-32 right-[-10%] h-[560px] w-[560px] rounded-full opacity-[0.16] blur-3xl"
           style={{ background: "radial-gradient(circle, #0E7C5A 0%, transparent 70%)" }}
         />
-        <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-14 px-6 pb-20 pt-16 sm:pb-28 sm:pt-20 lg:grid-cols-[1.05fr_1fr]">
-          <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-light px-3 py-1 text-xs font-semibold uppercase tracking-widest text-brand-dark">
+        <div className="relative mx-auto max-w-3xl px-6 pb-20 pt-16 text-center sm:pb-28 sm:pt-24">
+          <Reveal>
+            <p className="mx-auto inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-light px-3 py-1 text-xs font-semibold uppercase tracking-widest text-brand-dark">
               <span className="h-1.5 w-1.5 rounded-full bg-brand" />
               Gestion financière scolaire
             </p>
-            <h1 className="mt-5 text-balance font-display text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-[3.25rem]">
+            <h1 className="mx-auto mt-5 max-w-2xl text-balance font-display text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-[3.25rem]">
               La comptabilité de votre école, sans les cahiers ni les fichiers Excel.
             </h1>
-            <p className="mt-5 max-w-lg text-balance text-base leading-relaxed text-slate-600">
+            <p className="mx-auto mt-5 max-w-lg text-balance text-base leading-relaxed text-slate-600">
               Baraka Compta centralise les élèves, les paiements, les dépenses et les rapports de votre
               établissement — pour savoir, à tout moment, où en est votre trésorerie.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-4">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <Link
                 href="/signup"
                 className="rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm shadow-brand/30 transition-colors hover:bg-brand-dark"
@@ -112,10 +111,6 @@ export default function LandingPage() {
             <p className="mt-4 text-xs text-slate-400">
               Sans engagement · Aucune carte bancaire requise
             </p>
-          </div>
-
-          <Reveal>
-            <LedgerPreview />
           </Reveal>
         </div>
       </section>
