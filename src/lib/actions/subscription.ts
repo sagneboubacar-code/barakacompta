@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth/guard";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import { getPlan } from "@/lib/constants/plans";
-import { createInvoice } from "@/lib/paydunya/client";
+import { createPaymentRequest } from "@/lib/paytech/client";
 import { resolveChariowLicense, ChariowError } from "@/lib/chariow";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { SubscriptionPaymentMethod, SubscriptionPlan } from "@/types";
@@ -21,10 +21,10 @@ function siteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "https://barakacompta.vercel.app";
 }
 
-// Crée la demande de renouvellement puis, si PayDunya est configuré, une
-// facture de paiement réelle vers laquelle on redirige l'utilisateur.
+// Crée la demande de renouvellement puis, si PayTech est configuré, une
+// demande de paiement réelle vers laquelle on redirige l'utilisateur.
 // L'activation du plan ne se fait jamais ici : seul le webhook IPN
-// (server-to-server, revérifié auprès de PayDunya) peut faire passer la
+// (server-to-server, revérifié auprès de PayTech) peut faire passer la
 // demande de "pending" à "completed".
 export async function requestRenewal(formData: FormData) {
   const appUser = await requireRole(["owner"]);
@@ -74,27 +74,26 @@ export async function requestRenewal(formData: FormData) {
   // d'être avalée par le catch et transformée en faux message d'erreur.
   let checkoutUrl: string | null = null;
   try {
-    const invoice = await createInvoice({
+    const payment = await createPaymentRequest({
       amount: plan.priceXOF ?? 0,
-      description: `Abonnement Baraka Compta — ${plan.label} — ${school?.name ?? ""}`,
-      externalId: inserted.id,
-      returnUrl: `${siteUrl()}${BILLING_PATH}?success=${encodeURIComponent("Paiement reçu, activation en cours.")}`,
+      itemName: `Abonnement Baraka Compta — ${plan.label} — ${school?.name ?? ""}`,
+      refCommand: inserted.id,
+      successUrl: `${siteUrl()}${BILLING_PATH}?success=${encodeURIComponent("Paiement reçu, activation en cours.")}`,
       cancelUrl: `${siteUrl()}${BILLING_PATH}?error=${encodeURIComponent("Paiement annulé.")}`,
-      ipnUrl: `${siteUrl()}/api/paydunya/ipn`,
-      customer: { name: appUser.full_name ?? "", email: appUser.email ?? "" },
+      ipnUrl: `${siteUrl()}/api/paytech/ipn`,
     });
 
     await supabase
       .from("subscription_payments")
-      .update({ external_reference: invoice.token })
+      .update({ external_reference: payment.token })
       .eq("id", inserted.id);
 
-    checkoutUrl = invoice.checkoutUrl;
+    checkoutUrl = payment.redirectUrl;
   } catch (err) {
-    // Clés PayDunya pas encore configurées, ou service indisponible : on
+    // Clés PayTech pas encore configurées, ou service indisponible : on
     // garde la demande "pending" et on retombe sur le parcours manuel
     // plutôt que de bloquer l'utilisateur.
-    console.error("PayDunya — création de facture impossible", err);
+    console.error("PayTech — création de la demande de paiement impossible", err);
   }
 
   if (checkoutUrl) {
