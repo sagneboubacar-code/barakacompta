@@ -51,7 +51,11 @@ export function DashboardSidebar({
     <>
       {/* Barre mobile : logo + bouton menu, la sidebar devient un panneau coulissant */}
       <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 lg:hidden">
-        <span className="text-sm font-semibold text-slate-900">{schoolName}</span>
+        <span className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-icon.png" alt="" className="h-6 w-6" />
+          {schoolName}
+        </span>
         <button
           type="button"
           onClick={() => setMobileOpen((v) => !v)}
@@ -73,9 +77,13 @@ export function DashboardSidebar({
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="border-b border-slate-200 px-5 py-5">
-          <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">Baraka Compta</p>
-          <p className="mt-1 truncate text-sm font-semibold text-slate-900">{schoolName}</p>
+        <div className="flex items-center gap-2.5 border-b border-slate-200 px-5 py-5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-icon.png" alt="" className="h-8 w-8 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">Baraka Compta</p>
+            <p className="truncate text-sm font-semibold text-slate-900">{schoolName}</p>
+          </div>
         </div>
 
         {navList}
