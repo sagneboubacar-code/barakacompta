@@ -69,7 +69,7 @@ export default function LandingPage() {
             href="/signup"
             className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
           >
-            Essai gratuit
+            Commencer gratuitement
           </Link>
         </div>
       </header>
@@ -99,7 +99,7 @@ export default function LandingPage() {
                 href="/signup"
                 className="rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm shadow-brand/30 transition-colors hover:bg-brand-dark"
               >
-                Essai gratuit — {PLANS[0].trialDays} jours
+                Commencer gratuitement
               </Link>
               <Link
                 href="/login"
@@ -255,7 +255,7 @@ export default function LandingPage() {
               href="/signup"
               className="mt-8 inline-flex items-center justify-center rounded-full bg-brand px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-brand/30 transition-colors hover:bg-emerald-500"
             >
-              Essai gratuit — {PLANS[0].trialDays} jours
+              Commencer gratuitement
             </Link>
           </Reveal>
         </div>
