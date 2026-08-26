@@ -1,4 +1,5 @@
 import type { SchoolClassCycle } from "@/types";
+import type { Language } from "@/lib/i18n/config";
 
 export const CYCLES: { key: SchoolClassCycle; label: string }[] = [
   { key: "prescolaire", label: "Préscolaire" },
@@ -7,7 +8,16 @@ export const CYCLES: { key: SchoolClassCycle; label: string }[] = [
   { key: "lycee", label: "Lycée" },
 ];
 
-export function cycleLabel(key: string | null): string {
+const CYCLE_LABELS_AR: Record<string, string> = {
+  prescolaire: "التحضيري",
+  elementaire: "الابتدائي",
+  college: "المتوسط",
+  lycee: "الثانوي",
+};
+
+export function cycleLabel(key: string | null, language: Language = "fr"): string {
+  if (key === null) return "—";
+  if (language === "ar") return CYCLE_LABELS_AR[key] ?? "—";
   return CYCLES.find((c) => c.key === key)?.label ?? "—";
 }
 

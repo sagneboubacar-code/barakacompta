@@ -1,3 +1,5 @@
+import type { Language } from "@/lib/i18n/config";
+
 export const MONTH_NAMES = [
   "Janvier",
   "Février",
@@ -13,9 +15,28 @@ export const MONTH_NAMES = [
   "Décembre",
 ];
 
+const MONTH_NAMES_AR = [
+  "يناير",
+  "فبراير",
+  "مارس",
+  "أبريل",
+  "مايو",
+  "يونيو",
+  "يوليو",
+  "أغسطس",
+  "سبتمبر",
+  "أكتوبر",
+  "نوفمبر",
+  "ديسمبر",
+];
+
+export function monthNames(language: Language = "fr"): string[] {
+  return language === "ar" ? MONTH_NAMES_AR : MONTH_NAMES;
+}
+
 // monthKey au format "YYYY-MM"
-export function formatMonthLabel(monthKey: string): string {
+export function formatMonthLabel(monthKey: string, language: Language = "fr"): string {
   const [year, month] = monthKey.split("-").map(Number);
-  const name = MONTH_NAMES[(month ?? 1) - 1] ?? monthKey;
+  const name = monthNames(language)[(month ?? 1) - 1] ?? monthKey;
   return `${name} ${year}`;
 }

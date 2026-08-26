@@ -8,6 +8,9 @@ import {
 } from "@/lib/reports/financial";
 import { paymentMethodLabel } from "@/lib/constants/payments";
 import { expenseCategoryLabel } from "@/lib/constants/expenses";
+import { getLanguage } from "@/lib/i18n/get-language";
+import { dashboardHomeDict } from "@/lib/i18n/dictionaries/dashboard-home";
+import { formatDate } from "@/lib/format";
 
 // Année scolaire active complète (de son mois de début à son mois de fin),
 // pas seulement "depuis le début du mois" : la comptabilité affichée doit
@@ -31,6 +34,8 @@ function schoolYearBounds(school: {
 
 export default async function DashboardHomePage() {
   const appUser = await requireUser();
+  const language = getLanguage();
+  const t = dashboardHomeDict[language];
   const supabase = createClient();
 
   const { data: school } = await supabase
@@ -90,18 +95,18 @@ export default async function DashboardHomePage() {
   const uniformeCollected = yearReport.revenueByType.find((r) => r.key === "uniforme")?.collected ?? 0;
 
   const kpis = [
-    { label: "Élèves", value: studentCount ?? 0, tone: "neutral" as const },
-    { label: "Recettes de l'année", value: yearReport.totalCollected, tone: "positive" as const },
-    { label: "Inscription encaissée", value: inscriptionCollected, tone: "positive" as const },
-    { label: "Uniforme encaissé", value: uniformeCollected, tone: "positive" as const },
-    { label: "Dépenses de l'année", value: yearReport.totalExpenses, tone: "neutral" as const },
+    { label: t.kpiStudents, value: studentCount ?? 0, tone: "neutral" as const },
+    { label: t.kpiYearRevenue, value: yearReport.totalCollected, tone: "positive" as const },
+    { label: t.kpiInscription, value: inscriptionCollected, tone: "positive" as const },
+    { label: t.kpiUniform, value: uniformeCollected, tone: "positive" as const },
+    { label: t.kpiYearExpenses, value: yearReport.totalExpenses, tone: "neutral" as const },
     {
-      label: "Solde actuel",
+      label: t.kpiBalance,
       value: yearReport.balance,
       tone: yearReport.balance >= 0 ? ("positive" as const) : ("negative" as const),
     },
-    { label: "Montant à recouvrir", value: totalReceivable, tone: "warning" as const },
-    { label: "Élèves impayés", value: overdueStudentCount, tone: "negative" as const },
+    { label: t.kpiReceivable, value: totalReceivable, tone: "warning" as const },
+    { label: t.kpiOverdueStudents, value: overdueStudentCount, tone: "negative" as const },
   ];
 
   const toneClasses: Record<string, string> = {
@@ -114,9 +119,9 @@ export default async function DashboardHomePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">Bonjour {appUser.full_name ?? ""}</h1>
+        <h1 className="text-xl font-semibold text-slate-900">{t.greeting(appUser.full_name ?? "")}</h1>
         <p className="text-sm text-slate-500">
-          Vue d&apos;ensemble de votre école — année scolaire {school?.school_year_label ?? "en cours"}.
+          {t.overview(school?.school_year_label ?? t.ongoing)}.
         </p>
       </div>
 
@@ -132,9 +137,9 @@ export default async function DashboardHomePage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <section className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-900">Derniers paiements</h2>
+            <h2 className="text-sm font-semibold text-slate-900">{t.recentPayments}</h2>
             <Link href="/dashboard/payments" className="text-xs text-slate-500 underline">
-              Tout voir
+              {t.seeAll}
             </Link>
           </div>
           <ul className="mt-3 divide-y divide-slate-100">
@@ -147,8 +152,8 @@ export default async function DashboardHomePage() {
                       {student ? `${student.last_name} ${student.first_name}` : "—"}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {new Date(payment.paid_at).toLocaleDateString("fr-FR")} ·{" "}
-                      {paymentMethodLabel(payment.payment_method)}
+                      {formatDate(payment.paid_at, language)} ·{" "}
+                      {paymentMethodLabel(payment.payment_method, language)}
                     </p>
                   </div>
                   <span className="font-medium text-slate-900">{payment.amount}</span>
@@ -156,16 +161,16 @@ export default async function DashboardHomePage() {
               );
             })}
             {(recentPayments ?? []).length === 0 && (
-              <li className="py-3 text-center text-xs text-slate-400">Aucun paiement enregistré.</li>
+              <li className="py-3 text-center text-xs text-slate-400">{t.noPayments}</li>
             )}
           </ul>
         </section>
 
         <section className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-900">Dernières dépenses</h2>
+            <h2 className="text-sm font-semibold text-slate-900">{t.recentExpenses}</h2>
             <Link href="/dashboard/expenses" className="text-xs text-slate-500 underline">
-              Tout voir
+              {t.seeAll}
             </Link>
           </div>
           <ul className="mt-3 divide-y divide-slate-100">
@@ -174,15 +179,15 @@ export default async function DashboardHomePage() {
                 <div>
                   <p className="text-slate-900">{expense.label}</p>
                   <p className="text-xs text-slate-500">
-                    {new Date(expense.expense_date).toLocaleDateString("fr-FR")} ·{" "}
-                    {expenseCategoryLabel(expense.category)}
+                    {formatDate(expense.expense_date, language)} ·{" "}
+                    {expenseCategoryLabel(expense.category, language)}
                   </p>
                 </div>
                 <span className="font-medium text-slate-900">{expense.amount}</span>
               </li>
             ))}
             {(recentExpenses ?? []).length === 0 && (
-              <li className="py-3 text-center text-xs text-slate-400">Aucune dépense enregistrée.</li>
+              <li className="py-3 text-center text-xs text-slate-400">{t.noExpenses}</li>
             )}
           </ul>
         </section>
@@ -191,15 +196,15 @@ export default async function DashboardHomePage() {
       {cashManagerBreakdown.length > 0 && (
         <section className="rounded-lg border border-slate-200 bg-white p-4">
           <h2 className="text-sm font-semibold text-slate-900">
-            Par responsable — année scolaire {school?.school_year_label ?? "en cours"}
+            {t.byManager(school?.school_year_label ?? t.ongoing)}
           </h2>
           <table className="mt-3 w-full text-left text-sm">
             <thead className="text-slate-500">
               <tr>
-                <th className="py-1 font-medium">Responsable</th>
-                <th className="py-1 font-medium">Recette</th>
-                <th className="py-1 font-medium">Dépense</th>
-                <th className="py-1 font-medium">Solde</th>
+                <th className="py-1 font-medium">{t.manager}</th>
+                <th className="py-1 font-medium">{t.revenue}</th>
+                <th className="py-1 font-medium">{t.expense}</th>
+                <th className="py-1 font-medium">{t.balance}</th>
               </tr>
             </thead>
             <tbody>
@@ -214,7 +219,7 @@ export default async function DashboardHomePage() {
                 </tr>
               ))}
               <tr className="border-t border-slate-200 font-medium">
-                <td className="py-1.5 text-slate-900">Compta finale — école</td>
+                <td className="py-1.5 text-slate-900">{t.finalAccounting}</td>
                 <td className="py-1.5 text-slate-900">{yearReport.totalCollected}</td>
                 <td className="py-1.5 text-slate-900">{yearReport.totalExpenses}</td>
                 <td className="py-1.5 text-slate-900">{yearReport.balance}</td>
@@ -226,23 +231,23 @@ export default async function DashboardHomePage() {
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">
-          Mois en cours — {currentMonthReport?.label ?? ""}
+          {t.currentMonth(currentMonthReport?.label ?? "")}
         </h2>
         <div className="mt-3 grid grid-cols-3 gap-3">
           <div className="rounded-lg bg-slate-50 p-3 sm:p-4">
-            <p className="text-xs text-slate-500 sm:text-sm">Recette</p>
+            <p className="text-xs text-slate-500 sm:text-sm">{t.revenue}</p>
             <p className="mt-1 text-xl font-semibold text-green-700 sm:text-2xl">
               {currentMonthReport?.recettes ?? 0}
             </p>
           </div>
           <div className="rounded-lg bg-slate-50 p-3 sm:p-4">
-            <p className="text-xs text-slate-500 sm:text-sm">Dépense</p>
+            <p className="text-xs text-slate-500 sm:text-sm">{t.expense}</p>
             <p className="mt-1 text-xl font-semibold text-slate-900 sm:text-2xl">
               {currentMonthReport?.depenses ?? 0}
             </p>
           </div>
           <div className="rounded-lg bg-slate-50 p-3 sm:p-4">
-            <p className="text-xs text-slate-500 sm:text-sm">Solde</p>
+            <p className="text-xs text-slate-500 sm:text-sm">{t.balance}</p>
             <p
               className={`mt-1 text-xl font-semibold sm:text-2xl ${
                 (currentMonthReport?.solde ?? 0) >= 0 ? "text-green-700" : "text-red-700"
