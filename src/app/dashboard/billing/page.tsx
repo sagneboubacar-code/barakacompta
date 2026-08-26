@@ -2,26 +2,9 @@ import { requireUser } from "@/lib/auth/guard";
 import { createClient } from "@/lib/supabase/server";
 import { requestRenewal } from "@/lib/actions/subscription";
 import { PLANS, getPlan, type GatedModule } from "@/lib/constants/plans";
-
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  wave: "Wave",
-  orange_money: "Orange Money",
-  card: "Carte bancaire",
-  chariow: "Chariow",
-  manual: "Manuel",
-};
-
-const SUBSCRIPTION_PAYMENT_STATUS_LABELS: Record<string, string> = {
-  pending: "En attente",
-  completed: "Confirmé",
-  failed: "Échoué",
-  cancelled: "Annulé",
-};
-
-const MODULE_LABELS: Record<GatedModule, string> = {
-  collections: "Recouvrement",
-  reports: "Rapports financiers",
-};
+import { getLanguage } from "@/lib/i18n/get-language";
+import { dashboardBillingDict } from "@/lib/i18n/dictionaries/dashboard-billing";
+import { formatDate } from "@/lib/format";
 
 export default async function BillingPage({
   searchParams,
@@ -29,6 +12,9 @@ export default async function BillingPage({
   searchParams: { error?: string; success?: string; upgrade?: string };
 }) {
   const appUser = await requireUser();
+  const language = getLanguage();
+  const t = dashboardBillingDict[language];
+  const MODULE_LABELS = t.moduleLabels as Record<GatedModule, string>;
   const supabase = createClient();
 
   const { data: school } = await supabase
@@ -49,6 +35,7 @@ export default async function BillingPage({
     : 0;
 
   const currentPlan = getPlan(school?.plan ?? "trial");
+  const currentPlanLabel = t.planLabels[currentPlan.key] ?? currentPlan.label;
   const isOwner = appUser.role === "owner";
 
   const { data: history } = isOwner
@@ -62,7 +49,7 @@ export default async function BillingPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">Abonnement</h1>
+        <h1 className="text-xl font-semibold text-slate-900">{t.title}</h1>
         <p className="text-sm text-slate-500">{school?.name}</p>
       </div>
 
@@ -74,34 +61,33 @@ export default async function BillingPage({
       )}
       {searchParams.upgrade && (
         <p className="rounded-md bg-orange-50 px-3 py-2 text-sm text-orange-700">
-          Le module &laquo; {MODULE_LABELS[searchParams.upgrade as GatedModule] ?? searchParams.upgrade} &raquo;
-          n&apos;est pas inclus dans votre plan actuel ({currentPlan.label}).
+          {t.upgradeNotice(
+            MODULE_LABELS[searchParams.upgrade as GatedModule] ?? searchParams.upgrade,
+            currentPlanLabel
+          )}
         </p>
       )}
 
       {isExpired ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="text-sm font-semibold text-red-800">Abonnement expiré</p>
+          <p className="text-sm font-semibold text-red-800">{t.expiredTitle}</p>
           <p className="mt-1 text-sm text-red-700">
-            L&apos;accès aux fonctionnalités de l&apos;école est bloqué depuis le{" "}
-            {new Date(school?.subscription_expires_at ?? today).toLocaleDateString("fr-FR")}. Renouvelez
-            votre abonnement ci-dessous pour rétablir l&apos;accès.
+            {t.expiredText(formatDate(school?.subscription_expires_at ?? today, language))}
           </p>
         </div>
       ) : (
         <div className="rounded-lg border border-green-200 bg-green-50 p-4">
           <p className="text-sm text-green-800">
-            Plan <strong>{currentPlan.label}</strong> actif jusqu&apos;au{" "}
-            {new Date(school?.subscription_expires_at ?? today).toLocaleDateString("fr-FR")} ({daysRemaining}{" "}
-            jour{daysRemaining > 1 ? "s" : ""} restant{daysRemaining > 1 ? "s" : ""}).
+            {t.activePrefix}
+            <strong>{currentPlanLabel}</strong>
+            {t.activeSuffix(formatDate(school?.subscription_expires_at ?? today, language), daysRemaining)}
           </p>
         </div>
       )}
 
       {!isOwner && (
         <p className="rounded-md border border-slate-200 bg-white p-4 text-sm text-slate-600">
-          Seul le propriétaire de l&apos;école peut renouveler l&apos;abonnement. Contactez-le si l&apos;accès
-          est bloqué.
+          {t.notOwner}
         </p>
       )}
 
@@ -117,24 +103,24 @@ export default async function BillingPage({
                     isCurrent ? "border-slate-900 ring-1 ring-slate-900" : "border-slate-200"
                   }`}
                 >
-                  <p className="text-sm font-semibold text-slate-900">{plan.label}</p>
+                  <p className="text-sm font-semibold text-slate-900">{t.planLabels[plan.key] ?? plan.label}</p>
                   <p className="mt-1 text-xl font-semibold text-slate-900">
-                    {plan.priceXOF === 0 ? "Gratuit" : `${plan.priceXOF} XOF`}
-                    {plan.priceXOF !== 0 && <span className="text-xs font-normal text-slate-500">/mois</span>}
+                    {plan.priceXOF === 0 ? t.free : `${plan.priceXOF} XOF`}
+                    {plan.priceXOF !== 0 && <span className="text-xs font-normal text-slate-500">{t.perMonth}</span>}
                   </p>
                   <ul className="mt-3 space-y-1 text-xs text-slate-600">
-                    <li>{plan.maxStudents === null ? "Élèves illimités" : `Jusqu'à ${plan.maxStudents} élèves`}</li>
-                    <li>Élèves, tarifs, paiements, dépenses</li>
+                    <li>{plan.maxStudents === null ? t.unlimitedStudents : t.upToStudents(plan.maxStudents)}</li>
+                    <li>{t.coreLine}</li>
                     {plan.modules.map((moduleKey) => (
                       <li key={moduleKey}>{MODULE_LABELS[moduleKey]}</li>
                     ))}
-                    {plan.trialDays && <li>{plan.trialDays} jours d&apos;essai</li>}
+                    {plan.trialDays && <li>{t.trialDaysLine(plan.trialDays)}</li>}
                   </ul>
 
                   {isCurrent ? (
-                    <p className="mt-4 text-center text-xs font-medium text-slate-500">Plan actuel</p>
+                    <p className="mt-4 text-center text-xs font-medium text-slate-500">{t.currentPlan}</p>
                   ) : plan.priceXOF === 0 ? (
-                    <p className="mt-4 text-center text-xs text-slate-400">Réservé au nouvel essai</p>
+                    <p className="mt-4 text-center text-xs text-slate-400">{t.reservedNewTrial}</p>
                   ) : (
                     <form action={requestRenewal} className="mt-4 space-y-2">
                       <input type="hidden" name="plan" value={plan.key} />
@@ -143,16 +129,16 @@ export default async function BillingPage({
                         required
                         className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs"
                       >
-                        <option value="">Moyen de paiement</option>
-                        <option value="wave">Wave</option>
-                        <option value="orange_money">Orange Money</option>
-                        <option value="card">Carte bancaire</option>
+                        <option value="">{t.paymentMethodPlaceholder}</option>
+                        <option value="wave">{t.wave}</option>
+                        <option value="orange_money">{t.orangeMoney}</option>
+                        <option value="card">{t.card}</option>
                       </select>
                       <button
                         type="submit"
                         className="w-full rounded-md bg-slate-900 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
                       >
-                        Demander le renouvellement
+                        {t.requestRenewal}
                       </button>
                     </form>
                   )}
@@ -161,46 +147,42 @@ export default async function BillingPage({
             })}
           </div>
 
-          <p className="text-xs text-slate-400">
-            Vous serez redirigé vers une page de paiement sécurisée (Wave, Orange Money ou carte bancaire).
-            Si le paiement en ligne n&apos;est pas disponible, votre demande reste enregistrée et notre équipe
-            vous contacte pour finaliser l&apos;activation.
-          </p>
+          <p className="text-xs text-slate-400">{t.secureRedirectNote}</p>
 
           <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="text-sm font-semibold text-slate-900">Historique des demandes</h2>
+            <h2 className="text-sm font-semibold text-slate-900">{t.historyTitle}</h2>
             <table className="mt-3 w-full text-left text-sm">
               <thead className="text-slate-500">
                 <tr>
-                  <th className="py-1 font-medium">Date</th>
-                  <th className="py-1 font-medium">Plan</th>
-                  <th className="py-1 font-medium">Montant</th>
-                  <th className="py-1 font-medium">Moyen</th>
-                  <th className="py-1 font-medium">Statut</th>
+                  <th className="py-1 font-medium">{t.colDate}</th>
+                  <th className="py-1 font-medium">{t.colPlan}</th>
+                  <th className="py-1 font-medium">{t.colAmount}</th>
+                  <th className="py-1 font-medium">{t.colMethod}</th>
+                  <th className="py-1 font-medium">{t.colStatus}</th>
                 </tr>
               </thead>
               <tbody>
                 {(history ?? []).map((entry) => (
                   <tr key={entry.id} className="border-t border-slate-100">
                     <td className="py-1.5 text-slate-600">
-                      {new Date(entry.created_at).toLocaleDateString("fr-FR")}
+                      {formatDate(entry.created_at, language)}
                     </td>
-                    <td className="py-1.5 text-slate-600">{getPlan(entry.plan).label}</td>
+                    <td className="py-1.5 text-slate-600">{t.planLabels[entry.plan] ?? getPlan(entry.plan).label}</td>
                     <td className="py-1.5 text-slate-600">
                       {entry.amount} {entry.currency}
                     </td>
                     <td className="py-1.5 text-slate-600">
-                      {PAYMENT_METHOD_LABELS[entry.payment_method] ?? entry.payment_method}
+                      {t.paymentMethodLabels[entry.payment_method] ?? entry.payment_method}
                     </td>
                     <td className="py-1.5 text-slate-600">
-                      {SUBSCRIPTION_PAYMENT_STATUS_LABELS[entry.status] ?? entry.status}
+                      {t.paymentStatusLabels[entry.status] ?? entry.status}
                     </td>
                   </tr>
                 ))}
                 {(history ?? []).length === 0 && (
                   <tr>
                     <td colSpan={5} className="py-3 text-center text-xs text-slate-400">
-                      Aucune demande enregistrée.
+                      {t.noHistory}
                     </td>
                   </tr>
                 )}

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { cycleLabel } from "@/lib/constants/cycles";
+import type { Language } from "@/lib/i18n/config";
 
 type ScheduleRow = {
   student_id: string;
@@ -39,7 +40,8 @@ function defaultMonth(): string {
 // les deux restent exactement cohérents avec les mêmes filtres.
 export async function computeCollectionsReport(
   supabase: SupabaseClient<Database>,
-  filters: { cycle?: string; classId?: string; month?: string }
+  filters: { cycle?: string; classId?: string; month?: string },
+  language: Language = "fr"
 ): Promise<CollectionsReport> {
   const { data: classes } = await supabase
     .from("classes")
@@ -104,7 +106,7 @@ export async function computeCollectionsReport(
       id: student.id,
       name: `${student.last_name} ${student.first_name}`,
       className: klass?.name ?? "—",
-      cycle: cycleLabel(klass?.level ?? null),
+      cycle: cycleLabel(klass?.level ?? null, language),
       guardianName: student.guardian_name ?? "—",
       guardianPhone: student.guardian_phone ?? "—",
       totalRemaining,

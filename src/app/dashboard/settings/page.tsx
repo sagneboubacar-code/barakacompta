@@ -4,16 +4,12 @@ import { createClient } from "@/lib/supabase/server";
 import { updateSchoolInfo, updateSchoolYear, uploadSchoolLogo } from "@/lib/actions/school";
 import { createClass, deleteClass, updateClass } from "@/lib/actions/classes";
 import { createCashManager, deleteCashManager, updateCashManager } from "@/lib/actions/cashManagers";
-import { CYCLES } from "@/lib/constants/cycles";
-import { MONTH_NAMES } from "@/lib/constants/months";
+import { CYCLES, cycleLabel } from "@/lib/constants/cycles";
+import { monthNames } from "@/lib/constants/months";
 import { InviteTeamMemberForm } from "@/components/InviteTeamMemberForm";
-
-const ROLE_LABELS: Record<string, string> = {
-  owner: "Propriétaire",
-  admin: "Administrateur",
-  accountant: "Comptable",
-  super_admin: "Staff Baraka",
-};
+import { getLanguage } from "@/lib/i18n/get-language";
+import { dashboardSettingsDict } from "@/lib/i18n/dictionaries/dashboard-settings";
+import { roleLabelsDict } from "@/lib/i18n/dictionaries/dashboard-shell";
 
 export default async function SettingsPage({
   searchParams,
@@ -21,6 +17,8 @@ export default async function SettingsPage({
   searchParams: { error?: string; success?: string };
 }) {
   const appUser = await requireRole(["owner"]);
+  const language = getLanguage();
+  const t = dashboardSettingsDict[language];
   const supabase = createClient();
 
   const [{ data: school }, { data: team }, { data: classes }, { data: cashManagers }] = await Promise.all([
@@ -48,8 +46,8 @@ export default async function SettingsPage({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">Paramètres</h1>
-        <p className="text-sm text-slate-500">Réservé au propriétaire de l&apos;école.</p>
+        <h1 className="text-xl font-semibold text-slate-900">{t.pageTitle}</h1>
+        <p className="text-sm text-slate-500">{t.pageSubtitle}</p>
       </div>
 
       {searchParams.error && (
@@ -65,13 +63,13 @@ export default async function SettingsPage({
 
       {/* Informations générales */}
       <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Informations générales</h2>
+        <h2 className="text-sm font-semibold text-slate-900">{t.generalInfo}</h2>
 
         <div className="mt-4 flex items-center gap-4">
           {school?.logo_url ? (
             <Image
               src={school.logo_url}
-              alt="Logo de l'école"
+              alt={t.logoAlt}
               width={56}
               height={56}
               className="h-14 w-14 rounded-md border border-slate-200 object-cover"
@@ -79,7 +77,7 @@ export default async function SettingsPage({
             />
           ) : (
             <div className="flex h-14 w-14 items-center justify-center rounded-md border border-dashed border-slate-300 text-xs text-slate-400">
-              Logo
+              {t.logoPlaceholder}
             </div>
           )}
           <form action={uploadSchoolLogo} encType="multipart/form-data" className="flex items-center gap-2">
@@ -94,14 +92,14 @@ export default async function SettingsPage({
               type="submit"
               className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
             >
-              Envoyer
+              {t.send}
             </button>
           </form>
         </div>
 
         <form action={updateSchoolInfo} className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Nom de l&apos;école</span>
+            <span className="text-slate-600">{t.schoolName}</span>
             <input
               name="name"
               defaultValue={school?.name ?? ""}
@@ -110,7 +108,7 @@ export default async function SettingsPage({
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Devise</span>
+            <span className="text-slate-600">{t.currency}</span>
             <input
               name="currency"
               defaultValue={school?.currency ?? "XOF"}
@@ -119,7 +117,7 @@ export default async function SettingsPage({
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Pays</span>
+            <span className="text-slate-600">{t.country}</span>
             <input
               name="country"
               defaultValue={school?.country ?? ""}
@@ -127,7 +125,7 @@ export default async function SettingsPage({
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Téléphone</span>
+            <span className="text-slate-600">{t.phone}</span>
             <input
               name="phone"
               defaultValue={school?.phone ?? ""}
@@ -135,7 +133,7 @@ export default async function SettingsPage({
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Email</span>
+            <span className="text-slate-600">{t.email}</span>
             <input
               name="email"
               type="email"
@@ -144,7 +142,7 @@ export default async function SettingsPage({
             />
           </label>
           <label className="space-y-1 text-sm sm:col-span-2">
-            <span className="text-slate-600">Adresse</span>
+            <span className="text-slate-600">{t.address}</span>
             <input
               name="address"
               defaultValue={school?.address ?? ""}
@@ -156,7 +154,7 @@ export default async function SettingsPage({
               type="submit"
               className="rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
             >
-              Enregistrer
+              {t.save}
             </button>
           </div>
         </form>
@@ -164,10 +162,10 @@ export default async function SettingsPage({
 
       {/* Année scolaire active */}
       <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Année scolaire active</h2>
+        <h2 className="text-sm font-semibold text-slate-900">{t.activeSchoolYear}</h2>
         <form action={updateSchoolYear} className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Année (ex. 2025-2026)</span>
+            <span className="text-slate-600">{t.yearLabel}</span>
             <input
               name="school_year_label"
               defaultValue={school?.school_year_label ?? ""}
@@ -176,13 +174,13 @@ export default async function SettingsPage({
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Mois de début</span>
+            <span className="text-slate-600">{t.startMonth}</span>
             <select
               name="school_year_start_month"
               defaultValue={school?.school_year_start_month ?? 9}
               className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
             >
-              {MONTH_NAMES.map((month, index) => (
+              {monthNames(language).map((month, index) => (
                 <option key={month} value={index + 1}>
                   {month}
                 </option>
@@ -190,13 +188,13 @@ export default async function SettingsPage({
             </select>
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Mois de fin</span>
+            <span className="text-slate-600">{t.endMonth}</span>
             <select
               name="school_year_end_month"
               defaultValue={school?.school_year_end_month ?? 6}
               className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
             >
-              {MONTH_NAMES.map((month, index) => (
+              {monthNames(language).map((month, index) => (
                 <option key={month} value={index + 1}>
                   {month}
                 </option>
@@ -208,7 +206,7 @@ export default async function SettingsPage({
               type="submit"
               className="rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
             >
-              Enregistrer
+              {t.save}
             </button>
           </div>
         </form>
@@ -216,15 +214,15 @@ export default async function SettingsPage({
 
       {/* Classes par cycle */}
       <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Classes par cycle</h2>
+        <h2 className="text-sm font-semibold text-slate-900">{t.classesByCycle}</h2>
         <p className="text-xs text-slate-500">
-          Pré-remplies à la création de l&apos;école ({school?.school_year_label}), modifiables ci-dessous.
+          {t.classesByCycleDesc(school?.school_year_label ?? "")}
         </p>
 
         <div className="mt-4 space-y-6">
           {classesByCycle.map((cycle) => (
             <div key={cycle.key}>
-              <h3 className="text-sm font-medium text-slate-700">{cycle.label}</h3>
+              <h3 className="text-sm font-medium text-slate-700">{cycleLabel(cycle.key, language)}</h3>
               <div className="mt-2 space-y-2">
                 {cycle.classes.map((klass) => (
                   <div key={klass.id} className="flex items-center gap-2">
@@ -246,7 +244,7 @@ export default async function SettingsPage({
                         type="submit"
                         className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
                       >
-                        Enregistrer
+                        {t.save}
                       </button>
                     </form>
                     <form action={deleteClass}>
@@ -255,13 +253,13 @@ export default async function SettingsPage({
                         type="submit"
                         className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50"
                       >
-                        Supprimer
+                        {t.delete}
                       </button>
                     </form>
                   </div>
                 ))}
                 {cycle.classes.length === 0 && (
-                  <p className="text-xs text-slate-400">Aucune classe dans ce cycle.</p>
+                  <p className="text-xs text-slate-400">{t.noClassInCycle}</p>
                 )}
               </div>
 
@@ -269,14 +267,14 @@ export default async function SettingsPage({
                 <input type="hidden" name="level" value={cycle.key} />
                 <input
                   name="name"
-                  placeholder="Nom de la classe"
+                  placeholder={t.classNamePlaceholder}
                   required
                   className="w-40 rounded-md border border-slate-300 px-2 py-1 text-sm"
                 />
                 <input
                   name="sort_order"
                   type="number"
-                  placeholder="Ordre"
+                  placeholder={t.orderPlaceholder}
                   defaultValue={cycle.classes.length + 1}
                   className="w-16 rounded-md border border-slate-300 px-2 py-1 text-sm"
                 />
@@ -284,7 +282,7 @@ export default async function SettingsPage({
                   type="submit"
                   className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
                 >
-                  Ajouter
+                  {t.add}
                 </button>
               </form>
             </div>
@@ -294,12 +292,8 @@ export default async function SettingsPage({
 
       {/* Responsables (caisse) */}
       <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Responsables (caisse)</h2>
-        <p className="text-xs text-slate-500">
-          Pour les écoles où un seul comptable saisit tout mais où l&apos;argent est réparti entre plusieurs
-          personnes (ex. Directeur, Adjoint). Rattachez un responsable à chaque paiement/dépense pour suivre
-          qui a quoi en main.
-        </p>
+        <h2 className="text-sm font-semibold text-slate-900">{t.cashManagers}</h2>
+        <p className="text-xs text-slate-500">{t.cashManagersDesc}</p>
 
         <div className="mt-4 space-y-2">
           {(cashManagers ?? []).map((manager) => (
@@ -321,7 +315,7 @@ export default async function SettingsPage({
                   type="submit"
                   className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
                 >
-                  Enregistrer
+                  {t.save}
                 </button>
               </form>
               <form action={deleteCashManager}>
@@ -330,27 +324,27 @@ export default async function SettingsPage({
                   type="submit"
                   className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50"
                 >
-                  Supprimer
+                  {t.delete}
                 </button>
               </form>
             </div>
           ))}
           {(cashManagers ?? []).length === 0 && (
-            <p className="text-xs text-slate-400">Aucun responsable configuré.</p>
+            <p className="text-xs text-slate-400">{t.noManager}</p>
           )}
         </div>
 
         <form action={createCashManager} className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3">
           <input
             name="name"
-            placeholder="Nom (ex. Directeur)"
+            placeholder={t.managerNamePlaceholder}
             required
             className="w-40 rounded-md border border-slate-300 px-2 py-1 text-sm"
           />
           <input
             name="sort_order"
             type="number"
-            placeholder="Ordre"
+            placeholder={t.orderPlaceholder}
             defaultValue={(cashManagers ?? []).length + 1}
             className="w-16 rounded-md border border-slate-300 px-2 py-1 text-sm"
           />
@@ -358,26 +352,24 @@ export default async function SettingsPage({
             type="submit"
             className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
           >
-            Ajouter
+            {t.add}
           </button>
         </form>
       </section>
 
       {/* Équipe */}
       <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Équipe</h2>
-        <p className="text-xs text-slate-500">
-          Seul le propriétaire peut ajouter un administrateur ou un comptable à l&apos;école.
-        </p>
+        <h2 className="text-sm font-semibold text-slate-900">{t.team}</h2>
+        <p className="text-xs text-slate-500">{t.teamDesc}</p>
         <div className="mt-3 border-b border-slate-100 pb-4">
           <InviteTeamMemberForm />
         </div>
         <table className="mt-3 w-full text-left text-sm">
           <thead className="text-slate-500">
             <tr>
-              <th className="py-1 font-medium">Nom</th>
-              <th className="py-1 font-medium">Email</th>
-              <th className="py-1 font-medium">Rôle</th>
+              <th className="py-1 font-medium">{t.colName}</th>
+              <th className="py-1 font-medium">{t.colEmail}</th>
+              <th className="py-1 font-medium">{t.colRole}</th>
             </tr>
           </thead>
           <tbody>
@@ -385,7 +377,9 @@ export default async function SettingsPage({
               <tr key={member.id} className="border-t border-slate-100">
                 <td className="py-1.5 text-slate-900">{member.full_name ?? "—"}</td>
                 <td className="py-1.5 text-slate-600">{member.email}</td>
-                <td className="py-1.5 text-slate-600">{ROLE_LABELS[member.role] ?? member.role}</td>
+                <td className="py-1.5 text-slate-600">
+                  {roleLabelsDict[member.role]?.[language] ?? member.role}
+                </td>
               </tr>
             ))}
           </tbody>

@@ -2,6 +2,9 @@ import { requireRole } from "@/lib/auth/guard";
 import { createClient } from "@/lib/supabase/server";
 import { createExpense, deleteExpense, updateExpense } from "@/lib/actions/expenses";
 import { EXPENSE_CATEGORIES, expenseCategoryLabel } from "@/lib/constants/expenses";
+import { getLanguage } from "@/lib/i18n/get-language";
+import { dashboardExpensesDict } from "@/lib/i18n/dictionaries/dashboard-expenses";
+import { formatDate } from "@/lib/format";
 import type { ExpenseCategory } from "@/types";
 
 export default async function ExpensesPage({
@@ -10,6 +13,8 @@ export default async function ExpensesPage({
   searchParams: { q?: string; category?: string; from?: string; to?: string; error?: string; success?: string };
 }) {
   const appUser = await requireRole(["owner", "admin", "accountant"]);
+  const language = getLanguage();
+  const t = dashboardExpensesDict[language];
   const supabase = createClient();
 
   let query = supabase
@@ -59,8 +64,8 @@ export default async function ExpensesPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">Dépenses</h1>
-        <p className="text-sm text-slate-500">Total affiché : {total}</p>
+        <h1 className="text-xl font-semibold text-slate-900">{t.title}</h1>
+        <p className="text-sm text-slate-500">{t.totalDisplayed(total)}</p>
       </div>
 
       {searchParams.error && (
@@ -72,31 +77,31 @@ export default async function ExpensesPage({
 
       <form method="get" className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4">
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Recherche</span>
+          <span className="text-slate-600">{t.search}</span>
           <input
             name="q"
             defaultValue={searchParams.q ?? ""}
-            placeholder="Description"
+            placeholder={t.searchPlaceholder}
             className="w-44 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
           />
         </label>
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Catégorie</span>
+          <span className="text-slate-600">{t.category}</span>
           <select
             name="category"
             defaultValue={searchParams.category ?? ""}
             className="w-40 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
           >
-            <option value="">Toutes</option>
+            <option value="">{t.all}</option>
             {EXPENSE_CATEGORIES.map((category) => (
               <option key={category.key} value={category.key}>
-                {category.label}
+                {expenseCategoryLabel(category.key, language)}
               </option>
             ))}
           </select>
         </label>
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Du</span>
+          <span className="text-slate-600">{t.from}</span>
           <input
             name="from"
             type="date"
@@ -105,7 +110,7 @@ export default async function ExpensesPage({
           />
         </label>
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Au</span>
+          <span className="text-slate-600">{t.to}</span>
           <input
             name="to"
             type="date"
@@ -117,7 +122,7 @@ export default async function ExpensesPage({
           type="submit"
           className="rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
         >
-          Filtrer
+          {t.filter}
         </button>
       </form>
 
@@ -125,11 +130,11 @@ export default async function ExpensesPage({
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
-              <th className="px-4 py-2 font-medium">Date</th>
-              <th className="px-4 py-2 font-medium">Catégorie</th>
-              <th className="px-4 py-2 font-medium">Description</th>
-              <th className="px-4 py-2 font-medium">Montant</th>
-              <th className="px-4 py-2 font-medium">Justificatif</th>
+              <th className="px-4 py-2 font-medium">{t.colDate}</th>
+              <th className="px-4 py-2 font-medium">{t.colCategory}</th>
+              <th className="px-4 py-2 font-medium">{t.colDescription}</th>
+              <th className="px-4 py-2 font-medium">{t.colAmount}</th>
+              <th className="px-4 py-2 font-medium">{t.colReceipt}</th>
               <th className="px-4 py-2 font-medium"></th>
             </tr>
           </thead>
@@ -137,9 +142,9 @@ export default async function ExpensesPage({
             {(expenses ?? []).map((expense) => (
               <tr key={expense.id} className="border-t border-slate-100 align-top">
                 <td className="px-4 py-2 text-slate-600">
-                  {new Date(expense.expense_date).toLocaleDateString("fr-FR")}
+                  {formatDate(expense.expense_date, language)}
                 </td>
-                <td className="px-4 py-2 text-slate-600">{expenseCategoryLabel(expense.category)}</td>
+                <td className="px-4 py-2 text-slate-600">{expenseCategoryLabel(expense.category, language)}</td>
                 <td className="px-4 py-2 text-slate-900">{expense.label}</td>
                 <td className="px-4 py-2 text-slate-600">{expense.amount}</td>
                 <td className="px-4 py-2">
@@ -150,7 +155,7 @@ export default async function ExpensesPage({
                       rel="noopener noreferrer"
                       className="text-slate-900 underline"
                     >
-                      Voir
+                      {t.view}
                     </a>
                   ) : (
                     <span className="text-slate-400">—</span>
@@ -160,7 +165,7 @@ export default async function ExpensesPage({
                   <div className="flex items-start gap-2">
                     <details>
                       <summary className="cursor-pointer text-xs text-slate-600 underline">
-                        Modifier
+                        {t.edit}
                       </summary>
                       <form
                         action={updateExpense}
@@ -182,7 +187,7 @@ export default async function ExpensesPage({
                         >
                           {EXPENSE_CATEGORIES.map((category) => (
                             <option key={category.key} value={category.key}>
-                              {category.label}
+                              {expenseCategoryLabel(category.key, language)}
                             </option>
                           ))}
                         </select>
@@ -205,7 +210,7 @@ export default async function ExpensesPage({
                             defaultValue={expense.cash_manager_id ?? ""}
                             className="rounded-md border border-slate-300 px-2 py-1 text-xs"
                           >
-                            <option value="">Responsable —</option>
+                            <option value="">{t.managerPlaceholder}</option>
                             {(cashManagers ?? []).map((manager) => (
                               <option key={manager.id} value={manager.id}>
                                 {manager.name}
@@ -223,7 +228,7 @@ export default async function ExpensesPage({
                           type="submit"
                           className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
                         >
-                          Enregistrer
+                          {t.save}
                         </button>
                       </form>
                     </details>
@@ -234,7 +239,7 @@ export default async function ExpensesPage({
                           type="submit"
                           className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50"
                         >
-                          Supprimer
+                          {t.delete}
                         </button>
                       </form>
                     )}
@@ -245,7 +250,7 @@ export default async function ExpensesPage({
             {(expenses ?? []).length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
-                  Aucune dépense ne correspond à ces critères.
+                  {t.noExpenses}
                 </td>
               </tr>
             )}
@@ -255,7 +260,7 @@ export default async function ExpensesPage({
 
       <details className="rounded-lg border border-slate-200 bg-white p-4">
         <summary className="cursor-pointer text-sm font-semibold text-slate-900">
-          Ajouter une dépense
+          {t.addExpense}
         </summary>
         <form
           action={createExpense}
@@ -264,7 +269,7 @@ export default async function ExpensesPage({
         >
           <input type="hidden" name="redirect_to" value={redirectTo} />
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Date</span>
+            <span className="text-slate-600">{t.date}</span>
             <input
               name="expense_date"
               type="date"
@@ -274,7 +279,7 @@ export default async function ExpensesPage({
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Catégorie</span>
+            <span className="text-slate-600">{t.category}</span>
             <select
               name="category"
               defaultValue="autres"
@@ -282,13 +287,13 @@ export default async function ExpensesPage({
             >
               {EXPENSE_CATEGORIES.map((category) => (
                 <option key={category.key} value={category.key}>
-                  {category.label}
+                  {expenseCategoryLabel(category.key, language)}
                 </option>
               ))}
             </select>
           </label>
           <label className="space-y-1 text-sm sm:col-span-2">
-            <span className="text-slate-600">Description</span>
+            <span className="text-slate-600">{t.description}</span>
             <input
               name="label"
               required
@@ -296,7 +301,7 @@ export default async function ExpensesPage({
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Montant</span>
+            <span className="text-slate-600">{t.amount}</span>
             <input
               name="amount"
               type="number"
@@ -308,7 +313,7 @@ export default async function ExpensesPage({
           </label>
           {(cashManagers ?? []).length > 0 && (
             <label className="space-y-1 text-sm">
-              <span className="text-slate-600">Responsable (optionnel)</span>
+              <span className="text-slate-600">{t.managerOptional}</span>
               <select
                 name="cash_manager_id"
                 defaultValue=""
@@ -324,7 +329,7 @@ export default async function ExpensesPage({
             </label>
           )}
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Justificatif (image ou PDF)</span>
+            <span className="text-slate-600">{t.receiptOptional}</span>
             <input
               name="receipt"
               type="file"
@@ -337,7 +342,7 @@ export default async function ExpensesPage({
               type="submit"
               className="rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
             >
-              Ajouter
+              {t.add}
             </button>
           </div>
         </form>

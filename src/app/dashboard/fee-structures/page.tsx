@@ -13,8 +13,10 @@ import {
   regimeLabel,
   mensualiteMonthsForSchoolYear,
 } from "@/lib/constants/fees";
-import { CYCLES, sortByCycle } from "@/lib/constants/cycles";
+import { CYCLES, cycleLabel, sortByCycle } from "@/lib/constants/cycles";
 import type { FeeRegime } from "@/types";
+import { getLanguage } from "@/lib/i18n/get-language";
+import { dashboardFeeStructuresDict } from "@/lib/i18n/dictionaries/dashboard-fee-structures";
 
 type FeeRow = {
   id: string;
@@ -40,6 +42,8 @@ export default async function FeeStructuresPage({
   };
 }) {
   const appUser = await requireRole(["owner", "admin"]);
+  const language = getLanguage();
+  const t = dashboardFeeStructuresDict[language];
   const supabase = createClient();
 
   const [{ data: school }, { data: rawClasses }] = await Promise.all([
@@ -56,7 +60,8 @@ export default async function FeeStructuresPage({
   const resolvedRegime: FeeRegime = searchParams.regime === "internat" ? "internat" : "externat";
   const mensualiteMonths = mensualiteMonthsForSchoolYear(
     school?.school_year_start_month ?? 9,
-    school?.school_year_end_month ?? 6
+    school?.school_year_end_month ?? 6,
+    language
   );
 
   const { data: feeStructures } = await supabase
@@ -100,10 +105,9 @@ export default async function FeeStructuresPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">Gestion des tarifs</h1>
+        <h1 className="text-xl font-semibold text-slate-900">{t.pageTitle}</h1>
         <p className="text-sm text-slate-500">
-          Un tableau par classe : inscription, uniforme et une mensualité par mois — versionné par année
-          scolaire.
+          {t.subtitle}
         </p>
       </div>
 
@@ -116,28 +120,28 @@ export default async function FeeStructuresPage({
 
       <form method="get" className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4">
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Cycle</span>
+          <span className="text-slate-600">{t.cycleLabel}</span>
           <select
             name="cycle"
             defaultValue={searchParams.cycle ?? ""}
             className="w-40 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
           >
-            <option value="">Tous</option>
+            <option value="">{t.allCycles}</option>
             {CYCLES.map((cycle) => (
               <option key={cycle.key} value={cycle.key}>
-                {cycle.label}
+                {cycleLabel(cycle.key, language)}
               </option>
             ))}
           </select>
         </label>
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Classe</span>
+          <span className="text-slate-600">{t.classLabel}</span>
           <select
             name="class_id"
             defaultValue={searchParams.class_id ?? ""}
             className="w-40 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
           >
-            <option value="">Toutes</option>
+            <option value="">{t.allClasses}</option>
             {(classes ?? []).map((klass) => (
               <option key={klass.id} value={klass.id}>
                 {klass.name}
@@ -146,7 +150,7 @@ export default async function FeeStructuresPage({
           </select>
         </label>
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Régime</span>
+          <span className="text-slate-600">{t.regimeLabel}</span>
           <select
             name="regime"
             defaultValue={resolvedRegime}
@@ -154,13 +158,13 @@ export default async function FeeStructuresPage({
           >
             {REGIMES.map((regime) => (
               <option key={regime.key} value={regime.key}>
-                {regime.label}
+                {regimeLabel(regime.key, language)}
               </option>
             ))}
           </select>
         </label>
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Année scolaire</span>
+          <span className="text-slate-600">{t.schoolYearLabel}</span>
           <input
             name="year"
             defaultValue={resolvedYear}
@@ -171,24 +175,24 @@ export default async function FeeStructuresPage({
           type="submit"
           className="rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
         >
-          Filtrer
+          {t.filterButton}
         </button>
       </form>
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">
-          Tarifs par classe — {regimeLabel(resolvedRegime)} — {resolvedYear || "année non définie"}
+          {t.tariffsByClass(regimeLabel(resolvedRegime, language), resolvedYear || t.undefinedYear)}
         </h2>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[1100px] text-left text-sm">
             <thead className="text-slate-500">
               <tr>
-                <th className="py-1 pr-2 font-medium">Classe</th>
-                <th className="py-1 pr-2 font-medium">Inscription</th>
-                <th className="py-1 pr-2 font-medium">Uniforme</th>
+                <th className="py-1 pr-2 font-medium">{t.mainTable.class}</th>
+                <th className="py-1 pr-2 font-medium">{t.mainTable.inscription}</th>
+                <th className="py-1 pr-2 font-medium">{t.mainTable.uniforme}</th>
                 {mensualiteMonths.map((m) => (
                   <th key={m.month} className="py-1 pr-2 font-medium">
-                    Mensualité {m.label}
+                    {t.mainTable.mensualite(m.label)}
                   </th>
                 ))}
                 <th className="py-1 pr-2 font-medium"></th>
@@ -246,7 +250,7 @@ export default async function FeeStructuresPage({
                           type="submit"
                           className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
                         >
-                          Enregistrer
+                          {t.saveButton}
                         </button>
                       </form>
                     </td>
@@ -256,7 +260,7 @@ export default async function FeeStructuresPage({
               {classesInScope.length === 0 && (
                 <tr>
                   <td colSpan={13} className="py-4 text-center text-xs text-slate-400">
-                    Aucune classe ne correspond à ce filtre.
+                    {t.noClassMatch}
                   </td>
                 </tr>
               )}
@@ -264,13 +268,12 @@ export default async function FeeStructuresPage({
           </table>
         </div>
         <p className="mt-2 text-xs text-slate-400">
-          Laissez une case vide pour supprimer le tarif correspondant. Chaque ligne s&apos;enregistre
-          indépendamment.
+          {t.emptyCellHint}
         </p>
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Autres frais (cantine, internat, transport…)</h2>
+        <h2 className="text-sm font-semibold text-slate-900">{t.otherFeesTitle}</h2>
         <div className="mt-3 space-y-6">
           {classesInScope.map((klass) => {
             const fees = otherFeesByClass.get(klass.id) ?? [];
@@ -287,8 +290,8 @@ export default async function FeeStructuresPage({
                 <div className="mt-2 space-y-2">
                   {fees.map((fee) => (
                     <div key={fee.id} className="flex items-center gap-2">
-                      <span className="w-20 text-xs text-slate-500">{regimeLabel(fee.regime)}</span>
-                      <span className="w-24 text-xs text-slate-500">{feeTypeLabel(fee.fee_type)}</span>
+                      <span className="w-20 text-xs text-slate-500">{regimeLabel(fee.regime, language)}</span>
+                      <span className="w-24 text-xs text-slate-500">{feeTypeLabel(fee.fee_type, language)}</span>
                       <form action={updateFeeStructureAmount} className="flex items-center gap-2">
                         <input type="hidden" name="id" value={fee.id} />
                         <input type="hidden" name="redirect_to" value={redirectTo} />
@@ -304,7 +307,7 @@ export default async function FeeStructuresPage({
                           type="submit"
                           className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
                         >
-                          Enregistrer
+                          {t.saveButton}
                         </button>
                       </form>
                       <form action={deleteFeeStructure}>
@@ -314,13 +317,13 @@ export default async function FeeStructuresPage({
                           type="submit"
                           className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50"
                         >
-                          Supprimer
+                          {t.deleteButton}
                         </button>
                       </form>
                     </div>
                   ))}
                   {fees.length === 0 && (
-                    <p className="text-xs text-slate-400">Aucun autre frais pour cette classe.</p>
+                    <p className="text-xs text-slate-400">{t.noOtherFees}</p>
                   )}
                 </div>
 
@@ -334,14 +337,14 @@ export default async function FeeStructuresPage({
                     <select name="regime" className="rounded-md border border-slate-300 px-2 py-1 text-sm">
                       {REGIMES.map((regime) => (
                         <option key={regime.key} value={regime.key}>
-                          {regime.label}
+                          {regimeLabel(regime.key, language)}
                         </option>
                       ))}
                     </select>
                     <select name="fee_type" className="rounded-md border border-slate-300 px-2 py-1 text-sm">
                       {OTHER_FEE_TYPES.map((feeType) => (
                         <option key={feeType.key} value={feeType.key}>
-                          {feeType.label}
+                          {feeTypeLabel(feeType.key, language)}
                         </option>
                       ))}
                     </select>
@@ -355,19 +358,19 @@ export default async function FeeStructuresPage({
                       type="number"
                       min="0"
                       step="1"
-                      placeholder="Montant"
+                      placeholder={t.amountPlaceholder}
                       required
                       className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm"
                     />
                     <label className="flex items-center gap-1 text-xs text-slate-600">
                       <input type="checkbox" name="installments_allowed" defaultChecked />
-                      Échelonnable
+                      {t.installmentAllowed}
                     </label>
                     <button
                       type="submit"
                       className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
                     >
-                      Ajouter un tarif
+                      {t.addTariff}
                     </button>
                   </form>
                 )}

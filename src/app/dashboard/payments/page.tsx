@@ -5,14 +5,9 @@ import { recordPayment } from "@/lib/actions/payments";
 import { PAYMENT_METHODS, paymentMethodLabel } from "@/lib/constants/payments";
 import { feeTypeLabel, regimeLabel } from "@/lib/constants/fees";
 import { cycleLabel } from "@/lib/constants/cycles";
-
-const SCHEDULE_STATUS_LABELS: Record<string, string> = {
-  pending: "À venir",
-  partial: "Partiel",
-  paid: "Payé",
-  overdue: "En retard",
-  cancelled: "Annulé",
-};
+import { getLanguage } from "@/lib/i18n/get-language";
+import { dashboardPaymentsDict } from "@/lib/i18n/dictionaries/dashboard-payments";
+import { formatDate } from "@/lib/format";
 
 export default async function PaymentsPage({
   searchParams,
@@ -21,6 +16,8 @@ export default async function PaymentsPage({
 }) {
   // Accessible aux 3 rôles : c'est le cœur du périmètre "accountant".
   await requireRole(["owner", "admin", "accountant"]);
+  const language = getLanguage();
+  const t = dashboardPaymentsDict[language];
   const supabase = createClient();
 
   let studentsQuery = supabase
@@ -97,7 +94,7 @@ export default async function PaymentsPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-slate-900">Paiements</h1>
+      <h1 className="text-xl font-semibold text-slate-900">{t.pageTitle}</h1>
 
       {searchParams.error && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{searchParams.error}</p>
@@ -108,23 +105,23 @@ export default async function PaymentsPage({
 
       <form method="get" className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4">
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Rechercher un élève</span>
+          <span className="text-slate-600">{t.searchLabel}</span>
           <input
             name="q"
             defaultValue={searchParams.q ?? ""}
-            placeholder="Nom, prénom, matricule"
+            placeholder={t.searchPlaceholder}
             className="w-52 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
           />
         </label>
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Élève</span>
+          <span className="text-slate-600">{t.studentLabel}</span>
           <select
             name="student_id"
             defaultValue={searchParams.student_id ?? ""}
             className="w-64 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
           >
             <option value="">
-              {q ? `— ${(students ?? []).length} résultat(s) —` : "— Choisir un élève —"}
+              {q ? t.searchResults((students ?? []).length) : t.chooseStudent}
             </option>
             {(students ?? []).map((student) => (
               <option key={student.id} value={student.id}>
@@ -138,11 +135,11 @@ export default async function PaymentsPage({
           type="submit"
           className="rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
         >
-          Rechercher / Choisir
+          {t.searchButton}
         </button>
         {(selectedStudent || q) && (
           <Link href="/dashboard/payments" className="text-sm text-slate-500 underline">
-            Réinitialiser
+            {t.reset}
           </Link>
         )}
       </form>
@@ -158,35 +155,35 @@ export default async function PaymentsPage({
               href={`/dashboard/students/${selectedStudent.id}`}
               className="text-xs text-slate-500 underline"
             >
-              Voir la fiche complète
+              {t.viewFullProfile}
             </Link>
           </div>
 
           <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-4">
             <div>
-              <dt className="text-xs text-slate-500">Classe</dt>
+              <dt className="text-xs text-slate-500">{t.classLabel}</dt>
               <dd className="text-slate-900">
                 {selectedStudentClass
-                  ? `${selectedStudentClass.name} (${cycleLabel(selectedStudentClass.level)})`
-                  : "—"}
+                  ? `${selectedStudentClass.name} (${cycleLabel(selectedStudentClass.level, language)})`
+                  : t.dash}
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-slate-500">Régime</dt>
-              <dd className="text-slate-900">{regimeLabel(selectedStudent.regime)}</dd>
+              <dt className="text-xs text-slate-500">{t.regime}</dt>
+              <dd className="text-slate-900">{regimeLabel(selectedStudent.regime, language)}</dd>
             </div>
             <div>
-              <dt className="text-xs text-slate-500">Parent</dt>
-              <dd className="text-slate-900">{selectedStudent.guardian_name ?? "—"}</dd>
+              <dt className="text-xs text-slate-500">{t.parent}</dt>
+              <dd className="text-slate-900">{selectedStudent.guardian_name ?? t.dash}</dd>
             </div>
             <div>
-              <dt className="text-xs text-slate-500">Téléphone parent</dt>
-              <dd className="text-slate-900">{selectedStudent.guardian_phone ?? "—"}</dd>
+              <dt className="text-xs text-slate-500">{t.parentPhone}</dt>
+              <dd className="text-slate-900">{selectedStudent.guardian_phone ?? t.dash}</dd>
             </div>
           </dl>
 
           <p className="mt-3 text-sm text-slate-600">
-            Solde restant dû :{" "}
+            {t.remainingBalance}{" "}
             <strong className={studentBalance > 0 ? "text-red-700" : "text-green-700"}>
               {studentBalance}
             </strong>
@@ -197,12 +194,12 @@ export default async function PaymentsPage({
               <table className="w-full text-left text-sm">
                 <thead className="text-slate-500">
                   <tr>
-                    <th className="py-1 pr-3 font-medium">Échéance</th>
-                    <th className="py-1 pr-3 font-medium">Type</th>
-                    <th className="py-1 pr-3 font-medium">Prévu</th>
-                    <th className="py-1 pr-3 font-medium">Payé</th>
-                    <th className="py-1 pr-3 font-medium">Reste</th>
-                    <th className="py-1 pr-3 font-medium">Statut</th>
+                    <th className="py-1 pr-3 font-medium">{t.scheduleTable.dueDate}</th>
+                    <th className="py-1 pr-3 font-medium">{t.scheduleTable.type}</th>
+                    <th className="py-1 pr-3 font-medium">{t.scheduleTable.planned}</th>
+                    <th className="py-1 pr-3 font-medium">{t.scheduleTable.paid}</th>
+                    <th className="py-1 pr-3 font-medium">{t.scheduleTable.remaining}</th>
+                    <th className="py-1 pr-3 font-medium">{t.scheduleTable.status}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -213,16 +210,16 @@ export default async function PaymentsPage({
                     return (
                       <tr key={schedule.id} className="border-t border-slate-100">
                         <td className="py-1 pr-3 text-slate-600">
-                          {new Date(schedule.due_date).toLocaleDateString("fr-FR")}
+                          {formatDate(schedule.due_date, language)}
                         </td>
                         <td className="py-1 pr-3 text-slate-600">
-                          {feeStructure ? feeTypeLabel(feeStructure.fee_type) : "—"}
+                          {feeStructure ? feeTypeLabel(feeStructure.fee_type, language) : t.dash}
                         </td>
                         <td className="py-1 pr-3 text-slate-600">{schedule.amount_due}</td>
                         <td className="py-1 pr-3 text-slate-600">{schedule.amount_paid}</td>
                         <td className="py-1 pr-3 text-slate-600">{schedule.amount_remaining}</td>
                         <td className="py-1 pr-3 text-slate-600">
-                          {SCHEDULE_STATUS_LABELS[schedule.status] ?? schedule.status}
+                          {t.scheduleStatus[schedule.status] ?? schedule.status}
                         </td>
                       </tr>
                     );
@@ -232,17 +229,17 @@ export default async function PaymentsPage({
             </div>
           )}
 
-          <h3 className="mt-5 text-sm font-semibold text-slate-900">Enregistrer un paiement</h3>
+          <h3 className="mt-5 text-sm font-semibold text-slate-900">{t.recordPaymentTitle}</h3>
 
           {outstandingSchedules.length === 0 ? (
             <p className="mt-2 text-xs text-slate-400">
-              Aucune échéance en attente pour cet élève (échéancier non généré, ou déjà soldé).
+              {t.noOutstandingSchedules}
             </p>
           ) : (
             <form action={recordPayment} className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <input type="hidden" name="student_id" value={selectedStudent.id} />
               <label className="space-y-1 text-sm">
-                <span className="text-slate-600">Date</span>
+                <span className="text-slate-600">{t.dateLabel}</span>
                 <input
                   name="paid_at"
                   type="date"
@@ -252,7 +249,7 @@ export default async function PaymentsPage({
                 />
               </label>
               <label className="space-y-1 text-sm">
-                <span className="text-slate-600">Mois concerné</span>
+                <span className="text-slate-600">{t.monthConcerned}</span>
                 <select
                   name="payment_schedule_id"
                   required
@@ -264,16 +261,18 @@ export default async function PaymentsPage({
                       : schedule.fee_structures;
                     return (
                       <option key={schedule.id} value={schedule.id}>
-                        {new Date(schedule.due_date).toLocaleDateString("fr-FR")} —{" "}
-                        {feeStructure ? feeTypeLabel(feeStructure.fee_type) : "—"} (reste{" "}
-                        {schedule.amount_remaining})
+                        {t.scheduleOption(
+                          formatDate(schedule.due_date, language),
+                          feeStructure ? feeTypeLabel(feeStructure.fee_type, language) : t.dash,
+                          schedule.amount_remaining
+                        )}
                       </option>
                     );
                   })}
                 </select>
               </label>
               <label className="space-y-1 text-sm">
-                <span className="text-slate-600">Montant</span>
+                <span className="text-slate-600">{t.amountLabel}</span>
                 <input
                   name="amount"
                   type="number"
@@ -284,7 +283,7 @@ export default async function PaymentsPage({
                 />
               </label>
               <label className="space-y-1 text-sm">
-                <span className="text-slate-600">Mode de paiement</span>
+                <span className="text-slate-600">{t.paymentMethodLabel}</span>
                 <select
                   name="payment_method"
                   defaultValue="cash"
@@ -292,20 +291,20 @@ export default async function PaymentsPage({
                 >
                   {PAYMENT_METHODS.map((method) => (
                     <option key={method.key} value={method.key}>
-                      {method.label}
+                      {paymentMethodLabel(method.key, language)}
                     </option>
                   ))}
                 </select>
               </label>
               {(cashManagers ?? []).length > 0 && (
                 <label className="space-y-1 text-sm">
-                  <span className="text-slate-600">Responsable (optionnel)</span>
+                  <span className="text-slate-600">{t.cashManagerLabel}</span>
                   <select
                     name="cash_manager_id"
                     defaultValue=""
                     className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
                   >
-                    <option value="">—</option>
+                    <option value="">{t.dash}</option>
                     {(cashManagers ?? []).map((manager) => (
                       <option key={manager.id} value={manager.id}>
                         {manager.name}
@@ -315,29 +314,28 @@ export default async function PaymentsPage({
                 </label>
               )}
               <label className="space-y-1 text-sm">
-                <span className="text-slate-600">Référence (optionnel)</span>
+                <span className="text-slate-600">{t.referenceLabel}</span>
                 <input
                   name="reference"
                   className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
                 />
               </label>
               <label className="space-y-1 text-sm">
-                <span className="text-slate-600">Notes (optionnel)</span>
+                <span className="text-slate-600">{t.notesLabel}</span>
                 <input
                   name="notes"
                   className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
                 />
               </label>
               <p className="text-xs text-slate-400 sm:col-span-2">
-                Si le montant dépasse le reste dû du mois choisi, l&apos;excédent est
-                automatiquement affecté aux échéances suivantes (avance).
+                {t.excessNote}
               </p>
               <div className="sm:col-span-2">
                 <button
                   type="submit"
                   className="rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
                 >
-                  Enregistrer le paiement
+                  {t.submitPayment}
                 </button>
               </div>
             </form>
@@ -348,17 +346,17 @@ export default async function PaymentsPage({
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         {selectedStudent && (
           <h2 className="border-b border-slate-200 px-4 py-2 text-sm font-semibold text-slate-900">
-            Historique des paiements — {selectedStudent.last_name} {selectedStudent.first_name}
+            {t.paymentHistory(`${selectedStudent.last_name} ${selectedStudent.first_name}`)}
           </h2>
         )}
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
-              <th className="px-4 py-2 font-medium">Date</th>
-              <th className="px-4 py-2 font-medium">Élève</th>
-              <th className="px-4 py-2 font-medium">Montant</th>
-              <th className="px-4 py-2 font-medium">Moyen</th>
-              <th className="px-4 py-2 font-medium">Reçu</th>
+              <th className="px-4 py-2 font-medium">{t.paymentsTable.date}</th>
+              <th className="px-4 py-2 font-medium">{t.paymentsTable.student}</th>
+              <th className="px-4 py-2 font-medium">{t.paymentsTable.amount}</th>
+              <th className="px-4 py-2 font-medium">{t.paymentsTable.method}</th>
+              <th className="px-4 py-2 font-medium">{t.paymentsTable.receipt}</th>
             </tr>
           </thead>
           <tbody>
@@ -369,19 +367,21 @@ export default async function PaymentsPage({
               return (
                 <tr key={payment.id} className="border-t border-slate-100">
                   <td className="px-4 py-2 text-slate-600">
-                    {new Date(payment.paid_at).toLocaleDateString("fr-FR")}
+                    {formatDate(payment.paid_at, language)}
                   </td>
                   <td className="px-4 py-2 text-slate-900">
-                    {student ? `${student.last_name} ${student.first_name}` : "—"}
+                    {student ? `${student.last_name} ${student.first_name}` : t.dash}
                   </td>
                   <td className="px-4 py-2 text-slate-600">{payment.amount}</td>
-                  <td className="px-4 py-2 text-slate-600">{paymentMethodLabel(payment.payment_method)}</td>
+                  <td className="px-4 py-2 text-slate-600">
+                    {paymentMethodLabel(payment.payment_method, language)}
+                  </td>
                   <td className="px-4 py-2">
                     <Link
                       href={`/dashboard/payments/${payment.id}/receipt`}
                       className="text-slate-900 underline"
                     >
-                      Voir le reçu
+                      {t.viewReceipt}
                     </Link>
                   </td>
                 </tr>
@@ -390,7 +390,7 @@ export default async function PaymentsPage({
             {(payments ?? []).length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
-                  Aucun paiement enregistré.
+                  {t.noPayments}
                 </td>
               </tr>
             )}

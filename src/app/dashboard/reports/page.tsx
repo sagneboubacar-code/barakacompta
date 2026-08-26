@@ -5,8 +5,11 @@ import {
   computeDailyBreakdown,
   computeCashManagerBreakdown,
 } from "@/lib/reports/financial";
-import { formatCurrency, formatSignedCurrency } from "@/lib/format";
+import { formatCurrency, formatSignedCurrency, formatDate } from "@/lib/format";
+import { expenseCategoryLabel } from "@/lib/constants/expenses";
 import { PrintButton } from "@/components/PrintButton";
+import { getLanguage } from "@/lib/i18n/get-language";
+import { dashboardReportsDict } from "@/lib/i18n/dictionaries/dashboard-reports";
 
 function currentMonthBounds() {
   const now = new Date();
@@ -36,6 +39,8 @@ export default async function ReportsPage({
   searchParams: { from?: string; to?: string };
 }) {
   const appUser = await requireRole(["owner", "admin"]);
+  const language = getLanguage();
+  const t = dashboardReportsDict[language];
   const supabase = createClient();
 
   const defaults = currentMonthBounds();
@@ -56,19 +61,19 @@ export default async function ReportsPage({
     ]);
 
   const currency = school?.currency ?? "XOF";
-  const money = (amount: number) => formatCurrency(amount, currency);
+  const money = (amount: number) => formatCurrency(amount, currency, language);
   const exportParams = `from=${from}&to=${to}`;
-  const generatedAt = new Date().toLocaleString("fr-FR", {
+  const generatedAt = new Date().toLocaleString(language === "ar" ? "ar-SN" : "fr-FR", {
     dateStyle: "long",
     timeStyle: "short",
   });
 
   const summaryTiles = [
-    { label: "Attendu", value: report.totalExpected, accent: "border-t-slate-400 text-slate-900" },
-    { label: "Encaissé", value: report.totalCollected, accent: "border-t-emerald-600 text-emerald-700" },
-    { label: "À recouvrer", value: report.totalRemaining, accent: "border-t-amber-500 text-amber-700" },
+    { label: t.tileExpected, value: report.totalExpected, accent: "border-t-slate-400 text-slate-900" },
+    { label: t.tileCollected, value: report.totalCollected, accent: "border-t-emerald-600 text-emerald-700" },
+    { label: t.tileRemaining, value: report.totalRemaining, accent: "border-t-amber-500 text-amber-700" },
     {
-      label: "Solde (recettes − dépenses)",
+      label: t.tileBalance,
       value: report.balance,
       accent:
         report.balance >= 0 ? "border-t-emerald-600 text-emerald-700" : "border-t-rose-600 text-rose-700",
@@ -85,10 +90,10 @@ export default async function ReportsPage({
             {school?.name ?? "Baraka Compta"}
             {school?.address ? ` · ${school.address}` : ""}
           </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Rapport financier</h1>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{t.pageTitle}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Du {new Date(from).toLocaleDateString("fr-FR")} au {new Date(to).toLocaleDateString("fr-FR")}
-            <span className="print:inline hidden"> · généré le {generatedAt}</span>
+            {t.period(formatDate(from, language), formatDate(to, language))}
+            <span className="print:inline hidden">{t.generatedAt(generatedAt)}</span>
           </p>
         </div>
         <div className="flex gap-2 print:hidden">
@@ -97,7 +102,7 @@ export default async function ReportsPage({
             href={`/api/reports/financial/csv?${exportParams}`}
             className="rounded-md border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
           >
-            Export Excel
+            {t.exportExcel}
           </a>
         </div>
       </div>
@@ -107,7 +112,7 @@ export default async function ReportsPage({
         className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4 print:hidden"
       >
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Du</span>
+          <span className="text-slate-600">{t.filterFrom}</span>
           <input
             name="from"
             type="date"
@@ -116,7 +121,7 @@ export default async function ReportsPage({
           />
         </label>
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Au</span>
+          <span className="text-slate-600">{t.filterTo}</span>
           <input
             name="to"
             type="date"
@@ -128,7 +133,7 @@ export default async function ReportsPage({
           type="submit"
           className="rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
         >
-          Appliquer
+          {t.apply}
         </button>
       </form>
 
@@ -148,20 +153,20 @@ export default async function ReportsPage({
       </div>
 
       <section className="break-inside-avoid space-y-3">
-        <SectionHeading>Recettes détaillées</SectionHeading>
+        <SectionHeading>{t.sectionRevenue}</SectionHeading>
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="text-[11px] uppercase tracking-wide text-slate-400">
-              <th className="py-2 font-medium">Type</th>
-              <th className="py-2 text-right font-medium">Attendu</th>
-              <th className="py-2 text-right font-medium">Encaissé</th>
-              <th className="py-2 text-right font-medium">Reste</th>
+              <th className="py-2 font-medium">{t.colType}</th>
+              <th className="py-2 text-right font-medium">{t.colExpected}</th>
+              <th className="py-2 text-right font-medium">{t.colCollected}</th>
+              <th className="py-2 text-right font-medium">{t.colRemaining}</th>
             </tr>
           </thead>
           <tbody>
             {report.revenueByType.map((bucket) => (
               <tr key={bucket.key} className="border-t border-slate-100">
-                <td className="py-2 text-slate-900">{bucket.label}</td>
+                <td className="py-2 text-slate-900">{t.revenueLabels[bucket.key] ?? bucket.label}</td>
                 <td className="py-2 text-right font-mono tabular-nums text-slate-600">
                   {money(bucket.expected)}
                 </td>
@@ -174,7 +179,7 @@ export default async function ReportsPage({
               </tr>
             ))}
             <tr className="border-t-2 border-slate-900 font-semibold">
-              <td className="py-2 text-slate-900">Total</td>
+              <td className="py-2 text-slate-900">{t.total}</td>
               <td className="py-2 text-right font-mono tabular-nums text-slate-900">
                 {money(report.totalExpected)}
               </td>
@@ -190,25 +195,25 @@ export default async function ReportsPage({
       </section>
 
       <section className="break-inside-avoid space-y-3">
-        <SectionHeading>Dépenses par catégorie</SectionHeading>
+        <SectionHeading>{t.sectionExpenses}</SectionHeading>
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="text-[11px] uppercase tracking-wide text-slate-400">
-              <th className="py-2 font-medium">Catégorie</th>
-              <th className="py-2 text-right font-medium">Montant</th>
+              <th className="py-2 font-medium">{t.colCategory}</th>
+              <th className="py-2 text-right font-medium">{t.colAmount}</th>
             </tr>
           </thead>
           <tbody>
             {report.expensesByCategory.map((category) => (
               <tr key={category.key} className="border-t border-slate-100">
-                <td className="py-2 text-slate-900">{category.label}</td>
+                <td className="py-2 text-slate-900">{expenseCategoryLabel(category.key, language)}</td>
                 <td className="py-2 text-right font-mono tabular-nums text-rose-700">
                   {money(category.amount)}
                 </td>
               </tr>
             ))}
             <tr className="border-t-2 border-slate-900 font-semibold">
-              <td className="py-2 text-slate-900">Total</td>
+              <td className="py-2 text-slate-900">{t.total}</td>
               <td className="py-2 text-right font-mono tabular-nums text-rose-700">
                 {money(report.totalExpenses)}
               </td>
@@ -219,20 +224,22 @@ export default async function ReportsPage({
 
       {cashManagerBreakdown.length > 0 && (
         <section className="break-inside-avoid space-y-3">
-          <SectionHeading>Par responsable</SectionHeading>
+          <SectionHeading>{t.sectionByManager}</SectionHeading>
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="text-[11px] uppercase tracking-wide text-slate-400">
-                <th className="py-2 font-medium">Responsable</th>
-                <th className="py-2 text-right font-medium">Recette</th>
-                <th className="py-2 text-right font-medium">Dépense</th>
-                <th className="py-2 text-right font-medium">Solde</th>
+                <th className="py-2 font-medium">{t.colManager}</th>
+                <th className="py-2 text-right font-medium">{t.colRevenue}</th>
+                <th className="py-2 text-right font-medium">{t.colExpense}</th>
+                <th className="py-2 text-right font-medium">{t.colBalance}</th>
               </tr>
             </thead>
             <tbody>
               {cashManagerBreakdown.map((manager) => (
                 <tr key={manager.cashManagerId ?? "none"} className="border-t border-slate-100">
-                  <td className="py-2 text-slate-900">{manager.name}</td>
+                  <td className="py-2 text-slate-900">
+                    {manager.cashManagerId === null ? t.unassigned : manager.name}
+                  </td>
                   <td className="py-2 text-right font-mono tabular-nums text-emerald-700">
                     {money(manager.collected)}
                   </td>
@@ -244,12 +251,12 @@ export default async function ReportsPage({
                       manager.solde >= 0 ? "text-emerald-700" : "text-rose-700"
                     }`}
                   >
-                    {formatSignedCurrency(manager.solde, currency)}
+                    {formatSignedCurrency(manager.solde, currency, language)}
                   </td>
                 </tr>
               ))}
               <tr className="border-t-2 border-slate-900 font-semibold">
-                <td className="py-2 text-slate-900">Compta finale — école</td>
+                <td className="py-2 text-slate-900">{t.finalAccounting}</td>
                 <td className="py-2 text-right font-mono tabular-nums text-emerald-700">
                   {money(report.totalCollected)}
                 </td>
@@ -261,7 +268,7 @@ export default async function ReportsPage({
                     report.balance >= 0 ? "text-emerald-700" : "text-rose-700"
                   }`}
                 >
-                  {formatSignedCurrency(report.balance, currency)}
+                  {formatSignedCurrency(report.balance, currency, language)}
                 </td>
               </tr>
             </tbody>
@@ -270,14 +277,14 @@ export default async function ReportsPage({
       )}
 
       <section className="space-y-3">
-        <SectionHeading>Détail journalier</SectionHeading>
+        <SectionHeading>{t.sectionDaily}</SectionHeading>
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="text-[11px] uppercase tracking-wide text-slate-400">
-              <th className="py-2 font-medium">Date</th>
-              <th className="py-2 text-right font-medium">Recettes</th>
-              <th className="py-2 text-right font-medium">Dépenses</th>
-              <th className="py-2 text-right font-medium">Solde</th>
+              <th className="py-2 font-medium">{t.colDate}</th>
+              <th className="py-2 text-right font-medium">{t.colRevenues}</th>
+              <th className="py-2 text-right font-medium">{t.colExpenses}</th>
+              <th className="py-2 text-right font-medium">{t.colBalance}</th>
             </tr>
           </thead>
           <tbody>
@@ -304,13 +311,13 @@ export default async function ReportsPage({
                     {isQuiet ? "—" : money(day.depenses)}
                   </td>
                   <td className={`py-1.5 text-right font-mono tabular-nums ${isQuiet ? "" : "font-medium"}`}>
-                    {isQuiet ? "—" : formatSignedCurrency(day.solde, currency)}
+                    {isQuiet ? "—" : formatSignedCurrency(day.solde, currency, language)}
                   </td>
                 </tr>
               );
             })}
             <tr className="border-t-2 border-slate-900 font-semibold">
-              <td className="py-2 text-slate-900">Total</td>
+              <td className="py-2 text-slate-900">{t.total}</td>
               <td className="py-2 text-right font-mono tabular-nums text-emerald-700">
                 {money(dailyBreakdown.reduce((sum, d) => sum + d.recettes, 0))}
               </td>
@@ -318,26 +325,23 @@ export default async function ReportsPage({
                 {money(dailyBreakdown.reduce((sum, d) => sum + d.depenses, 0))}
               </td>
               <td className="py-2 text-right font-mono tabular-nums text-slate-900">
-                {formatSignedCurrency(dailyBreakdown.reduce((sum, d) => sum + d.solde, 0), currency)}
+                {formatSignedCurrency(dailyBreakdown.reduce((sum, d) => sum + d.solde, 0), currency, language)}
               </td>
             </tr>
           </tbody>
         </table>
       </section>
 
-      <p className="text-xs text-slate-500 print:hidden">
-        {activeDiscountCount ?? 0} réduction{(activeDiscountCount ?? 0) > 1 ? "s" : ""} active
-        {(activeDiscountCount ?? 0) > 1 ? "s" : ""} sur la période sélectionnée.
-      </p>
+      <p className="text-xs text-slate-500 print:hidden">{t.discountCount(activeDiscountCount ?? 0)}</p>
 
       {/* Bloc de signature : uniquement à l'impression — le rapport écran
           n'a pas besoin d'être "validé", le papier remis à la direction si. */}
       <div className="hidden grid-cols-2 gap-12 pt-10 text-xs text-slate-500 print:grid">
         <div>
-          <p className="border-t border-slate-400 pt-1.5">Établi par — date</p>
+          <p className="border-t border-slate-400 pt-1.5">{t.signedBy}</p>
         </div>
         <div>
-          <p className="border-t border-slate-400 pt-1.5">Vérifié par — date</p>
+          <p className="border-t border-slate-400 pt-1.5">{t.verifiedBy}</p>
         </div>
       </div>
     </div>

@@ -5,6 +5,9 @@ import { createStudent, deleteStudent } from "@/lib/actions/students";
 import { CYCLES, cycleLabel, sortByCycle } from "@/lib/constants/cycles";
 import { REGIMES, regimeLabel } from "@/lib/constants/fees";
 import { PrintButton } from "@/components/PrintButton";
+import { getLanguage } from "@/lib/i18n/get-language";
+import { dashboardStudentsDict } from "@/lib/i18n/dictionaries/dashboard-students";
+import { formatDate } from "@/lib/format";
 
 export default async function StudentsPage({
   searchParams,
@@ -20,6 +23,8 @@ export default async function StudentsPage({
   };
 }) {
   const appUser = await requireRole(["owner", "admin"]);
+  const language = getLanguage();
+  const t = dashboardStudentsDict[language];
   const supabase = createClient();
 
   const [{ data: rawClasses }, { data: school }] = await Promise.all([
@@ -76,15 +81,15 @@ export default async function StudentsPage({
         <h1 className="text-lg font-semibold text-slate-900">{school?.name}</h1>
         <p className="text-xs text-slate-500">{school?.address}</p>
         <p className="mt-2 text-base font-medium text-slate-900">
-          Liste des élèves{selectedClass ? ` — ${selectedClass.name}` : ""}
+          {t.printTitle(selectedClass?.name)}
         </p>
       </div>
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 print:hidden">Élèves</h1>
+          <h1 className="text-xl font-semibold text-slate-900 print:hidden">{t.pageTitle}</h1>
           <p className="text-sm text-slate-500 print:hidden">
-            Recherche, filtres et gestion des dossiers élèves.
+            {t.pageSubtitle}
           </p>
         </div>
         <div className="flex gap-2 print:hidden">
@@ -93,7 +98,7 @@ export default async function StudentsPage({
             href={`/api/students/csv${exportParams ? `?${exportParams}` : ""}`}
             className="rounded-md border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
           >
-            Export Excel
+            {t.exportExcel}
           </a>
         </div>
       </div>
@@ -110,37 +115,37 @@ export default async function StudentsPage({
         className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4 print:hidden"
       >
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Recherche</span>
+          <span className="text-slate-600">{t.filterSearchLabel}</span>
           <input
             name="q"
             defaultValue={searchParams.q ?? ""}
-            placeholder="Nom, prénom, matricule"
+            placeholder={t.filterSearchPlaceholder}
             className="w-48 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
           />
         </label>
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Cycle</span>
+          <span className="text-slate-600">{t.filterCycleLabel}</span>
           <select
             name="cycle"
             defaultValue={searchParams.cycle ?? ""}
             className="w-36 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
           >
-            <option value="">Tous</option>
+            <option value="">{t.filterAll}</option>
             {CYCLES.map((cycle) => (
               <option key={cycle.key} value={cycle.key}>
-                {cycle.label}
+                {cycleLabel(cycle.key, language)}
               </option>
             ))}
           </select>
         </label>
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Classe</span>
+          <span className="text-slate-600">{t.filterClassLabel}</span>
           <select
             name="class_id"
             defaultValue={searchParams.class_id ?? ""}
             className="w-36 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
           >
-            <option value="">Toutes</option>
+            <option value="">{t.filterAllClasses}</option>
             {(classes ?? []).map((klass) => (
               <option key={klass.id} value={klass.id}>
                 {klass.name}
@@ -149,37 +154,37 @@ export default async function StudentsPage({
           </select>
         </label>
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Régime</span>
+          <span className="text-slate-600">{t.filterRegimeLabel}</span>
           <select
             name="regime"
             defaultValue={searchParams.regime ?? ""}
             className="w-32 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
           >
-            <option value="">Tous</option>
+            <option value="">{t.filterAll}</option>
             {REGIMES.map((regime) => (
               <option key={regime.key} value={regime.key}>
-                {regime.label}
+                {regimeLabel(regime.key, language)}
               </option>
             ))}
           </select>
         </label>
         <label className="space-y-1 text-sm">
-          <span className="text-slate-600">Statut</span>
+          <span className="text-slate-600">{t.filterStatusLabel}</span>
           <select
             name="status"
             defaultValue={searchParams.status ?? ""}
             className="w-32 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
           >
-            <option value="">Tous</option>
-            <option value="active">Actif</option>
-            <option value="inactive">Inactif</option>
+            <option value="">{t.filterAll}</option>
+            <option value="active">{t.statusActive}</option>
+            <option value="inactive">{t.statusInactive}</option>
           </select>
         </label>
         <button
           type="submit"
           className="rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
         >
-          Filtrer
+          {t.filterSubmit}
         </button>
       </form>
 
@@ -187,24 +192,24 @@ export default async function StudentsPage({
       <table className="hidden w-full text-left text-sm print:table">
         <thead>
           <tr>
-            <th className="border-b border-slate-300 py-1 pr-3 font-medium">Matricule</th>
-            <th className="border-b border-slate-300 py-1 pr-3 font-medium">Prénom</th>
-            <th className="border-b border-slate-300 py-1 pr-3 font-medium">Nom</th>
-            <th className="border-b border-slate-300 py-1 pr-3 font-medium">Date de naissance</th>
-            <th className="border-b border-slate-300 py-1 pr-3 font-medium">Lieu de naissance</th>
-            <th className="border-b border-slate-300 py-1 font-medium">Numéro parent</th>
+            <th className="border-b border-slate-300 py-1 pe-3 font-medium">{t.printColMatricule}</th>
+            <th className="border-b border-slate-300 py-1 pe-3 font-medium">{t.printColFirstName}</th>
+            <th className="border-b border-slate-300 py-1 pe-3 font-medium">{t.printColLastName}</th>
+            <th className="border-b border-slate-300 py-1 pe-3 font-medium">{t.printColDob}</th>
+            <th className="border-b border-slate-300 py-1 pe-3 font-medium">{t.printColPob}</th>
+            <th className="border-b border-slate-300 py-1 font-medium">{t.printColParentPhone}</th>
           </tr>
         </thead>
         <tbody>
           {rosterRows.map((student) => (
             <tr key={student.id}>
-              <td className="border-b border-slate-100 py-1 pr-3">{student.matricule ?? "—"}</td>
-              <td className="border-b border-slate-100 py-1 pr-3">{student.first_name}</td>
-              <td className="border-b border-slate-100 py-1 pr-3">{student.last_name}</td>
-              <td className="border-b border-slate-100 py-1 pr-3">
-                {student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString("fr-FR") : "—"}
+              <td className="border-b border-slate-100 py-1 pe-3">{student.matricule ?? "—"}</td>
+              <td className="border-b border-slate-100 py-1 pe-3">{student.first_name}</td>
+              <td className="border-b border-slate-100 py-1 pe-3">{student.last_name}</td>
+              <td className="border-b border-slate-100 py-1 pe-3">
+                {student.date_of_birth ? formatDate(student.date_of_birth, language) : "—"}
               </td>
-              <td className="border-b border-slate-100 py-1 pr-3">{student.place_of_birth ?? "—"}</td>
+              <td className="border-b border-slate-100 py-1 pe-3">{student.place_of_birth ?? "—"}</td>
               <td className="border-b border-slate-100 py-1">{student.guardian_phone ?? "—"}</td>
             </tr>
           ))}
@@ -215,12 +220,12 @@ export default async function StudentsPage({
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
-              <th className="px-4 py-2 font-medium">Matricule</th>
-              <th className="px-4 py-2 font-medium">Nom</th>
-              <th className="px-4 py-2 font-medium">Classe</th>
-              <th className="px-4 py-2 font-medium">Cycle</th>
-              <th className="px-4 py-2 font-medium">Régime</th>
-              <th className="px-4 py-2 font-medium">Statut</th>
+              <th className="px-4 py-2 font-medium">{t.colMatricule}</th>
+              <th className="px-4 py-2 font-medium">{t.colName}</th>
+              <th className="px-4 py-2 font-medium">{t.colClass}</th>
+              <th className="px-4 py-2 font-medium">{t.colCycle}</th>
+              <th className="px-4 py-2 font-medium">{t.colRegime}</th>
+              <th className="px-4 py-2 font-medium">{t.colStatus}</th>
               <th className="px-4 py-2 font-medium print:hidden"></th>
             </tr>
           </thead>
@@ -239,10 +244,10 @@ export default async function StudentsPage({
                     </Link>
                   </td>
                   <td className="px-4 py-2 text-slate-600">{klass?.name ?? "—"}</td>
-                  <td className="px-4 py-2 text-slate-600">{cycleLabel(klass?.level ?? null)}</td>
-                  <td className="px-4 py-2 text-slate-600">{regimeLabel(student.regime)}</td>
+                  <td className="px-4 py-2 text-slate-600">{cycleLabel(klass?.level ?? null, language)}</td>
+                  <td className="px-4 py-2 text-slate-600">{regimeLabel(student.regime, language)}</td>
                   <td className="px-4 py-2 text-slate-600">
-                    {student.status === "active" ? "Actif" : "Inactif"}
+                    {student.status === "active" ? t.statusActive : t.statusInactive}
                   </td>
                   <td className="px-4 py-2 print:hidden">
                     <form action={deleteStudent}>
@@ -251,7 +256,7 @@ export default async function StudentsPage({
                         type="submit"
                         className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50"
                       >
-                        Supprimer
+                        {t.delete}
                       </button>
                     </form>
                   </td>
@@ -261,7 +266,7 @@ export default async function StudentsPage({
             {(students ?? []).length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
-                  Aucun élève ne correspond à ces critères.
+                  {t.noResults}
                 </td>
               </tr>
             )}
@@ -271,12 +276,12 @@ export default async function StudentsPage({
 
       <details className="rounded-lg border border-slate-200 bg-white p-4 print:hidden">
         <summary className="cursor-pointer text-sm font-semibold text-slate-900">
-          Ajouter un élève
+          {t.addStudentSummary}
         </summary>
         <form action={createStudent} className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <input type="hidden" name="redirect_to" value={redirectTo} />
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Prénom</span>
+            <span className="text-slate-600">{t.formFirstName}</span>
             <input
               name="first_name"
               required
@@ -284,7 +289,7 @@ export default async function StudentsPage({
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Nom</span>
+            <span className="text-slate-600">{t.formLastName}</span>
             <input
               name="last_name"
               required
@@ -292,14 +297,14 @@ export default async function StudentsPage({
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Sexe</span>
+            <span className="text-slate-600">{t.formGender}</span>
             <select name="gender" required className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm">
-              <option value="M">Masculin</option>
-              <option value="F">Féminin</option>
+              <option value="M">{t.genderMale}</option>
+              <option value="F">{t.genderFemale}</option>
             </select>
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Date de naissance</span>
+            <span className="text-slate-600">{t.formDob}</span>
             <input
               name="date_of_birth"
               type="date"
@@ -307,56 +312,56 @@ export default async function StudentsPage({
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Lieu de naissance</span>
+            <span className="text-slate-600">{t.formPob}</span>
             <input
               name="place_of_birth"
               className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Classe</span>
+            <span className="text-slate-600">{t.formClass}</span>
             <select name="class_id" className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm">
-              <option value="">Aucune</option>
+              <option value="">{t.formClassNone}</option>
               {(classes ?? []).map((klass) => (
                 <option key={klass.id} value={klass.id}>
-                  {klass.name} ({cycleLabel(klass.level)})
+                  {klass.name} ({cycleLabel(klass.level, language)})
                 </option>
               ))}
             </select>
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Régime</span>
+            <span className="text-slate-600">{t.formRegime}</span>
             <select name="regime" defaultValue="externat" className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm">
               {REGIMES.map((regime) => (
                 <option key={regime.key} value={regime.key}>
-                  {regime.label}
+                  {regimeLabel(regime.key, language)}
                 </option>
               ))}
             </select>
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Nom du parent</span>
+            <span className="text-slate-600">{t.formGuardianName}</span>
             <input
               name="guardian_name"
               className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Téléphone parent</span>
+            <span className="text-slate-600">{t.formGuardianPhone}</span>
             <input
               name="guardian_phone"
               className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
             />
           </label>
           <label className="space-y-1 text-sm sm:col-span-2">
-            <span className="text-slate-600">Adresse</span>
+            <span className="text-slate-600">{t.formAddress}</span>
             <input
               name="address"
               className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Date d&apos;inscription</span>
+            <span className="text-slate-600">{t.formEnrolledAt}</span>
             <input
               name="enrolled_at"
               type="date"
@@ -364,20 +369,20 @@ export default async function StudentsPage({
             />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-slate-600">Statut</span>
+            <span className="text-slate-600">{t.formStatus}</span>
             <select name="status" defaultValue="active" className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm">
-              <option value="active">Actif</option>
-              <option value="inactive">Inactif</option>
+              <option value="active">{t.statusActive}</option>
+              <option value="inactive">{t.statusInactive}</option>
             </select>
           </label>
           <div className="flex items-center gap-4 sm:col-span-2">
             <label className="flex items-center gap-2 text-sm text-slate-600">
               <input type="checkbox" name="subscribes_cantine" />
-              Inscrit à la cantine
+              {t.cantine}
             </label>
             <label className="flex items-center gap-2 text-sm text-slate-600">
               <input type="checkbox" name="subscribes_transport" />
-              Inscrit au transport
+              {t.transport}
             </label>
           </div>
           <div className="sm:col-span-2">
@@ -385,7 +390,7 @@ export default async function StudentsPage({
               type="submit"
               className="rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
             >
-              Ajouter
+              {t.addSubmit}
             </button>
           </div>
         </form>
