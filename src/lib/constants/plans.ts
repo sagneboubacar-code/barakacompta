@@ -22,6 +22,7 @@ export const PLANS: PlanDefinition[] = [
     priceXOF: 0,
     maxStudents: 30,
     modules: [],
+    trialDays: 14,
   },
   {
     key: "basic",
