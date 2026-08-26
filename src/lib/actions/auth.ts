@@ -14,10 +14,11 @@ function fail(path: string, message: string): never {
 export async function signUpSchool(formData: FormData) {
   const schoolName = String(formData.get("schoolName") ?? "").trim();
   const ownerFullName = String(formData.get("ownerFullName") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
-  if (!schoolName || !ownerFullName || !email || password.length < 8) {
+  if (!schoolName || !ownerFullName || !phone || !email || password.length < 8) {
     fail("/signup", "Merci de remplir tous les champs (mot de passe : 8 caractères minimum).");
   }
 
@@ -50,6 +51,7 @@ export async function signUpSchool(formData: FormData) {
       p_owner_id: ownerId,
       p_owner_email: email,
       p_owner_full_name: ownerFullName,
+      p_owner_phone: phone,
     });
 
     if (!error) {
@@ -85,6 +87,7 @@ export async function signUpSchool(formData: FormData) {
 export async function completeGoogleSignup(formData: FormData) {
   const schoolName = String(formData.get("schoolName") ?? "").trim();
   const ownerFullName = String(formData.get("ownerFullName") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
 
   const supabase = createServerSupabase();
   const {
@@ -95,8 +98,8 @@ export async function completeGoogleSignup(formData: FormData) {
     redirect("/login");
   }
 
-  if (!schoolName) {
-    fail("/onboarding", "Merci d'indiquer le nom de votre école.");
+  if (!schoolName || !phone) {
+    fail("/onboarding", "Merci d'indiquer le nom de votre école et votre numéro de téléphone.");
   }
 
   // Idempotence : en cas de double soumission, ne recrée rien si l'école
@@ -120,6 +123,7 @@ export async function completeGoogleSignup(formData: FormData) {
       p_owner_id: user.id,
       p_owner_email: email,
       p_owner_full_name: finalOwnerName,
+      p_owner_phone: phone,
     });
 
     if (!error) {
