@@ -1,24 +1,33 @@
 import Link from "next/link";
 import { signIn } from "@/lib/actions/auth";
+import { getLanguage } from "@/lib/i18n/get-language";
+import { authDict } from "@/lib/i18n/dictionaries/auth";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export default function LoginPage({
   searchParams,
 }: {
   searchParams: { error?: string };
 }) {
+  const language = getLanguage();
+  const t = authDict[language].login;
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
       <form
         action={signIn}
         className="w-full max-w-sm space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
       >
-        <div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-icon.png" alt="Baraka Compta" className="h-10 w-10" />
-          <h1 className="mt-3 text-xl font-semibold text-slate-900">Connexion</h1>
-          <p className="text-sm text-slate-500">
-            Accédez à l&apos;espace de gestion de votre école.
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-icon.png" alt="Baraka Compta" className="h-10 w-10" />
+            <h1 className="mt-3 text-xl font-semibold text-slate-900">{t.title}</h1>
+            <p className="text-sm text-slate-500">
+              {t.subtitle}
+            </p>
+          </div>
+          <LanguageSwitcher />
         </div>
 
         {searchParams.error && (
@@ -29,7 +38,7 @@ export default function LoginPage({
 
         <div className="space-y-1">
           <label htmlFor="email" className="text-sm font-medium text-slate-700">
-            Email
+            {t.email}
           </label>
           <input
             id="email"
@@ -43,7 +52,7 @@ export default function LoginPage({
 
         <div className="space-y-1">
           <label htmlFor="password" className="text-sm font-medium text-slate-700">
-            Mot de passe
+            {t.password}
           </label>
           <input
             id="password"
@@ -59,13 +68,13 @@ export default function LoginPage({
           type="submit"
           className="w-full rounded-md bg-slate-900 py-2 text-sm font-medium text-white hover:bg-slate-800"
         >
-          Se connecter
+          {t.submit}
         </button>
 
         <p className="text-center text-sm text-slate-500">
-          Pas encore de compte ?{" "}
+          {t.noAccount}{" "}
           <Link href="/signup" className="font-medium text-slate-900 underline">
-            Inscrire votre école
+            {t.signupLink}
           </Link>
         </p>
       </form>

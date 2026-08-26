@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { ContactWhatsAppForm } from "@/components/ContactWhatsAppForm";
+import { getLanguage } from "@/lib/i18n/get-language";
+import { contactDict } from "@/lib/i18n/dictionaries/contact";
 
 export const metadata: Metadata = {
   title: "Contact — Baraka Compta",
@@ -13,18 +15,21 @@ const WHATSAPP_HREF = "https://wa.me/221788363394";
 const CONTACT_EMAIL = "barakacomptasenegal@gmail.com";
 
 export default function ContactPage() {
+  const language = getLanguage();
+  const t = contactDict[language];
+
   return (
     <div className="bg-white text-ink">
       <PublicHeader />
 
       <section className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
         <div className="max-w-xl">
-          <p className="text-xs font-semibold uppercase tracking-widest text-brand">Contact</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-brand">{t.eyebrow}</p>
           <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-            Parlons de votre école
+            {t.title}
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-slate-500">
-            Une question, une démonstration à demander ? Notre équipe vous répond par email ou WhatsApp.
+            {t.subtitle}
           </p>
         </div>
 
@@ -45,7 +50,7 @@ export default function ContactPage() {
                 </svg>
               </span>
               <div>
-                <p className="text-sm font-semibold text-ink">Par email</p>
+                <p className="text-sm font-semibold text-ink">{t.byEmail}</p>
                 <p className="text-sm text-slate-500">{CONTACT_EMAIL}</p>
               </div>
             </a>
@@ -65,8 +70,8 @@ export default function ContactPage() {
                 </svg>
               </span>
               <div>
-                <p className="text-sm font-semibold text-ink">Par téléphone</p>
-                <p className="text-sm text-slate-500">+221 {WHATSAPP_NUMBER_DISPLAY}</p>
+                <p className="text-sm font-semibold text-ink">{t.byPhone}</p>
+                <p className="text-sm text-slate-500" dir="ltr">+221 {WHATSAPP_NUMBER_DISPLAY}</p>
               </div>
             </a>
 
@@ -82,15 +87,15 @@ export default function ContactPage() {
                 </svg>
               </span>
               <div>
-                <p className="text-sm font-semibold text-ink">Sur WhatsApp</p>
-                <p className="text-sm text-slate-500">Discuter ou appeler directement</p>
+                <p className="text-sm font-semibold text-ink">{t.onWhatsApp}</p>
+                <p className="text-sm text-slate-500">{t.whatsAppText}</p>
               </div>
             </a>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-7">
-            <h2 className="font-display text-lg font-semibold text-ink">Envoyer un message</h2>
-            <p className="mt-1 text-sm text-slate-500">Votre demande sera reçue directement sur WhatsApp.</p>
+            <h2 className="font-display text-lg font-semibold text-ink">{t.formTitle}</h2>
+            <p className="mt-1 text-sm text-slate-500">{t.formSubtitle}</p>
             <div className="mt-6">
               <ContactWhatsAppForm />
             </div>

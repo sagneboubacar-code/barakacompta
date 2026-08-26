@@ -19,9 +19,15 @@ const config: Config = {
         ink: "#0B1220",
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-geist-sans)", "var(--font-tajawal)", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["var(--font-geist-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
-        display: ["var(--font-space-grotesk)", "var(--font-geist-sans)", "ui-sans-serif", "sans-serif"],
+        display: [
+          "var(--font-space-grotesk)",
+          "var(--font-geist-sans)",
+          "var(--font-tajawal)",
+          "ui-sans-serif",
+          "sans-serif",
+        ],
       },
     },
   },

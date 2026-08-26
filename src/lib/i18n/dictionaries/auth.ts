@@ -1,0 +1,48 @@
+export const authDict = {
+  fr: {
+    login: {
+      title: "Connexion",
+      subtitle: "Accédez à l'espace de gestion de votre école.",
+      email: "Email",
+      password: "Mot de passe",
+      submit: "Se connecter",
+      noAccount: "Pas encore de compte ?",
+      signupLink: "Inscrire votre école",
+    },
+    signup: {
+      title: "Inscrire votre école",
+      subtitle: "Créez l'espace de gestion de votre établissement.",
+      schoolName: "Nom de l'école",
+      ownerFullName: "Votre nom complet",
+      email: "Email",
+      password: "Mot de passe",
+      passwordHint: "8 caractères minimum.",
+      submit: "Créer mon école",
+      alreadyRegistered: "Déjà inscrit ?",
+      loginLink: "Se connecter",
+    },
+  },
+  ar: {
+    login: {
+      title: "تسجيل الدخول",
+      subtitle: "ادخل إلى مساحة إدارة مدرستك.",
+      email: "البريد الإلكتروني",
+      password: "كلمة المرور",
+      submit: "تسجيل الدخول",
+      noAccount: "ليس لديك حساب بعد؟",
+      signupLink: "سجّل مدرستك",
+    },
+    signup: {
+      title: "سجّل مدرستك",
+      subtitle: "أنشئ مساحة إدارة مؤسستك.",
+      schoolName: "اسم المدرسة",
+      ownerFullName: "اسمك الكامل",
+      email: "البريد الإلكتروني",
+      password: "كلمة المرور",
+      passwordHint: "8 أحرف كحد أدنى.",
+      submit: "إنشاء مدرستي",
+      alreadyRegistered: "مسجّل بالفعل؟",
+      loginLink: "تسجيل الدخول",
+    },
+  },
+};

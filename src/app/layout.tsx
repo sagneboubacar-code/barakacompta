@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Space_Grotesk } from "next/font/google";
+import { Space_Grotesk, Tajawal } from "next/font/google";
+import { getLanguage } from "@/lib/i18n/get-language";
+import { dirOf } from "@/lib/i18n/config";
+import { LanguageProvider } from "@/lib/i18n/language-provider";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -19,6 +22,16 @@ const spaceGrotesk = Space_Grotesk({
   weight: ["500", "600", "700"],
   display: "swap",
 });
+// Ajoutée en secours dans les piles sans-serif/display (tailwind.config.ts) :
+// les caractères latins restent rendus par Geist/Space Grotesk, les
+// caractères arabes basculent automatiquement sur cette police au niveau
+// glyphe, sans logique conditionnelle côté JS.
+const tajawal = Tajawal({
+  subsets: ["arabic", "latin"],
+  variable: "--font-tajawal",
+  weight: ["400", "500", "700", "800"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Baraka Compta — Comptabilité scolaire",
@@ -30,12 +43,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const language = getLanguage();
+
   return (
-    <html lang="fr">
+    <html lang={language} dir={dirOf(language)}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${tajawal.variable} antialiased`}
       >
-        {children}
+        <LanguageProvider initialLanguage={language}>{children}</LanguageProvider>
       </body>
     </html>
   );

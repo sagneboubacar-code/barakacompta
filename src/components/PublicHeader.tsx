@@ -2,16 +2,21 @@
 
 import { useState } from "react";
 import Link from "next/link";
-
-const NAV_LINKS = [
-  { href: "/#fonctionnalites", label: "Fonctionnalités" },
-  { href: "/#tarifs", label: "Tarifs" },
-  { href: "/contact", label: "Contact" },
-  { href: "/login", label: "Se connecter" },
-];
+import { useLanguage } from "@/lib/i18n/language-provider";
+import { headerDict } from "@/lib/i18n/dictionaries/header";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export function PublicHeader() {
   const [open, setOpen] = useState(false);
+  const { language } = useLanguage();
+  const t = headerDict[language];
+
+  const navLinks = [
+    { href: "/#fonctionnalites", label: t.features },
+    { href: "/#tarifs", label: t.pricing },
+    { href: "/contact", label: t.contact },
+    { href: "/login", label: t.login },
+  ];
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
@@ -24,29 +29,33 @@ export function PublicHeader() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-icon.png" alt="" className="h-8 w-8 shrink-0" />
           <span className="truncate">
-            Baraka <span className="text-brand">Compta</span>
+            {t.brandFirst} <span className="text-brand">{t.brandSecond}</span>
           </span>
         </Link>
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-slate-600 sm:flex">
-          {NAV_LINKS.map((link) => (
+          {navLinks.map((link) => (
             <Link key={link.href} href={link.href} className="transition-colors hover:text-ink">
               {link.label}
             </Link>
           ))}
         </nav>
-        <Link
-          href="/signup"
-          className="hidden shrink-0 rounded-full bg-ink px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark sm:inline-flex"
-        >
-          Commencer gratuitement
-        </Link>
+
+        <div className="hidden shrink-0 items-center gap-3 sm:flex">
+          <LanguageSwitcher />
+          <Link
+            href="/signup"
+            className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
+          >
+            {t.signup}
+          </Link>
+        </div>
 
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
+          aria-label={open ? t.closeMenu : t.openMenu}
           className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-ink sm:hidden"
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -67,7 +76,7 @@ export function PublicHeader() {
       {open && (
         <nav className="border-t border-slate-200/80 bg-white px-6 py-4 sm:hidden">
           <ul className="flex flex-col gap-4 text-sm font-medium text-slate-600">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <li key={link.href}>
                 <Link href={link.href} onClick={() => setOpen(false)} className="transition-colors hover:text-ink">
                   {link.label}
@@ -75,13 +84,16 @@ export function PublicHeader() {
               </li>
             ))}
           </ul>
-          <Link
-            href="/signup"
-            onClick={() => setOpen(false)}
-            className="mt-5 block rounded-full bg-ink px-5 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
-          >
-            Commencer gratuitement
-          </Link>
+          <div className="mt-5 flex items-center justify-between gap-3">
+            <LanguageSwitcher />
+            <Link
+              href="/signup"
+              onClick={() => setOpen(false)}
+              className="flex-1 rounded-full bg-ink px-5 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
+            >
+              {t.signup}
+            </Link>
+          </div>
         </nav>
       )}
     </header>

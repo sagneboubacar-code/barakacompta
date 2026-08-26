@@ -4,58 +4,16 @@ import { formatCurrency } from "@/lib/format";
 import { Reveal } from "@/components/Reveal";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
-
-const FEATURES = [
-  {
-    title: "Élèves & inscriptions",
-    text: "Un dossier par élève : classe, responsables, statut, historique complet — fini les cahiers et les fiches volantes.",
-  },
-  {
-    title: "Tarifs & échéanciers",
-    text: "Définissez vos frais (inscription, mensualités, uniforme...) une fois, l'échéancier de chaque élève se génère automatiquement.",
-  },
-  {
-    title: "Paiements",
-    text: "Enregistrez chaque paiement en quelques secondes, par espèces, Wave, Orange Money ou virement.",
-  },
-  {
-    title: "Recouvrement",
-    text: "Voyez d'un coup d'œil qui est à jour et qui est en retard, élève par élève, classe par classe.",
-  },
-  {
-    title: "Rapports financiers",
-    text: "Recettes, dépenses, solde par responsable, détail journalier — prêts à imprimer ou exporter en un clic.",
-  },
-  {
-    title: "Dépenses & transferts",
-    text: "Suivez les sorties de caisse et les transferts entre responsables, avec une comptabilité consolidée pour l'école.",
-  },
-];
-
-const PAIN_POINTS = [
-  {
-    title: "Suivi manuel, source d'erreurs",
-    text: "Cahiers et fichiers Excel dispersés entre plusieurs responsables.",
-  },
-  {
-    title: "Retards difficiles à repérer",
-    text: "Impossible de savoir rapidement quels élèves sont à jour.",
-  },
-  {
-    title: "Rapports longs à préparer",
-    text: "Des heures perdues avant chaque réunion avec la direction.",
-  },
-];
+import { getLanguage } from "@/lib/i18n/get-language";
+import { landingDict } from "@/lib/i18n/dictionaries/landing";
 
 const WHATSAPP_COMMUNITY_URL = "https://chat.whatsapp.com/CUWfLrN8BVU6UkFX0G0ypc";
 
-const STEPS = [
-  { n: "01", title: "Inscrivez votre école", text: "Créez votre espace en moins de deux minutes, sans engagement." },
-  { n: "02", title: "Ajoutez élèves et tarifs", text: "Importez vos élèves et configurez vos frais scolaires." },
-  { n: "03", title: "Suivez tout en temps réel", text: "Paiements, retards et rapports, accessibles à toute votre équipe." },
-];
-
 export default function LandingPage() {
+  const language = getLanguage();
+  const t = landingDict[language];
+  const { features: FEATURES, painPoints: PAIN_POINTS, steps: STEPS } = t;
+
   return (
     <div className="bg-white text-ink">
       <PublicHeader />
@@ -71,31 +29,30 @@ export default function LandingPage() {
           <Reveal>
             <p className="mx-auto inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-light px-3 py-1 text-xs font-semibold uppercase tracking-widest text-brand-dark">
               <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-              Gestion financière scolaire
+              {t.heroBadge}
             </p>
             <h1 className="mx-auto mt-5 max-w-2xl text-balance font-display text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-[3.25rem]">
-              La comptabilité de votre école, sans les cahiers ni les fichiers Excel.
+              {t.heroTitle}
             </h1>
             <p className="mx-auto mt-5 max-w-lg text-balance text-base leading-relaxed text-slate-600">
-              Baraka Compta centralise les élèves, les paiements, les dépenses et les rapports de votre
-              établissement — pour savoir, à tout moment, où en est votre trésorerie.
+              {t.heroText}
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <Link
                 href="/signup"
                 className="rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm shadow-brand/30 transition-colors hover:bg-brand-dark"
               >
-                Commencer gratuitement
+                {t.ctaSignup}
               </Link>
               <Link
                 href="/login"
                 className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition-colors hover:border-ink hover:text-ink"
               >
-                Se connecter
+                {t.ctaLogin}
               </Link>
             </div>
             <p className="mt-4 text-xs text-slate-400">
-              Sans engagement · Aucune carte bancaire requise
+              {t.heroFootnote}
             </p>
           </Reveal>
         </div>
@@ -121,9 +78,9 @@ export default function LandingPage() {
       <section id="fonctionnalites" className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
         <Reveal>
           <div className="max-w-xl">
-            <p className="text-xs font-semibold uppercase tracking-widest text-brand">Fonctionnalités</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-brand">{t.featuresLabel}</p>
             <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink">
-              Tout ce qu&apos;il faut pour gérer la caisse de l&apos;école
+              {t.featuresTitle}
             </h2>
           </div>
         </Reveal>
@@ -143,7 +100,7 @@ export default function LandingPage() {
       <section className="border-y border-slate-100 bg-slate-50/60">
         <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
           <Reveal>
-            <h2 className="font-display text-3xl font-bold tracking-tight text-ink">Comment ça marche</h2>
+            <h2 className="font-display text-3xl font-bold tracking-tight text-ink">{t.howItWorksTitle}</h2>
           </Reveal>
           <div className="mt-12 grid grid-cols-1 gap-10 sm:grid-cols-3">
             {STEPS.map((s, i) => (
@@ -169,13 +126,12 @@ export default function LandingPage() {
               </svg>
             </span>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-brand">Communauté</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-brand">{t.communityLabel}</p>
               <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
-                Échangez avec d&apos;autres directeurs d&apos;école
+                {t.communityTitle}
               </h2>
               <p className="mx-auto mt-3 max-w-md text-balance text-sm leading-relaxed text-slate-500">
-                Rejoignez la communauté WhatsApp Baraka Compta : conseils, questions entre utilisateurs et
-                nouveautés du produit.
+                {t.communityText}
               </p>
             </div>
             <a
@@ -184,7 +140,7 @@ export default function LandingPage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1DA851]"
             >
-              Rejoindre la communauté WhatsApp
+              {t.communityCta}
             </a>
           </div>
         </Reveal>
@@ -194,11 +150,11 @@ export default function LandingPage() {
       <section id="tarifs" className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
         <Reveal>
           <div className="max-w-xl">
-            <p className="text-xs font-semibold uppercase tracking-widest text-brand">Tarifs</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-brand">{t.pricingLabel}</p>
             <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink">
-              Un tarif simple, qui grandit avec votre école
+              {t.pricingTitle}
             </h2>
-            <p className="mt-3 text-sm text-slate-500">Facturation mensuelle, sans engagement.</p>
+            <p className="mt-3 text-sm text-slate-500">{t.pricingSubtitle}</p>
           </div>
         </Reveal>
 
@@ -213,32 +169,32 @@ export default function LandingPage() {
                   }`}
                 >
                   {featured && (
-                    <span className="absolute -top-3 left-6 rounded-full bg-brand px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
-                      Recommandé
+                    <span className="absolute -top-3 start-6 rounded-full bg-brand px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
+                      {t.recommended}
                     </span>
                   )}
                   <p className={`text-sm font-semibold ${featured ? "text-white" : "text-ink"}`}>
-                    {plan.label}
+                    {t.planLabels[plan.key] ?? plan.label}
                   </p>
                   <p className="mt-3 font-mono text-2xl font-bold tabular-nums">
-                    {plan.priceXOF === 0 ? "Gratuit" : formatCurrency(plan.priceXOF ?? 0)}
+                    {plan.priceXOF === 0 ? t.free : formatCurrency(plan.priceXOF ?? 0)}
                   </p>
                   {plan.priceXOF !== 0 && (
-                    <p className={`text-xs ${featured ? "text-white/60" : "text-slate-400"}`}>/ mois</p>
+                    <p className={`text-xs ${featured ? "text-white/60" : "text-slate-400"}`}>{t.perMonth}</p>
                   )}
                   {plan.trialDays && (
                     <p className={`mt-1 text-xs ${featured ? "text-white/60" : "text-slate-400"}`}>
-                      {plan.trialDays} jours
+                      {plan.trialDays} {t.days}
                     </p>
                   )}
 
                   <ul className={`mt-5 flex-1 space-y-2 text-sm ${featured ? "text-white/80" : "text-slate-600"}`}>
                     <li>
-                      {plan.maxStudents === null ? "Élèves illimités" : `Jusqu'à ${plan.maxStudents} élèves`}
+                      {plan.maxStudents === null ? t.unlimitedStudents : t.upToStudents(plan.maxStudents)}
                     </li>
-                    <li>Élèves, tarifs, paiements, dépenses</li>
-                    {plan.modules.includes("collections") && <li>Recouvrement</li>}
-                    {plan.modules.includes("reports") && <li>Rapports financiers</li>}
+                    <li>{t.coreLine}</li>
+                    {plan.modules.includes("collections") && <li>{t.collectionsLine}</li>}
+                    {plan.modules.includes("reports") && <li>{t.reportsLine}</li>}
                   </ul>
 
                   <Link
@@ -249,7 +205,7 @@ export default function LandingPage() {
                         : "bg-ink text-white hover:bg-brand-dark"
                     }`}
                   >
-                    {i === 0 ? "Commencer" : "Choisir"}
+                    {i === 0 ? t.start : t.choose}
                   </Link>
                 </div>
               </Reveal>
@@ -263,16 +219,16 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-6 py-20 text-center sm:py-24">
           <Reveal>
             <h2 className="text-balance font-display text-3xl font-bold text-white sm:text-4xl">
-              Prêt à simplifier la gestion de votre école ?
+              {t.finalCtaTitle}
             </h2>
             <p className="mx-auto mt-3 max-w-md text-balance text-sm text-white/60">
-              Créez votre espace en moins de deux minutes.
+              {t.finalCtaText}
             </p>
             <Link
               href="/signup"
               className="mt-8 inline-flex items-center justify-center rounded-full bg-brand px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-brand/30 transition-colors hover:bg-emerald-500"
             >
-              Commencer gratuitement
+              {t.finalCtaButton}
             </Link>
           </Reveal>
         </div>

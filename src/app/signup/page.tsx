@@ -1,24 +1,33 @@
 import Link from "next/link";
 import { signUpSchool } from "@/lib/actions/auth";
+import { getLanguage } from "@/lib/i18n/get-language";
+import { authDict } from "@/lib/i18n/dictionaries/auth";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export default function SignupPage({
   searchParams,
 }: {
   searchParams: { error?: string };
 }) {
+  const language = getLanguage();
+  const t = authDict[language].signup;
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
       <form
         action={signUpSchool}
         className="w-full max-w-sm space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
       >
-        <div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-icon.png" alt="Baraka Compta" className="h-10 w-10" />
-          <h1 className="mt-3 text-xl font-semibold text-slate-900">Inscrire votre école</h1>
-          <p className="text-sm text-slate-500">
-            Créez l&apos;espace de gestion de votre établissement.
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-icon.png" alt="Baraka Compta" className="h-10 w-10" />
+            <h1 className="mt-3 text-xl font-semibold text-slate-900">{t.title}</h1>
+            <p className="text-sm text-slate-500">
+              {t.subtitle}
+            </p>
+          </div>
+          <LanguageSwitcher />
         </div>
 
         {searchParams.error && (
@@ -29,7 +38,7 @@ export default function SignupPage({
 
         <div className="space-y-1">
           <label htmlFor="schoolName" className="text-sm font-medium text-slate-700">
-            Nom de l&apos;école
+            {t.schoolName}
           </label>
           <input
             id="schoolName"
@@ -42,7 +51,7 @@ export default function SignupPage({
 
         <div className="space-y-1">
           <label htmlFor="ownerFullName" className="text-sm font-medium text-slate-700">
-            Votre nom complet
+            {t.ownerFullName}
           </label>
           <input
             id="ownerFullName"
@@ -55,7 +64,7 @@ export default function SignupPage({
 
         <div className="space-y-1">
           <label htmlFor="email" className="text-sm font-medium text-slate-700">
-            Email
+            {t.email}
           </label>
           <input
             id="email"
@@ -69,7 +78,7 @@ export default function SignupPage({
 
         <div className="space-y-1">
           <label htmlFor="password" className="text-sm font-medium text-slate-700">
-            Mot de passe
+            {t.password}
           </label>
           <input
             id="password"
@@ -80,20 +89,20 @@ export default function SignupPage({
             autoComplete="new-password"
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
           />
-          <p className="text-xs text-slate-400">8 caractères minimum.</p>
+          <p className="text-xs text-slate-400">{t.passwordHint}</p>
         </div>
 
         <button
           type="submit"
           className="w-full rounded-md bg-slate-900 py-2 text-sm font-medium text-white hover:bg-slate-800"
         >
-          Créer mon école
+          {t.submit}
         </button>
 
         <p className="text-center text-sm text-slate-500">
-          Déjà inscrit ?{" "}
+          {t.alreadyRegistered}{" "}
           <Link href="/login" className="font-medium text-slate-900 underline">
-            Se connecter
+            {t.loginLink}
           </Link>
         </p>
       </form>
