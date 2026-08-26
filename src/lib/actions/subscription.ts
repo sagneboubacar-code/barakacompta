@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/auth/guard";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import { getPlan } from "@/lib/constants/plans";
 import { createPaymentRequest } from "@/lib/paytech/client";
+import { createCheckoutSession as createWaveCheckoutSession } from "@/lib/wave/client";
 import type { SubscriptionPaymentMethod, SubscriptionPlan } from "@/types";
 
 const BILLING_PATH = "/dashboard/billing";
@@ -72,26 +73,46 @@ export async function requestRenewal(formData: FormData) {
   // d'être avalée par le catch et transformée en faux message d'erreur.
   let checkoutUrl: string | null = null;
   try {
-    const payment = await createPaymentRequest({
-      amount: plan.priceXOF ?? 0,
-      itemName: `Abonnement Baraka Compta — ${plan.label} — ${school?.name ?? ""}`,
-      refCommand: inserted.id,
-      successUrl: `${siteUrl()}${BILLING_PATH}?success=${encodeURIComponent("Paiement reçu, activation en cours.")}`,
-      cancelUrl: `${siteUrl()}${BILLING_PATH}?error=${encodeURIComponent("Paiement annulé.")}`,
-      ipnUrl: `${siteUrl()}/api/paytech/ipn`,
-    });
+    if (method === "wave") {
+      // Intégration directe Wave (pas via PayTech) : leur sous-intégration
+      // Wave plafonne les transactions réelles à un montant test fixe,
+      // indépendamment du montant envoyé — on contourne le problème en
+      // parlant directement à l'API Wave pour ce moyen de paiement précis.
+      const session = await createWaveCheckoutSession({
+        amount: plan.priceXOF ?? 0,
+        clientReference: inserted.id,
+        successUrl: `${siteUrl()}${BILLING_PATH}?success=${encodeURIComponent("Paiement reçu, activation en cours.")}`,
+        errorUrl: `${siteUrl()}${BILLING_PATH}?error=${encodeURIComponent("Paiement annulé.")}`,
+      });
 
-    await supabase
-      .from("subscription_payments")
-      .update({ external_reference: payment.token })
-      .eq("id", inserted.id);
+      await supabase
+        .from("subscription_payments")
+        .update({ external_reference: session.id })
+        .eq("id", inserted.id);
 
-    checkoutUrl = payment.redirectUrl;
+      checkoutUrl = session.launchUrl;
+    } else {
+      const payment = await createPaymentRequest({
+        amount: plan.priceXOF ?? 0,
+        itemName: `Abonnement Baraka Compta — ${plan.label} — ${school?.name ?? ""}`,
+        refCommand: inserted.id,
+        successUrl: `${siteUrl()}${BILLING_PATH}?success=${encodeURIComponent("Paiement reçu, activation en cours.")}`,
+        cancelUrl: `${siteUrl()}${BILLING_PATH}?error=${encodeURIComponent("Paiement annulé.")}`,
+        ipnUrl: `${siteUrl()}/api/paytech/ipn`,
+      });
+
+      await supabase
+        .from("subscription_payments")
+        .update({ external_reference: payment.token })
+        .eq("id", inserted.id);
+
+      checkoutUrl = payment.redirectUrl;
+    }
   } catch (err) {
-    // Clés PayTech pas encore configurées, ou service indisponible : on
-    // garde la demande "pending" et on retombe sur le parcours manuel
-    // plutôt que de bloquer l'utilisateur.
-    console.error("PayTech — création de la demande de paiement impossible", err);
+    // Clés pas encore configurées, ou service indisponible : on garde la
+    // demande "pending" et on retombe sur le parcours manuel plutôt que de
+    // bloquer l'utilisateur.
+    console.error("Création de la demande de paiement impossible", err);
   }
 
   if (checkoutUrl) {
