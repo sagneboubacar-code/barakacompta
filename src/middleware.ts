@@ -18,28 +18,42 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    if (pathname.startsWith("/dashboard")) {
+    if (pathname.startsWith("/dashboard") || pathname === "/onboarding") {
       return NextResponse.redirect(new URL("/login", request.url));
     }
     return getResponse();
   }
 
+  const needsAppUser = AUTH_PAGES.includes(pathname) || pathname === "/onboarding" || pathname.startsWith("/dashboard");
+  if (!needsAppUser) {
+    return getResponse();
+  }
+
+  // La RLS protège déjà les données ; cette vérification évite en plus de
+  // rendre une page vide/trompeuse à un utilisateur sans le bon rôle — on
+  // le redirige explicitement vers /unauthorized.
+  const { data: appUser } = await supabase
+    .from("users")
+    .select("role, school_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  // Compte Auth existant (ex. créé via Google) mais sans école : seule
+  // /onboarding doit rester accessible tant que ce n'est pas fait.
+  if (pathname === "/onboarding") {
+    if (appUser?.school_id) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+    return getResponse();
+  }
+
   if (AUTH_PAGES.includes(pathname)) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL(appUser?.school_id ? "/dashboard" : "/onboarding", request.url));
   }
 
   if (pathname.startsWith("/dashboard")) {
-    // La RLS protège déjà les données ; cette vérification évite en plus de
-    // rendre une page vide/trompeuse à un utilisateur sans le bon rôle — on
-    // le redirige explicitement vers /unauthorized.
-    const { data: appUser } = await supabase
-      .from("users")
-      .select("role, school_id")
-      .eq("id", user.id)
-      .maybeSingle();
-
     if (!appUser || !appUser.school_id) {
-      return NextResponse.redirect(new URL("/unauthorized", request.url));
+      return NextResponse.redirect(new URL("/onboarding", request.url));
     }
 
     const rule = findRouteRule(pathname);

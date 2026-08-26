@@ -78,6 +78,68 @@ export async function signUpSchool(formData: FormData) {
   redirect("/dashboard");
 }
 
+// Dernière étape après une première connexion Google : l'utilisateur Auth
+// existe déjà (créé par Supabase via OAuth), il ne reste qu'à créer son
+// école et sa ligne public.users — on réutilise la même RPC que le signup
+// classique, seul le point de départ diffère (pas de création de compte).
+export async function completeGoogleSignup(formData: FormData) {
+  const schoolName = String(formData.get("schoolName") ?? "").trim();
+  const ownerFullName = String(formData.get("ownerFullName") ?? "").trim();
+
+  const supabase = createServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  if (!schoolName) {
+    fail("/onboarding", "Merci d'indiquer le nom de votre école.");
+  }
+
+  // Idempotence : en cas de double soumission, ne recrée rien si l'école
+  // existe déjà pour cet utilisateur.
+  const { data: existing } = await supabase.from("users").select("school_id").eq("id", user.id).maybeSingle();
+  if (existing?.school_id) {
+    redirect("/dashboard");
+  }
+
+  const admin = createAdminClient();
+  const email = user.email ?? "";
+  const finalOwnerName = ownerFullName || (user.user_metadata?.full_name as string | undefined) || email;
+  const baseSlug = slugify(schoolName);
+  let schoolId: string | null = null;
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const candidateSlug = attempt === 0 ? baseSlug : `${baseSlug}-${randomSlugSuffix()}`;
+    const { data, error } = await admin.rpc("create_school_with_owner", {
+      p_school_name: schoolName,
+      p_school_slug: candidateSlug,
+      p_owner_id: user.id,
+      p_owner_email: email,
+      p_owner_full_name: finalOwnerName,
+    });
+
+    if (!error) {
+      schoolId = data as unknown as string;
+      break;
+    }
+
+    if (error.code !== UNIQUE_VIOLATION) {
+      fail("/onboarding", "Impossible de créer l'école : " + error.message);
+    }
+    // sinon : collision de slug, on retente avec un suffixe.
+  }
+
+  if (!schoolId) {
+    fail("/onboarding", "Impossible de générer un identifiant unique pour cette école, réessayez avec un autre nom.");
+  }
+
+  redirect("/dashboard");
+}
+
 export async function signIn(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");

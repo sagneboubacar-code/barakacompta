@@ -3,6 +3,7 @@ import { signUpSchool } from "@/lib/actions/auth";
 import { getLanguage } from "@/lib/i18n/get-language";
 import { authDict } from "@/lib/i18n/dictionaries/auth";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 
 export default function SignupPage({
   searchParams,
@@ -28,6 +29,14 @@ export default function SignupPage({
             </p>
           </div>
           <LanguageSwitcher />
+        </div>
+
+        <GoogleAuthButton />
+
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1 bg-slate-200" />
+          <span className="text-xs uppercase tracking-wide text-slate-400">{t.orDivider}</span>
+          <div className="h-px flex-1 bg-slate-200" />
         </div>
 
         {searchParams.error && (
