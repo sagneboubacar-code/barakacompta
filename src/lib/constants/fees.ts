@@ -1,6 +1,6 @@
 import type { FeeRegime, FeeType } from "@/types";
 import type { Language } from "@/lib/i18n/config";
-import { MONTH_NAMES, monthNames } from "@/lib/constants/months";
+import { monthNames } from "@/lib/constants/months";
 
 export const REGIMES: { key: FeeRegime; label: string }[] = [
   { key: "externat", label: "Externat" },
