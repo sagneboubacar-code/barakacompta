@@ -49,7 +49,7 @@ export default async function AdminPage() {
     .filter((p) => p.created_at.slice(0, 7) === currentMonthPrefix)
     .reduce((sum, p) => sum + Number(p.amount), 0);
 
-  const revenueByPlan = (["basic", "pro", "premium"] as const).map((planKey) => ({
+  const revenueByPlan = (["basic", "pro"] as const).map((planKey) => ({
     plan: planKey,
     schools: allSchools.filter((s) => s.plan === planKey).length,
     revenue: completedPayments.filter((p) => p.plan === planKey).reduce((sum, p) => sum + Number(p.amount), 0),

@@ -9,7 +9,7 @@ import { createCheckoutSession as createWaveCheckoutSession } from "@/lib/wave/c
 import type { SubscriptionPaymentMethod, SubscriptionPlan } from "@/types";
 
 const BILLING_PATH = "/dashboard/billing";
-const VALID_PLANS: SubscriptionPlan[] = ["basic", "pro", "premium"];
+const VALID_PLANS: SubscriptionPlan[] = ["basic", "pro"];
 const VALID_METHODS: SubscriptionPaymentMethod[] = ["wave", "orange_money", "card"];
 
 function fail(message: string): never {

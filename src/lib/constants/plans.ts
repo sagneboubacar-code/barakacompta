@@ -34,14 +34,7 @@ export const PLANS: PlanDefinition[] = [
   {
     key: "pro",
     label: "Pro",
-    priceXOF: 35000,
-    maxStudents: 400,
-    modules: ["collections", "reports"],
-  },
-  {
-    key: "premium",
-    label: "Premium",
-    priceXOF: 60000,
+    priceXOF: 25000,
     maxStudents: null,
     modules: ["collections", "reports"],
   },
