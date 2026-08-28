@@ -52,7 +52,13 @@ export async function resolveChariowLicense(
     throw new ChariowError("Clé de licence introuvable.");
   }
   if (!response.ok) {
-    throw new ChariowError("Impossible de vérifier la licence auprès de Chariow.");
+    // Détail technique temporaire (à retirer une fois le diagnostic terminé) :
+    // le message générique ne suffisait pas à distinguer clé invalide,
+    // permissions manquantes ou panne côté Chariow.
+    const bodyText = await response.text().catch(() => "");
+    throw new ChariowError(
+      `Impossible de vérifier la licence auprès de Chariow (HTTP ${response.status}). ${bodyText.slice(0, 200)}`
+    );
   }
 
   let { data } = (await response.json()) as { data: ChariowLicense };
