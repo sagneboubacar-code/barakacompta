@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth/guard";
 import { createClient } from "@/lib/supabase/server";
 import { requestRenewal, redeemChariowLicense } from "@/lib/actions/subscription";
 import { PLANS, getPlan, type GatedModule } from "@/lib/constants/plans";
+import { CHARIOW_CHECKOUT_URLS } from "@/lib/chariow";
 import { getLanguage } from "@/lib/i18n/get-language";
 import { dashboardBillingDict } from "@/lib/i18n/dictionaries/dashboard-billing";
 import { formatDate } from "@/lib/format";
@@ -141,6 +142,17 @@ export default async function BillingPage({
                         {t.requestRenewal}
                       </button>
                     </form>
+                  )}
+
+                  {!isCurrent && CHARIOW_CHECKOUT_URLS[plan.key] && (
+                    <a
+                      href={CHARIOW_CHECKOUT_URLS[plan.key]}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 block rounded-md border border-emerald-600 py-1.5 text-center text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+                    >
+                      {t.chariowDirectLink}
+                    </a>
                   )}
                 </div>
               );
