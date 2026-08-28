@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/auth/guard";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { signOut } from "@/lib/actions/auth";
+import { activateSubscriptionManually } from "@/lib/actions/admin";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { paymentMethodLabel } from "@/lib/constants/payments";
 import { getLanguage } from "@/lib/i18n/get-language";
@@ -11,7 +12,11 @@ import { adminDict } from "@/lib/i18n/dictionaries/admin";
 // toutes les écoles — la RLS normale (scoped à une seule école) ne peut pas
 // et ne doit pas laisser passer ça pour un compte "owner"/"admin" classique.
 // C'est requireRole ci-dessous qui porte toute la barrière de sécurité.
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: { error?: string; success?: string };
+}) {
   const appUser = await requireRole(["super_admin"]);
   const language = getLanguage();
   const t = adminDict[language];
@@ -84,6 +89,13 @@ export default async function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-6xl space-y-8 px-6 py-8">
+        {searchParams.error && (
+          <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{searchParams.error}</p>
+        )}
+        {searchParams.success && (
+          <p className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">{searchParams.success}</p>
+        )}
+
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {kpis.map((kpi) => (
             <div key={kpi.label} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -127,6 +139,7 @@ export default async function AdminPage() {
                 <th className="py-1 font-medium">{t.colStatus}</th>
                 <th className="py-1 font-medium">{t.colExpiresOn}</th>
                 <th className="py-1 font-medium">{t.colRegisteredOn}</th>
+                <th className="py-1 font-medium">{t.colActions}</th>
               </tr>
             </thead>
             <tbody>
@@ -143,12 +156,41 @@ export default async function AdminPage() {
                       {formatDate(school.subscription_expires_at, language)}
                     </td>
                     <td className="py-1.5 text-slate-600">{formatDate(school.created_at, language)}</td>
+                    <td className="py-1.5">
+                      <form action={activateSubscriptionManually} className="flex items-center gap-1.5">
+                        <input type="hidden" name="school_id" value={school.id} />
+                        <select
+                          name="plan"
+                          required
+                          className="rounded-md border border-slate-300 px-1.5 py-1 text-xs"
+                        >
+                          <option value="basic">{t.planLabels.basic}</option>
+                          <option value="pro">{t.planLabels.pro}</option>
+                        </select>
+                        <input
+                          type="number"
+                          name="months"
+                          defaultValue={1}
+                          min={1}
+                          max={24}
+                          required
+                          className="w-14 rounded-md border border-slate-300 px-1.5 py-1 text-xs"
+                        />
+                        <span className="text-xs text-slate-400">{t.monthsSuffix}</span>
+                        <button
+                          type="submit"
+                          className="rounded-md bg-slate-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-slate-800"
+                        >
+                          {t.activateSubmit}
+                        </button>
+                      </form>
+                    </td>
                   </tr>
                 );
               })}
               {allSchools.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-3 text-center text-xs text-slate-400">
+                  <td colSpan={6} className="py-3 text-center text-xs text-slate-400">
                     {t.noSchools}
                   </td>
                 </tr>
