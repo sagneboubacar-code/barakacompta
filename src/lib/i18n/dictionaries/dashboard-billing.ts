@@ -25,7 +25,6 @@ export const dashboardBillingDict = {
     requestRenewal: "Demander le renouvellement",
     secureRedirectNote:
       "Vous serez redirigé vers une page de paiement sécurisée (Wave, Orange Money ou carte bancaire). Si le paiement en ligne n'est pas disponible, votre demande reste enregistrée et notre équipe vous contacte pour finaliser l'activation.",
-    chariowDirectLink: "Payer directement via Chariow",
     chariowTitle: "J'ai déjà une clé de licence Chariow",
     chariowText:
       "Vous avez acheté votre abonnement sur notre boutique Chariow (Wave, Orange Money ou carte) ? Collez la clé de licence reçue pour activer votre plan immédiatement.",
@@ -86,7 +85,6 @@ export const dashboardBillingDict = {
     requestRenewal: "طلب التجديد",
     secureRedirectNote:
       "سيتم توجيهك إلى صفحة دفع آمنة (Wave أو Orange Money أو بطاقة بنكية). إذا لم يكن الدفع عبر الإنترنت متاحًا، يبقى طلبك مسجلاً وسيتواصل معك فريقنا لإتمام التفعيل.",
-    chariowDirectLink: "الدفع مباشرة عبر Chariow",
     chariowTitle: "لدي بالفعل مفتاح ترخيص Chariow",
     chariowText:
       "هل اشتريت اشتراكك من متجرنا على Chariow (Wave أو Orange Money أو بطاقة بنكية)؟ الصق مفتاح الترخيص الذي استلمته لتفعيل خطتك فورًا.",

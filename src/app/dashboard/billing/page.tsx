@@ -122,6 +122,19 @@ export default async function BillingPage({
                     <p className="mt-4 text-center text-xs font-medium text-slate-500">{t.currentPlan}</p>
                   ) : plan.priceXOF === 0 ? (
                     <p className="mt-4 text-center text-xs text-slate-400">{t.reservedNewTrial}</p>
+                  ) : CHARIOW_CHECKOUT_URLS[plan.key] ? (
+                    // Chariow est le seul parcours de paiement actif pour le
+                    // moment (PayTech en pause, Wave en attente de
+                    // validation) — un seul bouton, sans exposer le nom du
+                    // prestataire à l'utilisateur.
+                    <a
+                      href={CHARIOW_CHECKOUT_URLS[plan.key]}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 block rounded-md bg-slate-900 py-1.5 text-center text-xs font-medium text-white hover:bg-slate-800"
+                    >
+                      {t.requestRenewal}
+                    </a>
                   ) : (
                     <form action={requestRenewal} className="mt-4 space-y-2">
                       <input type="hidden" name="plan" value={plan.key} />
@@ -142,17 +155,6 @@ export default async function BillingPage({
                         {t.requestRenewal}
                       </button>
                     </form>
-                  )}
-
-                  {!isCurrent && CHARIOW_CHECKOUT_URLS[plan.key] && (
-                    <a
-                      href={CHARIOW_CHECKOUT_URLS[plan.key]}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-2 block rounded-md border border-emerald-600 py-1.5 text-center text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
-                    >
-                      {t.chariowDirectLink}
-                    </a>
                   )}
                 </div>
               );
