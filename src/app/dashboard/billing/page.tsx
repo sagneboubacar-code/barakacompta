@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/auth/guard";
 import { createClient } from "@/lib/supabase/server";
-import { requestRenewal } from "@/lib/actions/subscription";
+import { requestRenewal, redeemChariowLicense } from "@/lib/actions/subscription";
 import { PLANS, getPlan, type GatedModule } from "@/lib/constants/plans";
 import { getLanguage } from "@/lib/i18n/get-language";
 import { dashboardBillingDict } from "@/lib/i18n/dictionaries/dashboard-billing";
@@ -148,6 +148,26 @@ export default async function BillingPage({
           </div>
 
           <p className="text-xs text-slate-400">{t.secureRedirectNote}</p>
+
+          <section className="rounded-lg border border-slate-200 bg-white p-4">
+            <h2 className="text-sm font-semibold text-slate-900">{t.chariowTitle}</h2>
+            <p className="mt-1 text-xs text-slate-500">{t.chariowText}</p>
+            <form action={redeemChariowLicense} className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <input
+                type="text"
+                name="license_key"
+                required
+                placeholder={t.chariowPlaceholder}
+                className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+              />
+              <button
+                type="submit"
+                className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+              >
+                {t.chariowSubmit}
+              </button>
+            </form>
+          </section>
 
           <section className="rounded-lg border border-slate-200 bg-white p-4">
             <h2 className="text-sm font-semibold text-slate-900">{t.historyTitle}</h2>
