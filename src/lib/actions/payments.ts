@@ -37,11 +37,12 @@ export async function recordPayment(formData: FormData) {
   if (
     !studentId ||
     !paidAt ||
+    isNaN(Date.parse(paidAt)) ||
     !Number.isFinite(amount) ||
     amount <= 0 ||
     !VALID_METHODS.includes(paymentMethod as PaymentMethod)
   ) {
-    fail(base, "Merci de renseigner l'élève, la date, un montant positif et un mode de paiement valide.");
+    fail(base, "Merci de renseigner l'élève, une date valide, un montant positif et un mode de paiement valide.");
   }
 
   const { error } = await supabase.from("payments").insert({

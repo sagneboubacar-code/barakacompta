@@ -45,7 +45,9 @@ function readStudentFields(formData: FormData) {
     !!lastName &&
     VALID_GENDERS.includes(gender) &&
     VALID_REGIMES.includes(regime as FeeRegime) &&
-    VALID_STATUSES.includes(status as StudentStatus);
+    VALID_STATUSES.includes(status as StudentStatus) &&
+    (dateOfBirth === null || !isNaN(Date.parse(dateOfBirth))) &&
+    (enrolledAt === null || !isNaN(Date.parse(enrolledAt)));
 
   return {
     valid,

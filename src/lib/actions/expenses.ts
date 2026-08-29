@@ -66,6 +66,7 @@ export async function createExpense(formData: FormData) {
 
   if (
     !expenseDate ||
+    isNaN(Date.parse(expenseDate)) ||
     !VALID_CATEGORIES.includes(category as ExpenseCategory) ||
     !label ||
     !Number.isFinite(amount) ||
@@ -107,6 +108,7 @@ export async function updateExpense(formData: FormData) {
   if (
     !id ||
     !expenseDate ||
+    isNaN(Date.parse(expenseDate)) ||
     !VALID_CATEGORIES.includes(category as ExpenseCategory) ||
     !label ||
     !Number.isFinite(amount) ||

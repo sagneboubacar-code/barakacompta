@@ -30,9 +30,10 @@ export async function createCashTransfer(formData: FormData) {
     fromManagerId === toManagerId ||
     !Number.isFinite(amount) ||
     amount <= 0 ||
-    !transferredAt
+    !transferredAt ||
+    isNaN(Date.parse(transferredAt))
   ) {
-    fail("Merci de choisir deux responsables différents, une date et un montant positif.");
+    fail("Merci de choisir deux responsables différents, une date valide et un montant positif.");
   }
 
   const { error } = await supabase.from("cash_manager_transfers").insert({

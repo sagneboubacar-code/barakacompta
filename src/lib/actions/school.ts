@@ -25,8 +25,11 @@ export async function updateSchoolInfo(formData: FormData) {
   const country = String(formData.get("country") ?? "").trim() || null;
   const currency = String(formData.get("currency") ?? "").trim();
 
-  if (!name || !currency) {
-    fail("Le nom de l'école et la devise sont obligatoires.");
+  // Code devise à 3 lettres majuscules (format ISO 4217, ex. XOF, EUR) —
+  // pas de liste fermée (l'app peut servir d'autres pays), juste un garde-fou
+  // contre une valeur arbitraire qui casserait l'affichage monétaire partout.
+  if (!name || !/^[A-Z]{3}$/.test(currency)) {
+    fail("Le nom de l'école est obligatoire et la devise doit être un code à 3 lettres (ex. XOF, EUR).");
   }
 
   const { error } = await supabase

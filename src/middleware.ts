@@ -18,13 +18,17 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    if (pathname.startsWith("/dashboard") || pathname === "/onboarding") {
+    if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin") || pathname === "/onboarding") {
       return NextResponse.redirect(new URL("/login", request.url));
     }
     return getResponse();
   }
 
-  const needsAppUser = AUTH_PAGES.includes(pathname) || pathname === "/onboarding" || pathname.startsWith("/dashboard");
+  const needsAppUser =
+    AUTH_PAGES.includes(pathname) ||
+    pathname === "/onboarding" ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/admin");
   if (!needsAppUser) {
     return getResponse();
   }
@@ -49,6 +53,17 @@ export async function middleware(request: NextRequest) {
 
   if (AUTH_PAGES.includes(pathname)) {
     return NextResponse.redirect(new URL(appUser?.school_id ? "/dashboard" : "/onboarding", request.url));
+  }
+
+  // Défense en profondeur pour /admin (staff Baraka uniquement) : la page
+  // vérifie déjà le rôle elle-même via requireRole, mais contrairement à
+  // /dashboard elle n'avait aucun filet au niveau middleware — un oubli de
+  // requireRole sur une future route /admin/* passerait alors inaperçu.
+  if (pathname.startsWith("/admin")) {
+    if (appUser?.role !== "super_admin") {
+      return NextResponse.redirect(new URL("/unauthorized", request.url));
+    }
+    return getResponse();
   }
 
   if (pathname.startsWith("/dashboard")) {
