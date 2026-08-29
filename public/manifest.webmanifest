@@ -1,0 +1,13 @@
+{
+  "name": "Baraka Compta",
+  "short_name": "Baraka Compta",
+  "description": "Gestion financière et comptable pour établissements scolaires.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0E7C5A",
+  "icons": [
+    { "src": "/logo-icon.png", "sizes": "620x620", "type": "image/png", "purpose": "any" }
+  ]
+}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { headerDict } from "@/lib/i18n/dictionaries/header";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { InstallAppButton } from "@/components/InstallAppButton";
 
 export function PublicHeader() {
   const [open, setOpen] = useState(false);
@@ -42,6 +43,7 @@ export function PublicHeader() {
         </nav>
 
         <div className="hidden shrink-0 items-center gap-3 sm:flex">
+          <InstallAppButton />
           <LanguageSwitcher />
           <Link
             href="/signup"
@@ -84,8 +86,11 @@ export function PublicHeader() {
               </li>
             ))}
           </ul>
-          <div className="mt-5 flex items-center justify-between gap-3">
-            <LanguageSwitcher />
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <InstallAppButton />
+              <LanguageSwitcher />
+            </div>
             <Link
               href="/signup"
               onClick={() => setOpen(false)}

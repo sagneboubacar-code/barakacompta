@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Space_Grotesk, Tajawal } from "next/font/google";
 import { getLanguage } from "@/lib/i18n/get-language";
@@ -36,6 +36,20 @@ const tajawal = Tajawal({
 export const metadata: Metadata = {
   title: "Baraka Compta — Comptabilité scolaire",
   description: "Gestion financière et comptable pour établissements scolaires.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/logo-icon.png",
+    apple: "/logo-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Baraka Compta",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0E7C5A",
 };
 
 export default function RootLayout({
