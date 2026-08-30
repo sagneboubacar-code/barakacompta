@@ -82,26 +82,33 @@ export function InstallAppButton({ className = "" }: { className?: string }) {
   }
 
   return (
-    <div className="relative">
+    <div className={`fixed bottom-5 end-5 z-40 ${className}`}>
+      {/* Halo pulsé discret pour attirer l'œil sans être agaçant en continu
+          (animation CSS pure, s'arrête après quelques cycles). */}
+      <span className="absolute inset-0 -z-10 animate-[ping_2.5s_ease-out_3] rounded-full bg-brand/50" />
+
       <button
         type="button"
         onClick={handleClick}
-        className={`inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:border-ink hover:text-ink ${className}`}
+        className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-brand to-brand-dark px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-dark/30 ring-1 ring-white/20 transition-transform hover:scale-105 hover:shadow-xl active:scale-95"
       >
-        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <path
-            d="M10 3v9m0 0 3.5-3.5M10 12l-3.5-3.5M4 14.5V16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-1.5"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white/20 transition-transform group-hover:-translate-y-0.5">
+          <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path
+              d="M10 3v9m0 0 3.5-3.5M10 12l-3.5-3.5M4 14.5V16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-1.5"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
         {LABEL[language]}
       </button>
 
       {showIosHint && (
-        <div className="absolute end-0 top-full z-50 mt-2 w-56 rounded-lg border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-600 shadow-lg">
+        <div className="absolute bottom-full end-0 z-50 mb-3 w-60 rounded-xl border border-slate-200 bg-white p-4 text-xs leading-relaxed text-slate-600 shadow-xl">
+          <p className="mb-1 font-semibold text-ink">{LABEL[language]}</p>
           {IOS_HINT[language]}
         </div>
       )}
