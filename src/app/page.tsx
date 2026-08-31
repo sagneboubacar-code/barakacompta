@@ -116,6 +116,43 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Démonstration vidéo — preload="none" : la vidéo n'est téléchargée
+          qu'au clic, pour ne pas consommer les données des visiteurs mobiles. */}
+      <section className="mx-auto max-w-4xl px-6 py-20 sm:py-24">
+        <Reveal>
+          <div className="text-center">
+            <p className="text-xs font-semibold uppercase tracking-widest text-brand">{t.demoLabel}</p>
+            <h2 className="mt-2 text-balance font-display text-3xl font-bold tracking-tight text-ink">
+              {t.demoTitle}
+            </h2>
+            <p className="mx-auto mt-3 max-w-md text-balance text-sm leading-relaxed text-slate-500">
+              {t.demoText}
+            </p>
+          </div>
+
+          <div className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-ink shadow-xl shadow-slate-300/30">
+            <video
+              controls
+              preload="none"
+              playsInline
+              poster="/tuto-inscription-poster.jpg"
+              className="aspect-video w-full"
+            >
+              <source src="/tuto-inscription.mp4" type="video/mp4" />
+            </video>
+          </div>
+
+          <div className="mt-8 text-center">
+            <Link
+              href="/signup"
+              className="rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm shadow-brand/30 transition-colors hover:bg-brand-dark"
+            >
+              {t.ctaSignup}
+            </Link>
+          </div>
+        </Reveal>
+      </section>
+
       {/* Communauté WhatsApp */}
       <section className="mx-auto max-w-6xl px-6 py-16">
         <Reveal>

@@ -32,6 +32,11 @@ export const landingDict = {
       { n: "03", title: "Suivez tout en temps réel", text: "Paiements, retards et rapports, accessibles à toute votre équipe." },
     ],
 
+    demoLabel: "Démonstration",
+    demoTitle: "Voyez comment inscrire votre école en 1 minute",
+    demoText:
+      "Une courte vidéo qui montre, étape par étape, comment créer l'espace de votre établissement.",
+
     communityLabel: "Communauté",
     communityTitle: "Échangez avec d'autres directeurs d'école",
     communityText:
@@ -90,6 +95,10 @@ export const landingDict = {
       { n: "02", title: "أضف التلاميذ والرسوم", text: "استورد تلاميذك واضبط رسومك المدرسية." },
       { n: "03", title: "تابع كل شيء لحظة بلحظة", text: "المدفوعات والتأخيرات والتقارير، متاحة لكامل فريقك." },
     ],
+
+    demoLabel: "عرض توضيحي",
+    demoTitle: "شاهد كيف تسجّل مدرستك في دقيقة واحدة",
+    demoText: "فيديو قصير يوضّح، خطوة بخطوة، كيفية إنشاء مساحة مؤسستك.",
 
     communityLabel: "المجتمع",
     communityTitle: "تواصل مع مديري مدارس آخرين",
