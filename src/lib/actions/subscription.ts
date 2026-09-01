@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth/guard";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import { getPlan } from "@/lib/constants/plans";
-import { createPaymentRequest } from "@/lib/paytech/client";
 import { createCheckoutSession as createWaveCheckoutSession } from "@/lib/wave/client";
 import { resolveChariowLicense, ChariowError } from "@/lib/chariow";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -12,22 +11,25 @@ import type { SubscriptionPaymentMethod, SubscriptionPlan } from "@/types";
 
 const BILLING_PATH = "/dashboard/billing";
 const VALID_PLANS: SubscriptionPlan[] = ["basic", "pro"];
-const VALID_METHODS: SubscriptionPaymentMethod[] = ["wave", "orange_money", "card"];
+// Wave est le seul moyen de paiement en ligne branché (intégration directe).
+// Les anciens paiements enregistrés en orange_money/card restent lisibles
+// dans l'historique, mais ne peuvent plus être choisis.
+const VALID_METHODS: SubscriptionPaymentMethod[] = ["wave"];
 
 function fail(message: string): never {
   redirect(`${BILLING_PATH}?error=${encodeURIComponent(message)}`);
 }
 
 // Domaine canonique (l'apex redirige vers www) : utilisé pour les URL de
-// retour et de notification PayTech, qui doivent être absolues.
+// retour et de notification du paiement, qui doivent être absolues.
 function siteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.barakacompta.com";
 }
 
-// Crée la demande de renouvellement puis, si PayTech est configuré, une
-// demande de paiement réelle vers laquelle on redirige l'utilisateur.
-// L'activation du plan ne se fait jamais ici : seul le webhook IPN
-// (server-to-server, revérifié auprès de PayTech) peut faire passer la
+// Crée la demande de renouvellement puis, si Wave est configuré, une
+// session de paiement réelle vers laquelle on redirige l'utilisateur.
+// L'activation du plan ne se fait jamais ici : seul le webhook
+// (server-to-server, revérifié auprès de Wave) peut faire passer la
 // demande de "pending" à "completed".
 export async function requestRenewal(formData: FormData) {
   const appUser = await requireRole(["owner"]);
@@ -45,12 +47,6 @@ export async function requestRenewal(formData: FormData) {
   const periodEndDate = new Date();
   periodEndDate.setMonth(periodEndDate.getMonth() + 1);
   const periodEnd = periodEndDate.toISOString().slice(0, 10);
-
-  const { data: school } = await supabase
-    .from("schools")
-    .select("name")
-    .eq("id", appUser.school_id ?? "")
-    .maybeSingle();
 
   const { data: inserted, error } = await supabase
     .from("subscription_payments")
@@ -77,41 +73,22 @@ export async function requestRenewal(formData: FormData) {
   // d'être avalée par le catch et transformée en faux message d'erreur.
   let checkoutUrl: string | null = null;
   try {
-    if (method === "wave") {
-      // Intégration directe Wave (pas via PayTech) : leur sous-intégration
-      // Wave plafonne les transactions réelles à un montant test fixe,
-      // indépendamment du montant envoyé — on contourne le problème en
-      // parlant directement à l'API Wave pour ce moyen de paiement précis.
-      const session = await createWaveCheckoutSession({
-        amount: plan.priceXOF ?? 0,
-        clientReference: inserted.id,
-        successUrl: `${siteUrl()}${BILLING_PATH}?success=${encodeURIComponent("Paiement reçu, activation en cours.")}`,
-        errorUrl: `${siteUrl()}${BILLING_PATH}?error=${encodeURIComponent("Paiement annulé.")}`,
-      });
+    // Intégration directe à l'API Wave : les agrégateurs testés plafonnaient
+    // les transactions Wave à un montant fixe, indépendamment du montant
+    // envoyé — on parle donc directement à Wave.
+    const session = await createWaveCheckoutSession({
+      amount: plan.priceXOF ?? 0,
+      clientReference: inserted.id,
+      successUrl: `${siteUrl()}${BILLING_PATH}?success=${encodeURIComponent("Paiement reçu, activation en cours.")}`,
+      errorUrl: `${siteUrl()}${BILLING_PATH}?error=${encodeURIComponent("Paiement annulé.")}`,
+    });
 
-      await supabase
-        .from("subscription_payments")
-        .update({ external_reference: session.id })
-        .eq("id", inserted.id);
+    await supabase
+      .from("subscription_payments")
+      .update({ external_reference: session.id })
+      .eq("id", inserted.id);
 
-      checkoutUrl = session.launchUrl;
-    } else {
-      const payment = await createPaymentRequest({
-        amount: plan.priceXOF ?? 0,
-        itemName: `Abonnement Baraka Compta — ${plan.label} — ${school?.name ?? ""}`,
-        refCommand: inserted.id,
-        successUrl: `${siteUrl()}${BILLING_PATH}?success=${encodeURIComponent("Paiement reçu, activation en cours.")}`,
-        cancelUrl: `${siteUrl()}${BILLING_PATH}?error=${encodeURIComponent("Paiement annulé.")}`,
-        ipnUrl: `${siteUrl()}/api/paytech/ipn`,
-      });
-
-      await supabase
-        .from("subscription_payments")
-        .update({ external_reference: payment.token })
-        .eq("id", inserted.id);
-
-      checkoutUrl = payment.redirectUrl;
-    }
+    checkoutUrl = session.launchUrl;
   } catch (err) {
     // Clés pas encore configurées, ou service indisponible : on garde la
     // demande "pending" et on retombe sur le parcours manuel plutôt que de

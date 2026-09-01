@@ -1,9 +1,9 @@
 import "server-only";
 
 // Client minimal pour l'API Wave Checkout (docs.wave.com/checkout) —
-// intégration directe, en contournant PayTech pour ce moyen de paiement
-// précis (leur sous-intégration Wave plafonne les transactions réelles
-// à un montant test fixe, indépendamment du montant envoyé).
+// intégration directe plutôt que via un agrégateur : ceux testés
+// plafonnaient les transactions Wave à un montant test fixe,
+// indépendamment du montant envoyé.
 const WAVE_API_BASE = "https://api.wave.com";
 
 function getHeaders() {

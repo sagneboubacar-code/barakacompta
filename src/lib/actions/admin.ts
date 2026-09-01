@@ -15,9 +15,8 @@ function fail(message: string): never {
 
 // Active/prolonge manuellement l'abonnement d'une école — réservé au staff
 // Baraka (super_admin). Pour les paiements reçus hors app (virement,
-// espèces, mobile money envoyé directement) pendant que PayTech est en
-// pause et que Chariow se met en place : le staff constate le paiement et
-// l'enregistre ici, sans dépendre d'un agrégateur externe.
+// espèces, mobile money envoyé directement) : le staff constate le paiement
+// et l'enregistre ici, sans dépendre d'un service de paiement externe.
 export async function activateSubscriptionManually(formData: FormData) {
   const staff = await requireRole(["super_admin"]);
 

@@ -11,9 +11,9 @@ const CHARIOW_STORE_URL = "https://goaukwbl.mychariow.com";
 
 // Lien direct vers la page de paiement Chariow de chaque plan — évite au
 // client de chercher lui-même le bon produit sur la boutique. Chariow n'a
-// pas d'API de création de commande côté serveur (contrairement à
-// PayTech/Wave) : impossible de faire mieux qu'un lien vers leur checkout
-// hébergé tant que ce n'est pas le cas.
+// pas d'API de création de commande côté serveur (contrairement à Wave) :
+// impossible de faire mieux qu'un lien vers leur checkout hébergé tant que
+// ce n'est pas le cas.
 export const CHARIOW_CHECKOUT_URLS: Partial<Record<SubscriptionPlan, string>> = Object.fromEntries(
   Object.entries(CHARIOW_PRODUCT_PLAN).map(([productId, plan]) => [
     plan,

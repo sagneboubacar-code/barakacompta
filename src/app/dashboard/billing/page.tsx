@@ -123,10 +123,10 @@ export default async function BillingPage({
                   ) : plan.priceXOF === 0 ? (
                     <p className="mt-4 text-center text-xs text-slate-400">{t.reservedNewTrial}</p>
                   ) : CHARIOW_CHECKOUT_URLS[plan.key] ? (
-                    // Chariow est le seul parcours de paiement actif pour le
-                    // moment (PayTech en pause, Wave en attente de
-                    // validation) — un seul bouton, sans exposer le nom du
-                    // prestataire à l'utilisateur.
+                    // Chariow est le parcours de paiement actif pour les
+                    // plans qui y ont une page de vente — un seul bouton,
+                    // sans exposer le nom du prestataire à l'utilisateur.
+                    // Les autres plans retombent sur le paiement Wave.
                     <a
                       href={CHARIOW_CHECKOUT_URLS[plan.key]}
                       target="_blank"
@@ -138,16 +138,9 @@ export default async function BillingPage({
                   ) : (
                     <form action={requestRenewal} className="mt-4 space-y-2">
                       <input type="hidden" name="plan" value={plan.key} />
-                      <select
-                        name="payment_method"
-                        required
-                        className="w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs"
-                      >
-                        <option value="">{t.paymentMethodPlaceholder}</option>
-                        <option value="wave">{t.wave}</option>
-                        <option value="orange_money">{t.orangeMoney}</option>
-                        <option value="card">{t.card}</option>
-                      </select>
+                      {/* Wave est le seul moyen en ligne branché : pas de
+                          liste déroulante à un seul choix. */}
+                      <input type="hidden" name="payment_method" value="wave" />
                       <button
                         type="submit"
                         className="w-full rounded-md bg-slate-900 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
