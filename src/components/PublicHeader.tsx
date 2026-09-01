@@ -6,15 +6,19 @@ import { useLanguage } from "@/lib/i18n/language-provider";
 import { headerDict } from "@/lib/i18n/dictionaries/header";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { InstallAppButton } from "@/components/InstallAppButton";
+import { YOUTUBE_CHANNEL_URL } from "@/lib/constants/links";
 
 export function PublicHeader() {
   const [open, setOpen] = useState(false);
   const { language } = useLanguage();
   const t = headerDict[language];
 
+  // `external` : ouvre dans un nouvel onglet pour ne pas faire quitter le
+  // site au visiteur (les tutoriels sont hébergés sur YouTube).
   const navLinks = [
     { href: "/#fonctionnalites", label: t.features },
     { href: "/#tarifs", label: t.pricing },
+    { href: YOUTUBE_CHANNEL_URL, label: t.tutorials, external: true },
     { href: "/contact", label: t.contact },
     { href: "/login", label: t.login },
   ];
@@ -37,11 +41,23 @@ export function PublicHeader() {
         </Link>
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-slate-600 sm:flex">
-          {navLinks.map((link) => (
-            <Link key={link.href} href={link.href} className="transition-colors hover:text-ink">
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) =>
+            link.external ? (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition-colors hover:text-ink"
+              >
+                {link.label}
+              </a>
+            ) : (
+              <Link key={link.href} href={link.href} className="transition-colors hover:text-ink">
+                {link.label}
+              </Link>
+            )
+          )}
         </nav>
 
         <div className="hidden shrink-0 items-center gap-3 sm:flex">
@@ -81,9 +97,21 @@ export function PublicHeader() {
           <ul className="flex flex-col gap-4 text-sm font-medium text-slate-600">
             {navLinks.map((link) => (
               <li key={link.href}>
-                <Link href={link.href} onClick={() => setOpen(false)} className="transition-colors hover:text-ink">
-                  {link.label}
-                </Link>
+                {link.external ? (
+                  <a
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setOpen(false)}
+                    className="transition-colors hover:text-ink"
+                  >
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link href={link.href} onClick={() => setOpen(false)} className="transition-colors hover:text-ink">
+                    {link.label}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

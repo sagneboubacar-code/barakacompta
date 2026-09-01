@@ -7,7 +7,7 @@ import { PublicFooter } from "@/components/PublicFooter";
 import { getLanguage } from "@/lib/i18n/get-language";
 import { landingDict } from "@/lib/i18n/dictionaries/landing";
 
-const WHATSAPP_COMMUNITY_URL = "https://chat.whatsapp.com/CUWfLrN8BVU6UkFX0G0ypc";
+import { WHATSAPP_COMMUNITY_URL, YOUTUBE_CHANNEL_URL } from "@/lib/constants/links";
 
 export default function LandingPage() {
   const language = getLanguage();
@@ -142,13 +142,21 @@ export default function LandingPage() {
             </video>
           </div>
 
-          <div className="mt-8 text-center">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/signup"
               className="rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm shadow-brand/30 transition-colors hover:bg-brand-dark"
             >
               {t.ctaSignup}
             </Link>
+            <a
+              href={YOUTUBE_CHANNEL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition-colors hover:border-ink hover:text-ink"
+            >
+              {t.demoWatchAll}
+            </a>
           </div>
         </Reveal>
       </section>

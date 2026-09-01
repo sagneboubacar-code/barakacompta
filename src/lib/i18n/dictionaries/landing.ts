@@ -36,6 +36,7 @@ export const landingDict = {
     demoTitle: "Voyez comment inscrire votre école en 1 minute",
     demoText:
       "Une courte vidéo qui montre, étape par étape, comment créer l'espace de votre établissement.",
+    demoWatchAll: "Voir tous les tutoriels",
 
     communityLabel: "Communauté",
     communityTitle: "Échangez avec d'autres directeurs d'école",
@@ -99,6 +100,7 @@ export const landingDict = {
     demoLabel: "عرض توضيحي",
     demoTitle: "شاهد كيف تسجّل مدرستك في دقيقة واحدة",
     demoText: "فيديو قصير يوضّح، خطوة بخطوة، كيفية إنشاء مساحة مؤسستك.",
+    demoWatchAll: "مشاهدة كل الدروس",
 
     communityLabel: "المجتمع",
     communityTitle: "تواصل مع مديري مدارس آخرين",
