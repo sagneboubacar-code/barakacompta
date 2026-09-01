@@ -26,7 +26,7 @@ export default async function StudentDetailPage({
   const { data: student } = await supabase
     .from("students")
     .select(
-      "id, first_name, last_name, matricule, gender, date_of_birth, place_of_birth, class_id, regime, guardian_name, guardian_phone, address, enrolled_at, status, subscribes_cantine, subscribes_transport"
+      "id, first_name, last_name, matricule, gender, date_of_birth, place_of_birth, class_id, regime, guardian_name, guardian_phone, address, enrolled_at, status, subscribes_cantine, subscribes_transport, transport_zone"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -215,6 +215,19 @@ export default async function StudentDetailPage({
             <label className="flex items-center gap-2 text-sm text-slate-600">
               <input type="checkbox" name="subscribes_transport" defaultChecked={student.subscribes_transport} />
               {t.transport}
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+              {t.transportZone}
+              <select
+                name="transport_zone"
+                defaultValue={student.transport_zone ? String(student.transport_zone) : ""}
+                className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              >
+                <option value="">{t.transportZoneNone}</option>
+                <option value="1">{t.transportZoneN(1)}</option>
+                <option value="2">{t.transportZoneN(2)}</option>
+                <option value="3">{t.transportZoneN(3)}</option>
+              </select>
             </label>
           </div>
           <div className="sm:col-span-2">

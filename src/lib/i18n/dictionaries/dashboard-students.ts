@@ -47,6 +47,9 @@ export const dashboardStudentsDict = {
     formStatus: "Statut",
     cantine: "Inscrit à la cantine",
     transport: "Inscrit au transport",
+    transportZone: "Zone de transport",
+    transportZoneNone: "Tarif unique (sans zone)",
+    transportZoneN: (n: number) => `Zone ${n}`,
     addSubmit: "Ajouter",
   },
   ar: {
@@ -97,6 +100,9 @@ export const dashboardStudentsDict = {
     formStatus: "الحالة",
     cantine: "مسجّل في المطعم",
     transport: "مسجّل في النقل",
+    transportZone: "منطقة النقل",
+    transportZoneNone: "تعريفة موحدة (بدون منطقة)",
+    transportZoneN: (n: number) => `المنطقة ${n}`,
     addSubmit: "إضافة",
   },
 };

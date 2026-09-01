@@ -80,6 +80,9 @@ export type FeeType =
   | "cantine"
   | "internat"
   | "transport"
+  | "transport_zone_1"
+  | "transport_zone_2"
+  | "transport_zone_3"
   | "autre";
 
 export interface FeeStructure {

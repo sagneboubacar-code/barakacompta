@@ -39,6 +39,9 @@ function readStudentFields(formData: FormData) {
   const status = String(formData.get("status") ?? "active");
   const subscribesCantine = formData.get("subscribes_cantine") === "on";
   const subscribesTransport = formData.get("subscribes_transport") === "on";
+  // Zone facultative : vide = tarif de transport unique (école sans zones).
+  const rawTransportZone = String(formData.get("transport_zone") ?? "").trim();
+  const transportZone = ["1", "2", "3"].includes(rawTransportZone) ? Number(rawTransportZone) : null;
 
   const valid =
     !!firstName &&
@@ -66,6 +69,7 @@ function readStudentFields(formData: FormData) {
       status: status as StudentStatus,
       subscribes_cantine: subscribesCantine,
       subscribes_transport: subscribesTransport,
+      transport_zone: transportZone,
     },
   };
 }

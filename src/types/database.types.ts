@@ -139,6 +139,9 @@ export interface Database {
             | "cantine"
             | "internat"
             | "transport"
+            | "transport_zone_1"
+            | "transport_zone_2"
+            | "transport_zone_3"
             | "autre";
           month: number;
           created_at: string;
@@ -161,6 +164,9 @@ export interface Database {
             | "cantine"
             | "internat"
             | "transport"
+            | "transport_zone_1"
+            | "transport_zone_2"
+            | "transport_zone_3"
             | "autre";
           month?: number;
           created_at?: string;
@@ -204,6 +210,7 @@ export interface Database {
           enrolled_at: string;
           subscribes_cantine: boolean;
           subscribes_transport: boolean;
+          transport_zone: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -226,6 +233,7 @@ export interface Database {
           enrolled_at?: string;
           subscribes_cantine?: boolean;
           subscribes_transport?: boolean;
+          transport_zone?: number | null;
           created_at?: string;
           updated_at?: string;
         };
