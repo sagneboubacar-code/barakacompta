@@ -18,8 +18,10 @@ function fail(message: string): never {
   redirect(`${BILLING_PATH}?error=${encodeURIComponent(message)}`);
 }
 
+// Domaine canonique (l'apex redirige vers www) : utilisé pour les URL de
+// retour et de notification PayTech, qui doivent être absolues.
 function siteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "https://barakacompta.vercel.app";
+  return process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.barakacompta.com";
 }
 
 // Crée la demande de renouvellement puis, si PayTech est configuré, une
