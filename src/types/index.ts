@@ -76,6 +76,7 @@ export type FeeType =
   | "inscription"
   | "uniforme"
   | "tenue_sport"
+  | "fournitures"
   | "mensualite"
   | "cantine"
   | "internat"
