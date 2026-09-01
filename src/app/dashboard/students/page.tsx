@@ -384,6 +384,10 @@ export default async function StudentsPage({
               <input type="checkbox" name="subscribes_transport" />
               {t.transport}
             </label>
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+              <input type="checkbox" name="subscribes_renforcement" />
+              {t.renforcement}
+            </label>
             {/* Zone facultative : sans zone, c'est le tarif unique qui
                 s'applique (écoles sans découpage géographique). */}
             <label className="flex items-center gap-2 text-sm text-slate-600">

@@ -24,6 +24,7 @@ export const FEE_TYPES: { key: FeeType; label: string }[] = [
   { key: "transport_zone_1", label: "Transport zone 1" },
   { key: "transport_zone_2", label: "Transport zone 2" },
   { key: "transport_zone_3", label: "Transport zone 3" },
+  { key: "renforcement", label: "Cours de renforcement" },
   { key: "autre", label: "Autre" },
 ];
 
@@ -39,6 +40,7 @@ const FEE_TYPE_LABELS_AR: Record<string, string> = {
   transport_zone_1: "النقل المنطقة 1",
   transport_zone_2: "النقل المنطقة 2",
   transport_zone_3: "النقل المنطقة 3",
+  renforcement: "دروس الدعم",
   autre: "أخرى",
 };
 

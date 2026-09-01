@@ -143,6 +143,7 @@ export interface Database {
             | "transport_zone_1"
             | "transport_zone_2"
             | "transport_zone_3"
+            | "renforcement"
             | "autre";
           month: number;
           created_at: string;
@@ -169,6 +170,7 @@ export interface Database {
             | "transport_zone_1"
             | "transport_zone_2"
             | "transport_zone_3"
+            | "renforcement"
             | "autre";
           month?: number;
           created_at?: string;
@@ -211,6 +213,7 @@ export interface Database {
           status: "active" | "inactive";
           enrolled_at: string;
           subscribes_cantine: boolean;
+          subscribes_renforcement: boolean;
           subscribes_transport: boolean;
           transport_zone: number | null;
           created_at: string;
@@ -234,6 +237,7 @@ export interface Database {
           status?: "active" | "inactive";
           enrolled_at?: string;
           subscribes_cantine?: boolean;
+          subscribes_renforcement?: boolean;
           subscribes_transport?: boolean;
           transport_zone?: number | null;
           created_at?: string;
