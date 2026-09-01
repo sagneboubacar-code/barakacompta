@@ -75,6 +75,7 @@ export type FeeRegime = "externat" | "internat";
 export type FeeType =
   | "inscription"
   | "uniforme"
+  | "tenue_sport"
   | "mensualite"
   | "cantine"
   | "internat"

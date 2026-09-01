@@ -134,6 +134,7 @@ export interface Database {
           fee_type:
             | "inscription"
             | "uniforme"
+            | "tenue_sport"
             | "mensualite"
             | "cantine"
             | "internat"
@@ -155,6 +156,7 @@ export interface Database {
           fee_type:
             | "inscription"
             | "uniforme"
+            | "tenue_sport"
             | "mensualite"
             | "cantine"
             | "internat"
