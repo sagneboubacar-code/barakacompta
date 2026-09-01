@@ -126,7 +126,8 @@ export default async function BillingPage({
                     // Chariow est le parcours de paiement actif pour les
                     // plans qui y ont une page de vente — un seul bouton,
                     // sans exposer le nom du prestataire à l'utilisateur.
-                    // Les autres plans retombent sur le paiement Wave.
+                    // Les autres plans enregistrent une demande à traiter
+                    // manuellement par le staff.
                     <a
                       href={CHARIOW_CHECKOUT_URLS[plan.key]}
                       target="_blank"
@@ -138,9 +139,6 @@ export default async function BillingPage({
                   ) : (
                     <form action={requestRenewal} className="mt-4 space-y-2">
                       <input type="hidden" name="plan" value={plan.key} />
-                      {/* Wave est le seul moyen en ligne branché : pas de
-                          liste déroulante à un seul choix. */}
-                      <input type="hidden" name="payment_method" value="wave" />
                       <button
                         type="submit"
                         className="w-full rounded-md bg-slate-900 py-1.5 text-xs font-medium text-white hover:bg-slate-800"

@@ -18,13 +18,9 @@ export const dashboardBillingDict = {
     trialDaysLine: (n: number) => `${n} jours d'essai`,
     currentPlan: "Plan actuel",
     reservedNewTrial: "Réservé au nouvel essai",
-    paymentMethodPlaceholder: "Moyen de paiement",
-    wave: "Wave",
-    orangeMoney: "Orange Money",
-    card: "Carte bancaire",
-    requestRenewal: "Payer avec Wave",
+    requestRenewal: "Demander un renouvellement",
     secureRedirectNote:
-      "Vous serez redirigé vers une page de paiement sécurisée (Wave, Orange Money ou carte bancaire). Si le paiement en ligne n'est pas disponible, votre demande reste enregistrée et notre équipe vous contacte pour finaliser l'activation.",
+      "Vous serez redirigé vers une page de paiement sécurisée (Wave, Orange Money ou carte bancaire). Après le paiement, collez la clé de licence reçue ci-dessous pour activer votre plan immédiatement.",
     chariowTitle: "J'ai déjà une clé de licence Chariow",
     chariowText:
       "Vous avez acheté votre abonnement sur notre boutique Chariow (Wave, Orange Money ou carte) ? Collez la clé de licence reçue pour activer votre plan immédiatement.",
@@ -78,13 +74,9 @@ export const dashboardBillingDict = {
     trialDaysLine: (n: number) => `${n} أيام تجربة مجانية`,
     currentPlan: "الخطة الحالية",
     reservedNewTrial: "مخصص للتجربة الجديدة فقط",
-    paymentMethodPlaceholder: "وسيلة الدفع",
-    wave: "Wave",
-    orangeMoney: "Orange Money",
-    card: "بطاقة بنكية",
-    requestRenewal: "الدفع عبر Wave",
+    requestRenewal: "طلب تجديد الاشتراك",
     secureRedirectNote:
-      "سيتم توجيهك إلى صفحة دفع آمنة (Wave أو Orange Money أو بطاقة بنكية). إذا لم يكن الدفع عبر الإنترنت متاحًا، يبقى طلبك مسجلاً وسيتواصل معك فريقنا لإتمام التفعيل.",
+      "سيتم توجيهك إلى صفحة دفع آمنة (Wave أو Orange Money أو بطاقة بنكية). بعد الدفع، الصق مفتاح الترخيص الذي استلمته أدناه لتفعيل خطتك فورًا.",
     chariowTitle: "لدي بالفعل مفتاح ترخيص Chariow",
     chariowText:
       "هل اشتريت اشتراكك من متجرنا على Chariow (Wave أو Orange Money أو بطاقة بنكية)؟ الصق مفتاح الترخيص الذي استلمته لتفعيل خطتك فورًا.",

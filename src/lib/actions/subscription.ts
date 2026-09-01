@@ -4,42 +4,30 @@ import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth/guard";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import { getPlan } from "@/lib/constants/plans";
-import { createCheckoutSession as createWaveCheckoutSession } from "@/lib/wave/client";
 import { resolveChariowLicense, ChariowError } from "@/lib/chariow";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { SubscriptionPaymentMethod, SubscriptionPlan } from "@/types";
 
 const BILLING_PATH = "/dashboard/billing";
 const VALID_PLANS: SubscriptionPlan[] = ["basic", "pro"];
-// Wave est le seul moyen de paiement en ligne branché (intégration directe).
-// Les anciens paiements enregistrés en orange_money/card restent lisibles
-// dans l'historique, mais ne peuvent plus être choisis.
-const VALID_METHODS: SubscriptionPaymentMethod[] = ["wave"];
 
 function fail(message: string): never {
   redirect(`${BILLING_PATH}?error=${encodeURIComponent(message)}`);
 }
 
-// Domaine canonique (l'apex redirige vers www) : utilisé pour les URL de
-// retour et de notification du paiement, qui doivent être absolues.
-function siteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.barakacompta.com";
-}
-
-// Crée la demande de renouvellement puis, si Wave est configuré, une
-// session de paiement réelle vers laquelle on redirige l'utilisateur.
-// L'activation du plan ne se fait jamais ici : seul le webhook
-// (server-to-server, revérifié auprès de Wave) peut faire passer la
-// demande de "pending" à "completed".
+// Enregistre une demande de renouvellement (statut "pending") sans paiement
+// en ligne : le parcours payant passe par Chariow (voir
+// redeemChariowLicense). Cette demande sert aux cas traités hors app —
+// virement, espèces, mobile money envoyé directement — que le staff
+// confirme ensuite depuis l'espace d'administration.
 export async function requestRenewal(formData: FormData) {
   const appUser = await requireRole(["owner"]);
   const supabase = createServerSupabase();
 
   const planKey = String(formData.get("plan") ?? "");
-  const method = String(formData.get("payment_method") ?? "");
 
-  if (!VALID_PLANS.includes(planKey as SubscriptionPlan) || !VALID_METHODS.includes(method as SubscriptionPaymentMethod)) {
-    fail("Merci de choisir un plan et un moyen de paiement valides.");
+  if (!VALID_PLANS.includes(planKey as SubscriptionPlan)) {
+    fail("Merci de choisir un plan valide.");
   }
 
   const plan = getPlan(planKey);
@@ -55,7 +43,7 @@ export async function requestRenewal(formData: FormData) {
       plan: plan.key,
       amount: plan.priceXOF ?? 0,
       currency: "XOF",
-      payment_method: method as SubscriptionPaymentMethod,
+      payment_method: "manual" as SubscriptionPaymentMethod,
       status: "pending",
       period_start: periodStart,
       period_end: periodEnd,
@@ -68,41 +56,9 @@ export async function requestRenewal(formData: FormData) {
     fail("Impossible d'enregistrer la demande : " + (error?.message ?? ""));
   }
 
-  // redirect() lève une exception interne pour interrompre le rendu : elle
-  // ne doit jamais se retrouver dans le try/catch ci-dessous, sous peine
-  // d'être avalée par le catch et transformée en faux message d'erreur.
-  let checkoutUrl: string | null = null;
-  try {
-    // Intégration directe à l'API Wave : les agrégateurs testés plafonnaient
-    // les transactions Wave à un montant fixe, indépendamment du montant
-    // envoyé — on parle donc directement à Wave.
-    const session = await createWaveCheckoutSession({
-      amount: plan.priceXOF ?? 0,
-      clientReference: inserted.id,
-      successUrl: `${siteUrl()}${BILLING_PATH}?success=${encodeURIComponent("Paiement reçu, activation en cours.")}`,
-      errorUrl: `${siteUrl()}${BILLING_PATH}?error=${encodeURIComponent("Paiement annulé.")}`,
-    });
-
-    await supabase
-      .from("subscription_payments")
-      .update({ external_reference: session.id })
-      .eq("id", inserted.id);
-
-    checkoutUrl = session.launchUrl;
-  } catch (err) {
-    // Clés pas encore configurées, ou service indisponible : on garde la
-    // demande "pending" et on retombe sur le parcours manuel plutôt que de
-    // bloquer l'utilisateur.
-    console.error("Création de la demande de paiement impossible", err);
-  }
-
-  if (checkoutUrl) {
-    redirect(checkoutUrl);
-  }
-
   redirect(
     `${BILLING_PATH}?success=${encodeURIComponent(
-      "Demande enregistrée. Le paiement en ligne n'est pas encore actif : notre équipe vous contacte pour finaliser l'activation."
+      "Demande enregistrée. Notre équipe vous contacte pour finaliser l'activation."
     )}`
   );
 }
