@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import { randomSlugSuffix, slugify } from "@/lib/slug";
+import { landingPath } from "@/lib/auth/landing";
 
 const UNIQUE_VIOLATION = "23505";
 
@@ -153,13 +154,21 @@ export async function signIn(formData: FormData) {
   }
 
   const supabase = createServerSupabase();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     fail("/login", "Identifiants invalides.");
   }
 
-  redirect("/dashboard");
+  // Envoyer tout le monde sur /dashboard laisserait le middleware rattraper
+  // le staff Baraka par une redirection de plus : autant viser juste ici.
+  const { data: appUser } = await supabase
+    .from("users")
+    .select("role, school_id")
+    .eq("id", data.user.id)
+    .maybeSingle();
+
+  redirect(landingPath(appUser));
 }
 
 export async function signOut() {

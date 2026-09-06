@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { landingPath } from "@/lib/auth/landing";
 
 // Point de retour après OAuth (Google) : Supabase redirige ici avec un
 // `code` à échanger contre une session. Ensuite on aiguille vers /dashboard
@@ -21,11 +22,11 @@ export async function GET(request: NextRequest) {
       if (user) {
         const { data: appUser } = await supabase
           .from("users")
-          .select("school_id")
+          .select("role, school_id")
           .eq("id", user.id)
           .maybeSingle();
 
-        return NextResponse.redirect(`${origin}${appUser?.school_id ? "/dashboard" : "/onboarding"}`);
+        return NextResponse.redirect(`${origin}${landingPath(appUser)}`);
       }
     }
   }

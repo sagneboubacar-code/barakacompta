@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createMiddlewareSupabaseClient } from "@/lib/supabase/middleware";
 import { findRouteRule } from "@/lib/auth/routes";
+import { landingPath } from "@/lib/auth/landing";
 import { planIncludesModule } from "@/lib/constants/plans";
 
 const AUTH_PAGES = ["/login", "/signup"];
@@ -43,16 +44,17 @@ export async function middleware(request: NextRequest) {
     .maybeSingle();
 
   // Compte Auth existant (ex. créé via Google) mais sans école : seule
-  // /onboarding doit rester accessible tant que ce n'est pas fait.
+  // /onboarding doit rester accessible tant que ce n'est pas fait. Le staff
+  // Baraka, lui, n'a pas d'école à créer : il repart vers sa console.
   if (pathname === "/onboarding") {
-    if (appUser?.school_id) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+    if (appUser?.school_id || appUser?.role === "super_admin") {
+      return NextResponse.redirect(new URL(landingPath(appUser), request.url));
     }
     return getResponse();
   }
 
   if (AUTH_PAGES.includes(pathname)) {
-    return NextResponse.redirect(new URL(appUser?.school_id ? "/dashboard" : "/onboarding", request.url));
+    return NextResponse.redirect(new URL(landingPath(appUser), request.url));
   }
 
   // Défense en profondeur pour /admin (staff Baraka uniquement) : la page
@@ -68,7 +70,7 @@ export async function middleware(request: NextRequest) {
 
   if (pathname.startsWith("/dashboard")) {
     if (!appUser || !appUser.school_id) {
-      return NextResponse.redirect(new URL("/onboarding", request.url));
+      return NextResponse.redirect(new URL(landingPath(appUser), request.url));
     }
 
     const rule = findRouteRule(pathname);

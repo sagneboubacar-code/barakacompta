@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { completeGoogleSignup } from "@/lib/actions/auth";
+import { landingPath } from "@/lib/auth/landing";
 
 export default async function OnboardingPage({
   searchParams,
@@ -16,9 +17,13 @@ export default async function OnboardingPage({
     redirect("/login");
   }
 
-  const { data: appUser } = await supabase.from("users").select("school_id").eq("id", user.id).maybeSingle();
-  if (appUser?.school_id) {
-    redirect("/dashboard");
+  const { data: appUser } = await supabase
+    .from("users")
+    .select("role, school_id")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (appUser?.school_id || appUser?.role === "super_admin") {
+    redirect(landingPath(appUser));
   }
 
   const suggestedName =
