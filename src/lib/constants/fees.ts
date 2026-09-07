@@ -44,22 +44,24 @@ const FEE_TYPE_LABELS_AR: Record<string, string> = {
   autre: "أخرى",
 };
 
-// Les mois de mensualité couvrent toute l'année scolaire, du "mois de début"
-// au "mois de fin" inclus — même règle que generate_student_schedule() côté
-// SQL. Ex. début=septembre, fin=juin → mensualités de septembre à juin.
+// Grille des tarifs : tous les mois de mensualité possibles de l'année
+// scolaire, du mois SUIVANT le "mois de début" jusqu'au mois suivant le
+// "mois de fin". Un élève paie sa première mensualité le mois d'après son
+// inscription — celui qui arrive à la rentrée (septembre) paie donc à
+// partir d'octobre, et le dernier mois payé est juillet.
 //
-// Ces mois étaient auparavant décalés d'un cran (octobre à juillet), le
-// premier mois étant considéré comme "réservé à l'inscription". Mais une
-// école qui rentre en septembre facture bien une mensualité de septembre :
-// l'inscription est un frais à part, elle ne remplace pas le premier mois.
+// C'est bien la liste des mois *facturables par l'école*, pas celle d'un
+// élève donné : un élève inscrit en cours d'année n'est facturé qu'à partir
+// du mois suivant son arrivée, filtrage fait par generate_student_schedule()
+// côté SQL à partir de sa date d'inscription.
 export function mensualiteMonthsForSchoolYear(
   startMonth: number,
   endMonth: number,
   language: Language = "fr"
 ): { month: number; label: string }[] {
   const names = monthNames(language);
-  const first = startMonth;
-  const last = endMonth;
+  const first = (startMonth % 12) + 1;
+  const last = (endMonth % 12) + 1;
   const months: { month: number; label: string }[] = [];
   let m = first;
   for (let i = 0; i < 12; i++) {
