@@ -67,7 +67,6 @@ export default async function DashboardHomePage() {
     [currentMonthReport],
     cashManagerBreakdown,
     { data: outstandingSchedules },
-    { data: overdueSchedules },
     { data: recentPayments },
     { data: recentExpenses },
   ] = await Promise.all([
@@ -75,8 +74,14 @@ export default async function DashboardHomePage() {
     computeFinancialReport(supabase, from, to),
     computeMonthlyBreakdown(supabase, currentMonthFrom, currentMonthTo),
     computeCashManagerBreakdown(supabase, from, to),
-    supabase.from("payment_schedules").select("amount_remaining").neq("status", "cancelled").lte("due_date", today),
-    supabase.from("payment_schedules").select("student_id").eq("status", "overdue"),
+    // Les échéances déjà exigibles aujourd'hui, qui servent à la fois au
+    // "Restant dû" et au décompte des élèves impayés — mêmes lignes, donc
+    // deux chiffres qui racontent forcément la même histoire.
+    supabase
+      .from("payment_schedules")
+      .select("student_id, amount_remaining, students!inner(status)")
+      .neq("status", "cancelled")
+      .lte("due_date", today),
     supabase
       .from("payments")
       .select("id, amount, payment_method, paid_at, students(first_name, last_name)")
@@ -89,8 +94,26 @@ export default async function DashboardHomePage() {
       .limit(6),
   ]);
 
-  const totalReceivable = (outstandingSchedules ?? []).reduce((sum, s) => sum + s.amount_remaining, 0);
-  const overdueStudentCount = new Set((overdueSchedules ?? []).map((s) => s.student_id)).size;
+  const dueSchedules = outstandingSchedules ?? [];
+  const totalReceivable = dueSchedules.reduce((sum, s) => sum + s.amount_remaining, 0);
+
+  // Un élève est impayé s'il lui reste quelque chose à régler sur une
+  // échéance déjà passée — c'est déduit des dates et des montants, pas lu
+  // dans la colonne `status`. Ce statut n'est en effet recalculé que quand
+  // on touche la ligne (création, paiement, réduction) : une échéance créée
+  // en septembre pour le 5 octobre reste "pending" indéfiniment une fois le
+  // 5 octobre passé, et l'élève n'apparaissait donc jamais comme impayé.
+  //
+  // Population identique à celle du tableau Recouvrement (élèves actifs),
+  // pour que les deux écrans ne puissent pas afficher des comptes différents.
+  const overdueStudentCount = new Set(
+    dueSchedules
+      .filter((s) => {
+        const student = Array.isArray(s.students) ? s.students[0] : s.students;
+        return s.amount_remaining > 0 && student?.status === "active";
+      })
+      .map((s) => s.student_id)
+  ).size;
   const inscriptionCollected = yearReport.revenueByType.find((r) => r.key === "inscription")?.collected ?? 0;
   const uniformeCollected = yearReport.revenueByType.find((r) => r.key === "uniforme")?.collected ?? 0;
 
