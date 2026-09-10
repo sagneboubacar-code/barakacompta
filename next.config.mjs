@@ -1,11 +1,24 @@
 /** @type {import('next').NextConfig} */
+
+// Fichiers de métriques des 14 polices PDF standard. pdfkit les charge par un
+// chemin construit à l'exécution (`./standard-fonts/${nom}.cjs`), que l'analyse
+// statique de Next ne voit pas : sans cette inclusion explicite, le rendu
+// marche en local et échoue une fois déployé avec
+// « Cannot find module '/var/task/node_modules/pdfkit/js/standard-fonts/Helvetica.cjs' ».
+const PDF_FONT_FILES = ["./node_modules/pdfkit/js/standard-fonts/**"];
+
 const nextConfig = {
   experimental: {
-    // @react-pdf/renderer charge ses métriques de polices par des chemins
-    // résolus à l'exécution. Bundlé par webpack dans la fonction serveur, il
-    // fonctionne en local mais casse une fois déployé : on le laisse dans
-    // node_modules, tracé par Next, plutôt que bundlé.
+    // Laisser @react-pdf/renderer dans node_modules plutôt que le faire bundler
+    // par webpack : ses résolutions de chemins internes ne survivent pas au
+    // bundling de la fonction serveur.
     serverComponentsExternalPackages: ["@react-pdf/renderer"],
+    // Les deux clés couvrent les deux formes d'identifiant de route selon la
+    // version de Next — l'une ou l'autre s'applique, jamais rien de superflu.
+    outputFileTracingIncludes: {
+      "/api/reports/financial/pdf": PDF_FONT_FILES,
+      "/api/reports/financial/pdf/route": PDF_FONT_FILES,
+    },
   },
 };
 
