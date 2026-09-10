@@ -37,21 +37,34 @@ export async function GET(request: NextRequest) {
     computeCashManagerBreakdown(supabase, from, to),
   ]);
 
-  const pdf = await renderFinancialReportPdf({
-    school: {
-      name: school?.name ?? "École",
-      address: school?.address ?? null,
-      phone: school?.phone ?? null,
-      email: school?.email ?? null,
-    },
-    currency: school?.currency ?? "XOF",
-    from,
-    to,
-    report,
-    dailyBreakdown,
-    cashManagerBreakdown,
-    generatedAt: new Date(),
-  });
+  // Le rendu PDF dépend de ressources résolues à l'exécution : une panne se
+  // manifesterait sinon par un 500 muet, impossible à diagnostiquer depuis
+  // l'école. On journalise côté serveur et on renvoie un message lisible.
+  let pdf: Buffer;
+  try {
+    pdf = await renderFinancialReportPdf({
+      school: {
+        name: school?.name ?? "École",
+        address: school?.address ?? null,
+        phone: school?.phone ?? null,
+        email: school?.email ?? null,
+      },
+      currency: school?.currency ?? "XOF",
+      from,
+      to,
+      report,
+      dailyBreakdown,
+      cashManagerBreakdown,
+      generatedAt: new Date(),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[rapport-pdf] échec du rendu", error);
+    return NextResponse.json(
+      { error: "Génération du PDF impossible.", detail: message },
+      { status: 500 }
+    );
+  }
 
   return new NextResponse(new Uint8Array(pdf), {
     headers: {
