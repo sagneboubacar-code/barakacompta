@@ -104,6 +104,16 @@ export default async function ReportsPage({
           >
             {t.exportExcel}
           </a>
+          {/* Le PDF s'ouvre dans un onglet plutôt que de se télécharger :
+              l'école le relit avant de l'imprimer ou de l'envoyer. */}
+          <a
+            href={`/api/reports/financial/pdf?${exportParams}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            {t.exportPdf}
+          </a>
         </div>
       </div>
 
