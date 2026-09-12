@@ -24,20 +24,68 @@ export default async function AdminPage({
 
   const today = new Date().toISOString().slice(0, 10);
 
-  const [{ data: schools }, { data: payments }] = await Promise.all([
-    admin
-      .from("schools")
-      .select("id, name, plan, subscription_status, subscription_expires_at, created_at")
-      .order("created_at", { ascending: false }),
-    admin
-      .from("subscription_payments")
-      .select("id, school_id, plan, amount, currency, status, payment_method, created_at")
-      .eq("status", "completed")
-      .order("created_at", { ascending: false }),
-  ]);
+  // Les listes d'élèves/tarifs/responsables sont ramenées entières puis
+  // agrégées ici : à l'échelle de quelques dizaines d'écoles c'est une requête
+  // au lieu de trois par école. À revoir le jour où le parc se compte en
+  // milliers d'écoles.
+  const [{ data: schools }, { data: payments }, { data: students }, { data: fees }, { data: staff }] =
+    await Promise.all([
+      admin
+        .from("schools")
+        .select("id, name, plan, subscription_status, subscription_expires_at, created_at, phone")
+        .order("created_at", { ascending: false }),
+      admin
+        .from("subscription_payments")
+        .select("id, school_id, plan, amount, currency, status, payment_method, created_at")
+        .eq("status", "completed")
+        .order("created_at", { ascending: false }),
+      admin.from("students").select("school_id, status"),
+      admin.from("fee_structures").select("school_id"),
+      admin.from("users").select("school_id, full_name, email, role"),
+    ]);
 
   const allSchools = schools ?? [];
   const completedPayments = payments ?? [];
+
+  const studentCount = new Map<string, number>();
+  for (const student of students ?? []) {
+    if (student.status !== "active" || !student.school_id) continue;
+    studentCount.set(student.school_id, (studentCount.get(student.school_id) ?? 0) + 1);
+  }
+
+  const feeCount = new Map<string, number>();
+  for (const fee of fees ?? []) {
+    if (!fee.school_id) continue;
+    feeCount.set(fee.school_id, (feeCount.get(fee.school_id) ?? 0) + 1);
+  }
+
+  // Le responsable joignable : le propriétaire du compte en priorité, à
+  // défaut n'importe quel membre de l'équipe de l'école.
+  const contactBySchool = new Map<string, { full_name: string | null; email: string | null }>();
+  for (const member of staff ?? []) {
+    if (!member.school_id) continue;
+    const current = contactBySchool.get(member.school_id);
+    if (!current || member.role === "owner") {
+      contactBySchool.set(member.school_id, { full_name: member.full_name, email: member.email });
+    }
+  }
+
+  const daysUntil = (isoDate: string | null) => {
+    if (!isoDate) return null;
+    const diff = Date.parse(`${isoDate}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`);
+    return Math.round(diff / 86_400_000);
+  };
+
+  // "Jamais démarrée" : inscrite, puis plus rien — ni élève, ni tarif. C'est
+  // le signal d'une école à rappeler, pas d'une école perdue.
+  const neverStartedCount = allSchools.filter(
+    (s) => (studentCount.get(s.id) ?? 0) === 0 && (feeCount.get(s.id) ?? 0) === 0
+  ).length;
+
+  const expiringSoonCount = allSchools.filter((s) => {
+    const days = daysUntil(s.subscription_expires_at);
+    return s.subscription_status !== "cancelled" && days !== null && days >= 0 && days <= 7;
+  }).length;
 
   const activeCount = allSchools.filter(
     (s) => s.subscription_status === "active" && s.subscription_expires_at >= today && s.plan !== "trial"
@@ -61,12 +109,14 @@ export default async function AdminPage({
   }));
 
   const kpis = [
-    { label: t.kpiTotalSchools, value: allSchools.length.toString() },
-    { label: t.kpiActiveSubs, value: activeCount.toString() },
-    { label: t.kpiTrial, value: trialCount.toString() },
-    { label: t.kpiExpired, value: expiredCount.toString() },
-    { label: t.kpiTotalRevenue, value: formatCurrency(totalRevenue, undefined, language) },
-    { label: t.kpiMonthRevenue, value: formatCurrency(monthRevenue, undefined, language) },
+    { label: t.kpiTotalSchools, value: allSchools.length.toString(), tone: "" },
+    { label: t.kpiActiveSubs, value: activeCount.toString(), tone: "" },
+    { label: t.kpiTrial, value: trialCount.toString(), tone: "" },
+    { label: t.kpiExpired, value: expiredCount.toString(), tone: "" },
+    { label: t.kpiNeverStarted, value: neverStartedCount.toString(), tone: "text-amber-700" },
+    { label: t.kpiExpiringSoon, value: expiringSoonCount.toString(), tone: "text-rose-700" },
+    { label: t.kpiTotalRevenue, value: formatCurrency(totalRevenue, undefined, language), tone: "" },
+    { label: t.kpiMonthRevenue, value: formatCurrency(monthRevenue, undefined, language), tone: "" },
   ];
 
   return (
@@ -96,11 +146,17 @@ export default async function AdminPage({
           <p className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">{searchParams.success}</p>
         )}
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {kpis.map((kpi) => (
             <div key={kpi.label} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs text-slate-500">{kpi.label}</p>
-              <p className="mt-1 font-mono text-lg font-semibold tabular-nums text-slate-900">{kpi.value}</p>
+              <p
+                className={`mt-1 font-mono text-lg font-semibold tabular-nums ${
+                  kpi.tone || "text-slate-900"
+                }`}
+              >
+                {kpi.value}
+              </p>
             </div>
           ))}
         </div>
@@ -135,28 +191,65 @@ export default async function AdminPage({
             <thead className="text-slate-500">
               <tr>
                 <th className="py-1 font-medium">{t.colSchool}</th>
+                <th className="py-1 font-medium">{t.colStudents}</th>
+                <th className="py-1 font-medium">{t.colActivity}</th>
                 <th className="py-1 font-medium">{t.colPlan}</th>
                 <th className="py-1 font-medium">{t.colStatus}</th>
                 <th className="py-1 font-medium">{t.colExpiresOn}</th>
-                <th className="py-1 font-medium">{t.colRegisteredOn}</th>
                 <th className="py-1 font-medium">{t.colActions}</th>
               </tr>
             </thead>
             <tbody>
               {allSchools.map((school) => {
                 const expired = school.subscription_status === "cancelled" || school.subscription_expires_at < today;
+                const students = studentCount.get(school.id) ?? 0;
+                const fees = feeCount.get(school.id) ?? 0;
+                const neverStarted = students === 0 && fees === 0;
+                const contact = contactBySchool.get(school.id);
+                const remainingDays = daysUntil(school.subscription_expires_at);
+                const urgent = !expired && remainingDays !== null && remainingDays <= 7;
                 return (
-                  <tr key={school.id} className="border-t border-slate-100">
-                    <td className="py-1.5 text-slate-900">{school.name}</td>
-                    <td className="py-1.5 text-slate-600">{t.planLabels[school.plan] ?? school.plan}</td>
-                    <td className={`py-1.5 font-medium ${expired ? "text-red-700" : "text-green-700"}`}>
+                  <tr key={school.id} className="border-t border-slate-100 align-top">
+                    <td className="py-2 text-slate-900">
+                      <span className="font-medium">{school.name}</span>
+                      {/* Le contact du responsable est la raison d'être de cet
+                          écran : sans lui, repérer une école à relancer ne sert
+                          à rien puisqu'on ne peut pas la joindre. */}
+                      <span className="mt-0.5 block text-xs text-slate-500">
+                        {contact ? `${contact.full_name ?? "—"} · ${contact.email ?? "—"}` : t.noOwner}
+                        {school.phone ? ` · ${school.phone}` : ""}
+                      </span>
+                      <span className="block text-xs text-slate-400">
+                        {t.colRegisteredOn} {formatDate(school.created_at, language)}
+                      </span>
+                    </td>
+                    <td
+                      className={`py-2 font-mono tabular-nums ${
+                        students === 0 ? "text-slate-300" : "text-slate-900"
+                      }`}
+                    >
+                      {students}
+                    </td>
+                    <td className="py-2">
+                      {neverStarted ? (
+                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                          {t.neverStarted}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-500">{t.feeCount(fees)}</span>
+                      )}
+                    </td>
+                    <td className="py-2 text-slate-600">{t.planLabels[school.plan] ?? school.plan}</td>
+                    <td className={`py-2 font-medium ${expired ? "text-red-700" : "text-green-700"}`}>
                       {expired ? t.statusExpired : t.statusActive}
                     </td>
-                    <td className="py-1.5 text-slate-600">
+                    <td className={`py-2 ${urgent ? "text-rose-700" : "text-slate-600"}`}>
                       {formatDate(school.subscription_expires_at, language)}
+                      {urgent && remainingDays !== null && (
+                        <span className="block text-xs font-medium">{t.expiresInDays(remainingDays)}</span>
+                      )}
                     </td>
-                    <td className="py-1.5 text-slate-600">{formatDate(school.created_at, language)}</td>
-                    <td className="py-1.5">
+                    <td className="py-2">
                       <form action={activateSubscriptionManually} className="flex items-center gap-1.5">
                         <input type="hidden" name="school_id" value={school.id} />
                         <select
@@ -190,7 +283,7 @@ export default async function AdminPage({
               })}
               {allSchools.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-3 text-center text-xs text-slate-400">
+                  <td colSpan={7} className="py-3 text-center text-xs text-slate-400">
                     {t.noSchools}
                   </td>
                 </tr>
