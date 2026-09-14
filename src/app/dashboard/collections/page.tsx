@@ -128,8 +128,12 @@ export default async function CollectionsPage({
         </button>
       </form>
 
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <table className="w-full text-left text-sm">
+      {/* overflow-x-auto et non overflow-hidden : `hidden` coupait purement et
+          simplement les dernières colonnes sur téléphone, sans moyen d'y accéder.
+          La largeur minimale est indispensable — sans elle, `w-full` écrase les
+          colonnes dans les 375 px et le défilement ne se déclenche jamais. */}
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+        <table className="min-w-[700px] w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-4 py-2 font-medium">{t.colStudent}</th>

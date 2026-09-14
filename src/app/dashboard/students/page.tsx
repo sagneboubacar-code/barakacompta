@@ -216,8 +216,12 @@ export default async function StudentsPage({
         </tbody>
       </table>
 
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white print:hidden">
-        <table className="w-full text-left text-sm">
+      {/* overflow-x-auto et non overflow-hidden : `hidden` coupait purement et
+          simplement les dernières colonnes sur téléphone, sans moyen d'y accéder.
+          La largeur minimale est indispensable — sans elle, `w-full` écrase les
+          colonnes dans les 375 px et le défilement ne se déclenche jamais. */}
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white print:hidden">
+        <table className="min-w-[720px] w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-4 py-2 font-medium">{t.colMatricule}</th>

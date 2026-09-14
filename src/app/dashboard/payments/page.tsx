@@ -343,7 +343,11 @@ export default async function PaymentsPage({
         </section>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      {/* overflow-x-auto et non overflow-hidden : `hidden` coupait purement et
+          simplement les dernières colonnes sur téléphone, sans moyen d'y accéder.
+          La largeur minimale est indispensable — sans elle, `w-full` écrase les
+          colonnes dans les 375 px et le défilement ne se déclenche jamais. */}
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
         {selectedStudent && (
           <h2 className="border-b border-slate-200 px-4 py-2 text-sm font-semibold text-slate-900">
             {t.paymentHistory(`${selectedStudent.last_name} ${selectedStudent.first_name}`)}
