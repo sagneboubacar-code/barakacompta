@@ -10,6 +10,13 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const code = searchParams.get("code");
 
+  // `next` sert au lien de réinitialisation de mot de passe, qui doit
+  // atterrir sur le formulaire de changement et non sur le tableau de bord.
+  // On n'accepte qu'un chemin interne : une URL absolue ferait de cette
+  // route une redirection ouverte, exploitable pour du hameçonnage.
+  const rawNext = searchParams.get("next");
+  const next = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
+
   if (code) {
     const supabase = createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -26,12 +33,18 @@ export async function GET(request: NextRequest) {
           .eq("id", user.id)
           .maybeSingle();
 
-        return NextResponse.redirect(`${origin}${landingPath(appUser)}`);
+        return NextResponse.redirect(`${origin}${next ?? landingPath(appUser)}`);
       }
     }
   }
 
-  return NextResponse.redirect(
-    `${origin}/login?error=${encodeURIComponent("Connexion avec Google impossible. Réessayez.")}`
-  );
+  // Cette route sert aussi aux liens de réinitialisation de mot de passe :
+  // annoncer un échec « Google » induisait en erreur une école qui venait
+  // simplement de cliquer sur un lien périmé.
+  const message = next
+    ? "Ce lien n'est plus valable. Demandez-en un nouveau."
+    : "Connexion avec Google impossible. Réessayez.";
+  const destination = next ? "/mot-de-passe-oublie" : "/login";
+
+  return NextResponse.redirect(`${origin}${destination}?error=${encodeURIComponent(message)}`);
 }

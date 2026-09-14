@@ -8,7 +8,7 @@ import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 export default function LoginPage({
   searchParams,
 }: {
-  searchParams: { error?: string };
+  searchParams: { error?: string; reset?: string };
 }) {
   const language = getLanguage();
   const t = authDict[language].login;
@@ -39,10 +39,26 @@ export default function LoginPage({
           <div className="h-px flex-1 bg-slate-200" />
         </div>
 
-        {searchParams.error && (
-          <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-            {searchParams.error}
+        {searchParams.reset && (
+          <p className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
+            {authDict[language].reset.done}
           </p>
+        )}
+
+        {/* La sortie de secours est proposée là où l'école bloque — dans le
+            message d'échec lui-même. Un lien discret en bas de page ne se
+            voit pas quand on est occupé à retaper son mot de passe. */}
+        {searchParams.error && (
+          <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p>{searchParams.error}</p>
+            <p className="mt-1 text-xs text-red-600">{t.forgotHint}</p>
+            <Link
+              href="/mot-de-passe-oublie"
+              className="mt-1 inline-block text-xs font-semibold text-red-800 underline"
+            >
+              {t.forgotLink}
+            </Link>
+          </div>
         )}
 
         <div className="space-y-1">
@@ -71,6 +87,12 @@ export default function LoginPage({
             autoComplete="current-password"
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
           />
+        </div>
+
+        <div className="text-right">
+          <Link href="/mot-de-passe-oublie" className="text-xs text-slate-500 underline hover:text-slate-900">
+            {t.forgotLink}
+          </Link>
         </div>
 
         <button

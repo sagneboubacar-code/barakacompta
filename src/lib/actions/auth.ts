@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import { randomSlugSuffix, slugify } from "@/lib/slug";
@@ -175,4 +176,71 @@ export async function signOut() {
   const supabase = createServerSupabase();
   await supabase.auth.signOut();
   redirect("/login");
+}
+
+// L'origine réelle de la requête, pour que le lien reçu par e-mail ramène
+// sur le domaine d'où part la demande (production comme local) plutôt que
+// sur une adresse codée en dur.
+function requestOrigin(): string {
+  const h = headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "www.barakacompta.com";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  return `${proto}://${host}`;
+}
+
+// Envoi du lien de réinitialisation. Le message de retour est le même que
+// l'adresse existe ou non : répondre « compte inconnu » permettrait de
+// savoir quelles écoles sont inscrites chez Baraka.
+export async function requestPasswordReset(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const base = "/mot-de-passe-oublie";
+
+  if (!email || !email.includes("@")) {
+    fail(base, "invalid");
+  }
+
+  const supabase = createServerSupabase();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    // On repasse par /auth/callback : c'est lui qui échange le code contre
+    // une session, exactement comme pour la connexion Google.
+    redirectTo: `${requestOrigin()}/auth/callback?next=/reinitialiser-mot-de-passe`,
+  });
+
+  // Seule la limite d'envoi mérite d'être signalée : l'école doit savoir
+  // qu'il faut patienter, et non renvoyer dix fois de suite.
+  if (error && /rate|limit|seconds/i.test(error.message)) {
+    fail(base, "rate");
+  }
+
+  redirect(`${base}?sent=1`);
+}
+
+export async function updatePassword(formData: FormData) {
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+  const base = "/reinitialiser-mot-de-passe";
+
+  if (password.length < 8) {
+    fail(base, "short");
+  }
+  if (password !== confirm) {
+    fail(base, "mismatch");
+  }
+
+  const supabase = createServerSupabase();
+  const { error } = await supabase.auth.updateUser({ password });
+
+  // Sans session valide (lien périmé ou déjà utilisé), Supabase refuse.
+  if (error) {
+    fail(base, "expired");
+  }
+
+  // On ferme la session ouverte par le lien avant de renvoyer vers /login :
+  // sans ça le middleware, voyant un utilisateur connecté, redirige aussitôt
+  // vers le tableau de bord et l'école ne voit jamais la confirmation. La
+  // reconnexion immédiate lui prouve en outre que son nouveau mot de passe
+  // fonctionne.
+  await supabase.auth.signOut();
+
+  redirect("/login?reset=1");
 }
