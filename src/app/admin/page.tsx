@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireRole } from "@/lib/auth/guard";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { signOut } from "@/lib/actions/auth";
@@ -135,14 +136,22 @@ export default async function AdminPage({
             <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">{t.brand}</p>
             <p className="text-sm text-slate-500">{appUser.full_name ?? appUser.email}</p>
           </div>
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+          <div className="flex items-center gap-2">
+            <Link
+              href="/admin/prospection"
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
             >
-              {t.signOut}
-            </button>
-          </form>
+              Prospection
+            </Link>
+            <form action={signOut}>
+              <button
+                type="submit"
+                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+              >
+                {t.signOut}
+              </button>
+            </form>
+          </div>
         </div>
       </header>
 

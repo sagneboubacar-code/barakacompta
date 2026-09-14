@@ -59,6 +59,48 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["schools"]["Insert"]>;
         Relationships: [];
       };
+      prospects: {
+        Row: {
+          id: string;
+          nom: string;
+          ville: string | null;
+          quartier: string | null;
+          telephone: string | null;
+          email: string | null;
+          email_fiable: boolean;
+          type_etablissement: string | null;
+          source_url: string;
+          score: number;
+          pourquoi: string | null;
+          accroche: string | null;
+          statut: "nouveau" | "contacte" | "interesse" | "refuse" | "client";
+          notes: string | null;
+          recherche: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          nom: string;
+          ville?: string | null;
+          quartier?: string | null;
+          telephone?: string | null;
+          email?: string | null;
+          email_fiable?: boolean;
+          type_etablissement?: string | null;
+          source_url: string;
+          score: number;
+          pourquoi?: string | null;
+          accroche?: string | null;
+          statut?: "nouveau" | "contacte" | "interesse" | "refuse" | "client";
+          notes?: string | null;
+          recherche?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["prospects"]["Insert"]>;
+        Relationships: [];
+      };
       users: {
         Row: {
           id: string;
