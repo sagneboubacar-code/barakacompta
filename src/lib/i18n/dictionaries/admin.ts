@@ -32,6 +32,7 @@ export const adminDict = {
     expiresInDays: (days: number) =>
       days === 0 ? "expire aujourd'hui" : `dans ${days} jour${days > 1 ? "s" : ""}`,
     noOwner: "Aucun responsable",
+    noPhone: "Aucun numéro",
     noSchools: "Aucune école pour l'instant.",
     monthsSuffix: "mois",
     activateSubmit: "Activer",
@@ -79,6 +80,7 @@ export const adminDict = {
     feeCount: (count: number) => `${count} رسم`,
     expiresInDays: (days: number) => (days === 0 ? "تنتهي اليوم" : `خلال ${days} يوم`),
     noOwner: "لا يوجد مسؤول",
+    noPhone: "لا يوجد رقم",
     statusActive: "نشط",
     statusExpired: "منتهي",
     noSchools: "لا توجد مدرسة حاليًا.",

@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { signOut } from "@/lib/actions/auth";
 import { activateSubscriptionManually } from "@/lib/actions/admin";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { telHref, whatsappHref, formatPhone } from "@/lib/phone";
 import { paymentMethodLabel } from "@/lib/constants/payments";
 import { getLanguage } from "@/lib/i18n/get-language";
 import { adminDict } from "@/lib/i18n/dictionaries/admin";
@@ -41,7 +42,7 @@ export default async function AdminPage({
         .order("created_at", { ascending: false }),
       admin.from("students").select("school_id, status"),
       admin.from("fee_structures").select("school_id"),
-      admin.from("users").select("school_id, full_name, email, role"),
+      admin.from("users").select("school_id, full_name, email, phone, role"),
     ]);
 
   const allSchools = schools ?? [];
@@ -61,12 +62,19 @@ export default async function AdminPage({
 
   // Le responsable joignable : le propriétaire du compte en priorité, à
   // défaut n'importe quel membre de l'équipe de l'école.
-  const contactBySchool = new Map<string, { full_name: string | null; email: string | null }>();
+  const contactBySchool = new Map<
+    string,
+    { full_name: string | null; email: string | null; phone: string | null }
+  >();
   for (const member of staff ?? []) {
     if (!member.school_id) continue;
     const current = contactBySchool.get(member.school_id);
     if (!current || member.role === "owner") {
-      contactBySchool.set(member.school_id, { full_name: member.full_name, email: member.email });
+      contactBySchool.set(member.school_id, {
+        full_name: member.full_name,
+        email: member.email,
+        phone: member.phone,
+      });
     }
   }
 
@@ -206,6 +214,7 @@ export default async function AdminPage({
                 const fees = feeCount.get(school.id) ?? 0;
                 const neverStarted = students === 0 && fees === 0;
                 const contact = contactBySchool.get(school.id);
+                const phone = contact?.phone ?? school.phone ?? null;
                 const remainingDays = daysUntil(school.subscription_expires_at);
                 const urgent = !expired && remainingDays !== null && remainingDays <= 7;
                 return (
@@ -217,8 +226,27 @@ export default async function AdminPage({
                           à rien puisqu'on ne peut pas la joindre. */}
                       <span className="mt-0.5 block text-xs text-slate-500">
                         {contact ? `${contact.full_name ?? "—"} · ${contact.email ?? "—"}` : t.noOwner}
-                        {school.phone ? ` · ${school.phone}` : ""}
                       </span>
+                      {/* Le numéro est le plus souvent sur le compte du
+                          responsable, pas sur la fiche de l'école : n'afficher
+                          que school.phone laissait 5 lignes sur 7 sans numéro. */}
+                      {phone ? (
+                        <span className="mt-0.5 flex items-center gap-2 text-xs">
+                          <a href={telHref(phone) ?? "#"} className="font-medium text-slate-700 hover:underline">
+                            {formatPhone(phone)}
+                          </a>
+                          <a
+                            href={whatsappHref(phone) ?? "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700 hover:bg-emerald-100"
+                          >
+                            WhatsApp
+                          </a>
+                        </span>
+                      ) : (
+                        <span className="mt-0.5 block text-xs text-slate-300">{t.noPhone}</span>
+                      )}
                       <span className="block text-xs text-slate-400">
                         {t.colRegisteredOn} {formatDate(school.created_at, language)}
                       </span>

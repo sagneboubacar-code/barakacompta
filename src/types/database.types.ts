@@ -65,6 +65,7 @@ export interface Database {
           school_id: string | null;
           full_name: string | null;
           email: string | null;
+          phone: string | null;
           role: "super_admin" | "owner" | "admin" | "accountant";
           created_at: string;
           updated_at: string;
@@ -74,6 +75,7 @@ export interface Database {
           school_id?: string | null;
           full_name?: string | null;
           email?: string | null;
+          phone?: string | null;
           role?: "super_admin" | "owner" | "admin" | "accountant";
           created_at?: string;
           updated_at?: string;
