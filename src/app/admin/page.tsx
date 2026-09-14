@@ -171,192 +171,204 @@ export default async function AdminPage({
 
         <section className="rounded-lg border border-slate-200 bg-white p-4">
           <h2 className="text-sm font-semibold text-slate-900">{t.revenueByPlan}</h2>
-          <table className="mt-3 w-full text-left text-sm">
-            <thead className="text-slate-500">
-              <tr>
-                <th className="py-1 font-medium">{t.colPlan}</th>
-                <th className="py-1 font-medium">{t.colSchools}</th>
-                <th className="py-1 font-medium">{t.colTotalRevenue}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {revenueByPlan.map((row) => (
-                <tr key={row.plan} className="border-t border-slate-100">
-                  <td className="py-1.5 text-slate-900">{t.planLabels[row.plan] ?? row.plan}</td>
-                  <td className="py-1.5 text-slate-600">{row.schools}</td>
-                  <td className="py-1.5 font-mono tabular-nums text-slate-600">
-                    {formatCurrency(row.revenue, undefined, language)}
-                  </td>
+          {/* Le tableau défile dans sa carte : avec le contact et l'activité,
+              les colonnes dépassent largement un écran de téléphone. */}
+          <div className="overflow-x-auto">
+            <table className="mt-3 w-full text-left text-sm">
+              <thead className="text-slate-500">
+                <tr>
+                  <th className="py-1 font-medium">{t.colPlan}</th>
+                  <th className="py-1 font-medium">{t.colSchools}</th>
+                  <th className="py-1 font-medium">{t.colTotalRevenue}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {revenueByPlan.map((row) => (
+                  <tr key={row.plan} className="border-t border-slate-100">
+                    <td className="py-1.5 text-slate-900">{t.planLabels[row.plan] ?? row.plan}</td>
+                    <td className="py-1.5 text-slate-600">{row.schools}</td>
+                    <td className="py-1.5 font-mono tabular-nums text-slate-600">
+                      {formatCurrency(row.revenue, undefined, language)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <section className="rounded-lg border border-slate-200 bg-white p-4">
           <h2 className="text-sm font-semibold text-slate-900">{t.schoolsSection(allSchools.length)}</h2>
-          <table className="mt-3 w-full text-left text-sm">
-            <thead className="text-slate-500">
-              <tr>
-                <th className="py-1 font-medium">{t.colSchool}</th>
-                <th className="py-1 font-medium">{t.colStudents}</th>
-                <th className="py-1 font-medium">{t.colActivity}</th>
-                <th className="py-1 font-medium">{t.colPlan}</th>
-                <th className="py-1 font-medium">{t.colStatus}</th>
-                <th className="py-1 font-medium">{t.colExpiresOn}</th>
-                <th className="py-1 font-medium">{t.colActions}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {allSchools.map((school) => {
-                const expired = school.subscription_status === "cancelled" || school.subscription_expires_at < today;
-                const students = studentCount.get(school.id) ?? 0;
-                const fees = feeCount.get(school.id) ?? 0;
-                const neverStarted = students === 0 && fees === 0;
-                const contact = contactBySchool.get(school.id);
-                const phone = contact?.phone ?? school.phone ?? null;
-                const remainingDays = daysUntil(school.subscription_expires_at);
-                const urgent = !expired && remainingDays !== null && remainingDays <= 7;
-                return (
-                  <tr key={school.id} className="border-t border-slate-100 align-top">
-                    <td className="py-2 text-slate-900">
-                      <span className="font-medium">{school.name}</span>
-                      {/* Le contact du responsable est la raison d'être de cet
-                          écran : sans lui, repérer une école à relancer ne sert
-                          à rien puisqu'on ne peut pas la joindre. */}
-                      <span className="mt-0.5 block text-xs text-slate-500">
-                        {contact ? `${contact.full_name ?? "—"} · ${contact.email ?? "—"}` : t.noOwner}
-                      </span>
-                      {/* Le numéro est le plus souvent sur le compte du
-                          responsable, pas sur la fiche de l'école : n'afficher
-                          que school.phone laissait 5 lignes sur 7 sans numéro. */}
-                      {phone ? (
-                        <span className="mt-0.5 flex items-center gap-2 text-xs">
-                          <a href={telHref(phone) ?? "#"} className="font-medium text-slate-700 hover:underline">
-                            {formatPhone(phone)}
-                          </a>
-                          <a
-                            href={whatsappHref(phone) ?? "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700 hover:bg-emerald-100"
+          {/* Le tableau défile dans sa carte : avec le contact et l'activité,
+              les colonnes dépassent largement un écran de téléphone. */}
+          <div className="overflow-x-auto">
+            <table className="mt-3 w-full text-left text-sm">
+              <thead className="text-slate-500">
+                <tr>
+                  <th className="py-1 font-medium">{t.colSchool}</th>
+                  <th className="py-1 font-medium">{t.colStudents}</th>
+                  <th className="py-1 font-medium">{t.colActivity}</th>
+                  <th className="py-1 font-medium">{t.colPlan}</th>
+                  <th className="py-1 font-medium">{t.colStatus}</th>
+                  <th className="py-1 font-medium">{t.colExpiresOn}</th>
+                  <th className="py-1 font-medium">{t.colActions}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allSchools.map((school) => {
+                  const expired = school.subscription_status === "cancelled" || school.subscription_expires_at < today;
+                  const students = studentCount.get(school.id) ?? 0;
+                  const fees = feeCount.get(school.id) ?? 0;
+                  const neverStarted = students === 0 && fees === 0;
+                  const contact = contactBySchool.get(school.id);
+                  const phone = contact?.phone ?? school.phone ?? null;
+                  const remainingDays = daysUntil(school.subscription_expires_at);
+                  const urgent = !expired && remainingDays !== null && remainingDays <= 7;
+                  return (
+                    <tr key={school.id} className="border-t border-slate-100 align-top">
+                      <td className="py-2 text-slate-900">
+                        <span className="font-medium">{school.name}</span>
+                        {/* Le contact du responsable est la raison d'être de cet
+                            écran : sans lui, repérer une école à relancer ne sert
+                            à rien puisqu'on ne peut pas la joindre. */}
+                        <span className="mt-0.5 block text-xs text-slate-500">
+                          {contact ? `${contact.full_name ?? "—"} · ${contact.email ?? "—"}` : t.noOwner}
+                        </span>
+                        {/* Le numéro est le plus souvent sur le compte du
+                            responsable, pas sur la fiche de l'école : n'afficher
+                            que school.phone laissait 5 lignes sur 7 sans numéro. */}
+                        {phone ? (
+                          <span className="mt-0.5 flex items-center gap-2 text-xs">
+                            <a href={telHref(phone) ?? "#"} className="font-medium text-slate-700 hover:underline">
+                              {formatPhone(phone)}
+                            </a>
+                            <a
+                              href={whatsappHref(phone) ?? "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700 hover:bg-emerald-100"
+                            >
+                              WhatsApp
+                            </a>
+                          </span>
+                        ) : (
+                          <span className="mt-0.5 block text-xs text-slate-300">{t.noPhone}</span>
+                        )}
+                        <span className="block text-xs text-slate-400">
+                          {t.colRegisteredOn} {formatDate(school.created_at, language)}
+                        </span>
+                      </td>
+                      <td
+                        className={`py-2 font-mono tabular-nums ${
+                          students === 0 ? "text-slate-300" : "text-slate-900"
+                        }`}
+                      >
+                        {students}
+                      </td>
+                      <td className="py-2">
+                        {neverStarted ? (
+                          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                            {t.neverStarted}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-500">{t.feeCount(fees)}</span>
+                        )}
+                      </td>
+                      <td className="py-2 text-slate-600">{t.planLabels[school.plan] ?? school.plan}</td>
+                      <td className={`py-2 font-medium ${expired ? "text-red-700" : "text-green-700"}`}>
+                        {expired ? t.statusExpired : t.statusActive}
+                      </td>
+                      <td className={`py-2 ${urgent ? "text-rose-700" : "text-slate-600"}`}>
+                        {formatDate(school.subscription_expires_at, language)}
+                        {urgent && remainingDays !== null && (
+                          <span className="block text-xs font-medium">{t.expiresInDays(remainingDays)}</span>
+                        )}
+                      </td>
+                      <td className="py-2">
+                        <form action={activateSubscriptionManually} className="flex items-center gap-1.5">
+                          <input type="hidden" name="school_id" value={school.id} />
+                          <select
+                            name="plan"
+                            required
+                            className="rounded-md border border-slate-300 px-1.5 py-1 text-xs"
                           >
-                            WhatsApp
-                          </a>
-                        </span>
-                      ) : (
-                        <span className="mt-0.5 block text-xs text-slate-300">{t.noPhone}</span>
-                      )}
-                      <span className="block text-xs text-slate-400">
-                        {t.colRegisteredOn} {formatDate(school.created_at, language)}
-                      </span>
-                    </td>
-                    <td
-                      className={`py-2 font-mono tabular-nums ${
-                        students === 0 ? "text-slate-300" : "text-slate-900"
-                      }`}
-                    >
-                      {students}
-                    </td>
-                    <td className="py-2">
-                      {neverStarted ? (
-                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                          {t.neverStarted}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-slate-500">{t.feeCount(fees)}</span>
-                      )}
-                    </td>
-                    <td className="py-2 text-slate-600">{t.planLabels[school.plan] ?? school.plan}</td>
-                    <td className={`py-2 font-medium ${expired ? "text-red-700" : "text-green-700"}`}>
-                      {expired ? t.statusExpired : t.statusActive}
-                    </td>
-                    <td className={`py-2 ${urgent ? "text-rose-700" : "text-slate-600"}`}>
-                      {formatDate(school.subscription_expires_at, language)}
-                      {urgent && remainingDays !== null && (
-                        <span className="block text-xs font-medium">{t.expiresInDays(remainingDays)}</span>
-                      )}
-                    </td>
-                    <td className="py-2">
-                      <form action={activateSubscriptionManually} className="flex items-center gap-1.5">
-                        <input type="hidden" name="school_id" value={school.id} />
-                        <select
-                          name="plan"
-                          required
-                          className="rounded-md border border-slate-300 px-1.5 py-1 text-xs"
-                        >
-                          <option value="basic">{t.planLabels.basic}</option>
-                          <option value="pro">{t.planLabels.pro}</option>
-                        </select>
-                        <input
-                          type="number"
-                          name="months"
-                          defaultValue={1}
-                          min={1}
-                          max={24}
-                          required
-                          className="w-14 rounded-md border border-slate-300 px-1.5 py-1 text-xs"
-                        />
-                        <span className="text-xs text-slate-400">{t.monthsSuffix}</span>
-                        <button
-                          type="submit"
-                          className="rounded-md bg-slate-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-slate-800"
-                        >
-                          {t.activateSubmit}
-                        </button>
-                      </form>
+                            <option value="basic">{t.planLabels.basic}</option>
+                            <option value="pro">{t.planLabels.pro}</option>
+                          </select>
+                          <input
+                            type="number"
+                            name="months"
+                            defaultValue={1}
+                            min={1}
+                            max={24}
+                            required
+                            className="w-14 rounded-md border border-slate-300 px-1.5 py-1 text-xs"
+                          />
+                          <span className="text-xs text-slate-400">{t.monthsSuffix}</span>
+                          <button
+                            type="submit"
+                            className="rounded-md bg-slate-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-slate-800"
+                          >
+                            {t.activateSubmit}
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {allSchools.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="py-3 text-center text-xs text-slate-400">
+                      {t.noSchools}
                     </td>
                   </tr>
-                );
-              })}
-              {allSchools.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="py-3 text-center text-xs text-slate-400">
-                    {t.noSchools}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <section className="rounded-lg border border-slate-200 bg-white p-4">
           <h2 className="text-sm font-semibold text-slate-900">{t.recentPayments}</h2>
-          <table className="mt-3 w-full text-left text-sm">
-            <thead className="text-slate-500">
-              <tr>
-                <th className="py-1 font-medium">{t.colDate}</th>
-                <th className="py-1 font-medium">{t.colSchool}</th>
-                <th className="py-1 font-medium">{t.colPlan}</th>
-                <th className="py-1 font-medium">{t.colAmount}</th>
-                <th className="py-1 font-medium">{t.colMethod}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {completedPayments.slice(0, 15).map((payment) => (
-                <tr key={payment.id} className="border-t border-slate-100">
-                  <td className="py-1.5 text-slate-600">{formatDate(payment.created_at, language)}</td>
-                  <td className="py-1.5 text-slate-900">
-                    {allSchools.find((s) => s.id === payment.school_id)?.name ?? "—"}
-                  </td>
-                  <td className="py-1.5 text-slate-600">{t.planLabels[payment.plan] ?? payment.plan}</td>
-                  <td className="py-1.5 font-mono tabular-nums text-slate-600">
-                    {formatCurrency(Number(payment.amount), payment.currency, language)}
-                  </td>
-                  <td className="py-1.5 text-slate-600">
-                    {paymentMethodLabel(payment.payment_method, language)}
-                  </td>
-                </tr>
-              ))}
-              {completedPayments.length === 0 && (
+          {/* Le tableau défile dans sa carte : avec le contact et l'activité,
+              les colonnes dépassent largement un écran de téléphone. */}
+          <div className="overflow-x-auto">
+            <table className="mt-3 w-full text-left text-sm">
+              <thead className="text-slate-500">
                 <tr>
-                  <td colSpan={5} className="py-3 text-center text-xs text-slate-400">
-                    {t.noPayments}
-                  </td>
+                  <th className="py-1 font-medium">{t.colDate}</th>
+                  <th className="py-1 font-medium">{t.colSchool}</th>
+                  <th className="py-1 font-medium">{t.colPlan}</th>
+                  <th className="py-1 font-medium">{t.colAmount}</th>
+                  <th className="py-1 font-medium">{t.colMethod}</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {completedPayments.slice(0, 15).map((payment) => (
+                  <tr key={payment.id} className="border-t border-slate-100">
+                    <td className="py-1.5 text-slate-600">{formatDate(payment.created_at, language)}</td>
+                    <td className="py-1.5 text-slate-900">
+                      {allSchools.find((s) => s.id === payment.school_id)?.name ?? "—"}
+                    </td>
+                    <td className="py-1.5 text-slate-600">{t.planLabels[payment.plan] ?? payment.plan}</td>
+                    <td className="py-1.5 font-mono tabular-nums text-slate-600">
+                      {formatCurrency(Number(payment.amount), payment.currency, language)}
+                    </td>
+                    <td className="py-1.5 text-slate-600">
+                      {paymentMethodLabel(payment.payment_method, language)}
+                    </td>
+                  </tr>
+                ))}
+                {completedPayments.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="py-3 text-center text-xs text-slate-400">
+                      {t.noPayments}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </section>
       </main>
     </div>

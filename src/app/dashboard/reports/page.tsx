@@ -164,182 +164,202 @@ export default async function ReportsPage({
 
       <section className="break-inside-avoid space-y-3">
         <SectionHeading>{t.sectionRevenue}</SectionHeading>
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="text-[11px] uppercase tracking-wide text-slate-400">
-              <th className="py-2 font-medium">{t.colType}</th>
-              <th className="py-2 text-right font-medium">{t.colExpected}</th>
-              <th className="py-2 text-right font-medium">{t.colCollected}</th>
-              <th className="py-2 text-right font-medium">{t.colRemaining}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {report.revenueByType.map((bucket) => (
-              <tr key={bucket.key} className="border-t border-slate-100">
-                <td className="py-2 text-slate-900">{t.revenueLabels[bucket.key] ?? bucket.label}</td>
-                <td className="py-2 text-right font-mono tabular-nums text-slate-600">
-                  {money(bucket.expected)}
+        {/* Le tableau défile horizontalement dans sa carte plutôt que de pousser
+            toute la page : sur un écran de téléphone, les colonnes de montants
+            sortaient de l'écran. L'impression, elle, reste intacte. */}
+        <div className="overflow-x-auto print:overflow-visible">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="text-[11px] uppercase tracking-wide text-slate-400">
+                <th className="py-2 font-medium">{t.colType}</th>
+                <th className="py-2 text-right font-medium">{t.colExpected}</th>
+                <th className="py-2 text-right font-medium">{t.colCollected}</th>
+                <th className="py-2 text-right font-medium">{t.colRemaining}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.revenueByType.map((bucket) => (
+                <tr key={bucket.key} className="border-t border-slate-100">
+                  <td className="py-2 text-slate-900">{t.revenueLabels[bucket.key] ?? bucket.label}</td>
+                  <td className="py-2 text-right font-mono tabular-nums text-slate-600">
+                    {money(bucket.expected)}
+                  </td>
+                  <td className="py-2 text-right font-mono tabular-nums text-emerald-700">
+                    {money(bucket.collected)}
+                  </td>
+                  <td className="py-2 text-right font-mono tabular-nums text-amber-700">
+                    {money(bucket.remaining)}
+                  </td>
+                </tr>
+              ))}
+              <tr className="border-t-2 border-slate-900 font-semibold">
+                <td className="py-2 text-slate-900">{t.total}</td>
+                <td className="py-2 text-right font-mono tabular-nums text-slate-900">
+                  {money(report.totalExpected)}
                 </td>
                 <td className="py-2 text-right font-mono tabular-nums text-emerald-700">
-                  {money(bucket.collected)}
+                  {money(report.totalCollected)}
                 </td>
                 <td className="py-2 text-right font-mono tabular-nums text-amber-700">
-                  {money(bucket.remaining)}
+                  {money(report.totalRemaining)}
                 </td>
               </tr>
-            ))}
-            <tr className="border-t-2 border-slate-900 font-semibold">
-              <td className="py-2 text-slate-900">{t.total}</td>
-              <td className="py-2 text-right font-mono tabular-nums text-slate-900">
-                {money(report.totalExpected)}
-              </td>
-              <td className="py-2 text-right font-mono tabular-nums text-emerald-700">
-                {money(report.totalCollected)}
-              </td>
-              <td className="py-2 text-right font-mono tabular-nums text-amber-700">
-                {money(report.totalRemaining)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section className="break-inside-avoid space-y-3">
         <SectionHeading>{t.sectionExpenses}</SectionHeading>
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="text-[11px] uppercase tracking-wide text-slate-400">
-              <th className="py-2 font-medium">{t.colCategory}</th>
-              <th className="py-2 text-right font-medium">{t.colAmount}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {report.expensesByCategory.map((category) => (
-              <tr key={category.key} className="border-t border-slate-100">
-                <td className="py-2 text-slate-900">{expenseCategoryLabel(category.key, language)}</td>
+        {/* Le tableau défile horizontalement dans sa carte plutôt que de pousser
+            toute la page : sur un écran de téléphone, les colonnes de montants
+            sortaient de l'écran. L'impression, elle, reste intacte. */}
+        <div className="overflow-x-auto print:overflow-visible">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="text-[11px] uppercase tracking-wide text-slate-400">
+                <th className="py-2 font-medium">{t.colCategory}</th>
+                <th className="py-2 text-right font-medium">{t.colAmount}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.expensesByCategory.map((category) => (
+                <tr key={category.key} className="border-t border-slate-100">
+                  <td className="py-2 text-slate-900">{expenseCategoryLabel(category.key, language)}</td>
+                  <td className="py-2 text-right font-mono tabular-nums text-rose-700">
+                    {money(category.amount)}
+                  </td>
+                </tr>
+              ))}
+              <tr className="border-t-2 border-slate-900 font-semibold">
+                <td className="py-2 text-slate-900">{t.total}</td>
                 <td className="py-2 text-right font-mono tabular-nums text-rose-700">
-                  {money(category.amount)}
+                  {money(report.totalExpenses)}
                 </td>
               </tr>
-            ))}
-            <tr className="border-t-2 border-slate-900 font-semibold">
-              <td className="py-2 text-slate-900">{t.total}</td>
-              <td className="py-2 text-right font-mono tabular-nums text-rose-700">
-                {money(report.totalExpenses)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       {cashManagerBreakdown.length > 0 && (
         <section className="break-inside-avoid space-y-3">
           <SectionHeading>{t.sectionByManager}</SectionHeading>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="text-[11px] uppercase tracking-wide text-slate-400">
-                <th className="py-2 font-medium">{t.colManager}</th>
-                <th className="py-2 text-right font-medium">{t.colRevenue}</th>
-                <th className="py-2 text-right font-medium">{t.colExpense}</th>
-                <th className="py-2 text-right font-medium">{t.colBalance}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cashManagerBreakdown.map((manager) => (
-                <tr key={manager.cashManagerId ?? "none"} className="border-t border-slate-100">
-                  <td className="py-2 text-slate-900">
-                    {manager.cashManagerId === null ? t.unassigned : manager.name}
-                  </td>
+          {/* Le tableau défile horizontalement dans sa carte plutôt que de pousser
+              toute la page : sur un écran de téléphone, les colonnes de montants
+              sortaient de l'écran. L'impression, elle, reste intacte. */}
+          <div className="overflow-x-auto print:overflow-visible">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="text-[11px] uppercase tracking-wide text-slate-400">
+                  <th className="py-2 font-medium">{t.colManager}</th>
+                  <th className="py-2 text-right font-medium">{t.colRevenue}</th>
+                  <th className="py-2 text-right font-medium">{t.colExpense}</th>
+                  <th className="py-2 text-right font-medium">{t.colBalance}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cashManagerBreakdown.map((manager) => (
+                  <tr key={manager.cashManagerId ?? "none"} className="border-t border-slate-100">
+                    <td className="py-2 text-slate-900">
+                      {manager.cashManagerId === null ? t.unassigned : manager.name}
+                    </td>
+                    <td className="py-2 text-right font-mono tabular-nums text-emerald-700">
+                      {money(manager.collected)}
+                    </td>
+                    <td className="py-2 text-right font-mono tabular-nums text-rose-700">
+                      {money(manager.spent)}
+                    </td>
+                    <td
+                      className={`py-2 text-right font-mono font-medium tabular-nums ${
+                        manager.solde >= 0 ? "text-emerald-700" : "text-rose-700"
+                      }`}
+                    >
+                      {formatSignedCurrency(manager.solde, currency, language)}
+                    </td>
+                  </tr>
+                ))}
+                <tr className="border-t-2 border-slate-900 font-semibold">
+                  <td className="py-2 text-slate-900">{t.finalAccounting}</td>
                   <td className="py-2 text-right font-mono tabular-nums text-emerald-700">
-                    {money(manager.collected)}
+                    {money(report.totalCollected)}
                   </td>
                   <td className="py-2 text-right font-mono tabular-nums text-rose-700">
-                    {money(manager.spent)}
+                    {money(report.totalExpenses)}
                   </td>
                   <td
-                    className={`py-2 text-right font-mono font-medium tabular-nums ${
-                      manager.solde >= 0 ? "text-emerald-700" : "text-rose-700"
+                    className={`py-2 text-right font-mono tabular-nums ${
+                      report.balance >= 0 ? "text-emerald-700" : "text-rose-700"
                     }`}
                   >
-                    {formatSignedCurrency(manager.solde, currency, language)}
+                    {formatSignedCurrency(report.balance, currency, language)}
                   </td>
                 </tr>
-              ))}
-              <tr className="border-t-2 border-slate-900 font-semibold">
-                <td className="py-2 text-slate-900">{t.finalAccounting}</td>
-                <td className="py-2 text-right font-mono tabular-nums text-emerald-700">
-                  {money(report.totalCollected)}
-                </td>
-                <td className="py-2 text-right font-mono tabular-nums text-rose-700">
-                  {money(report.totalExpenses)}
-                </td>
-                <td
-                  className={`py-2 text-right font-mono tabular-nums ${
-                    report.balance >= 0 ? "text-emerald-700" : "text-rose-700"
-                  }`}
-                >
-                  {formatSignedCurrency(report.balance, currency, language)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
 
       <section className="space-y-3">
         <SectionHeading>{t.sectionDaily}</SectionHeading>
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="text-[11px] uppercase tracking-wide text-slate-400">
-              <th className="py-2 font-medium">{t.colDate}</th>
-              <th className="py-2 text-right font-medium">{t.colRevenues}</th>
-              <th className="py-2 text-right font-medium">{t.colExpenses}</th>
-              <th className="py-2 text-right font-medium">{t.colBalance}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dailyBreakdown.map((day) => {
-              const isQuiet = day.recettes === 0 && day.depenses === 0;
-              return (
-                <tr
-                  key={day.key}
-                  className={`break-inside-avoid border-t border-slate-100 even:bg-slate-50/60 ${
-                    isQuiet ? "text-slate-300" : ""
-                  }`}
-                >
-                  <td className={`py-1.5 ${isQuiet ? "" : "text-slate-900"}`}>{day.label}</td>
-                  <td
-                    className={`py-1.5 text-right font-mono tabular-nums ${
-                      isQuiet ? "" : "text-emerald-700"
+        {/* Le tableau défile horizontalement dans sa carte plutôt que de pousser
+            toute la page : sur un écran de téléphone, les colonnes de montants
+            sortaient de l'écran. L'impression, elle, reste intacte. */}
+        <div className="overflow-x-auto print:overflow-visible">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="text-[11px] uppercase tracking-wide text-slate-400">
+                <th className="py-2 font-medium">{t.colDate}</th>
+                <th className="py-2 text-right font-medium">{t.colRevenues}</th>
+                <th className="py-2 text-right font-medium">{t.colExpenses}</th>
+                <th className="py-2 text-right font-medium">{t.colBalance}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dailyBreakdown.map((day) => {
+                const isQuiet = day.recettes === 0 && day.depenses === 0;
+                return (
+                  <tr
+                    key={day.key}
+                    className={`break-inside-avoid border-t border-slate-100 even:bg-slate-50/60 ${
+                      isQuiet ? "text-slate-300" : ""
                     }`}
                   >
-                    {isQuiet ? "—" : money(day.recettes)}
-                  </td>
-                  <td
-                    className={`py-1.5 text-right font-mono tabular-nums ${isQuiet ? "" : "text-rose-700"}`}
-                  >
-                    {isQuiet ? "—" : money(day.depenses)}
-                  </td>
-                  <td className={`py-1.5 text-right font-mono tabular-nums ${isQuiet ? "" : "font-medium"}`}>
-                    {isQuiet ? "—" : formatSignedCurrency(day.solde, currency, language)}
-                  </td>
-                </tr>
-              );
-            })}
-            <tr className="border-t-2 border-slate-900 font-semibold">
-              <td className="py-2 text-slate-900">{t.total}</td>
-              <td className="py-2 text-right font-mono tabular-nums text-emerald-700">
-                {money(dailyBreakdown.reduce((sum, d) => sum + d.recettes, 0))}
-              </td>
-              <td className="py-2 text-right font-mono tabular-nums text-rose-700">
-                {money(dailyBreakdown.reduce((sum, d) => sum + d.depenses, 0))}
-              </td>
-              <td className="py-2 text-right font-mono tabular-nums text-slate-900">
-                {formatSignedCurrency(dailyBreakdown.reduce((sum, d) => sum + d.solde, 0), currency, language)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                    <td className={`py-1.5 ${isQuiet ? "" : "text-slate-900"}`}>{day.label}</td>
+                    <td
+                      className={`py-1.5 text-right font-mono tabular-nums ${
+                        isQuiet ? "" : "text-emerald-700"
+                      }`}
+                    >
+                      {isQuiet ? "—" : money(day.recettes)}
+                    </td>
+                    <td
+                      className={`py-1.5 text-right font-mono tabular-nums ${isQuiet ? "" : "text-rose-700"}`}
+                    >
+                      {isQuiet ? "—" : money(day.depenses)}
+                    </td>
+                    <td className={`py-1.5 text-right font-mono tabular-nums ${isQuiet ? "" : "font-medium"}`}>
+                      {isQuiet ? "—" : formatSignedCurrency(day.solde, currency, language)}
+                    </td>
+                  </tr>
+                );
+              })}
+              <tr className="border-t-2 border-slate-900 font-semibold">
+                <td className="py-2 text-slate-900">{t.total}</td>
+                <td className="py-2 text-right font-mono tabular-nums text-emerald-700">
+                  {money(dailyBreakdown.reduce((sum, d) => sum + d.recettes, 0))}
+                </td>
+                <td className="py-2 text-right font-mono tabular-nums text-rose-700">
+                  {money(dailyBreakdown.reduce((sum, d) => sum + d.depenses, 0))}
+                </td>
+                <td className="py-2 text-right font-mono tabular-nums text-slate-900">
+                  {formatSignedCurrency(dailyBreakdown.reduce((sum, d) => sum + d.solde, 0), currency, language)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <p className="text-xs text-slate-500 print:hidden">{t.discountCount(activeDiscountCount ?? 0)}</p>

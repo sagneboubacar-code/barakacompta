@@ -289,7 +289,9 @@ export default async function FeeStructuresPage({
                 <h3 className="text-sm font-medium text-slate-700">{klass.name}</h3>
                 <div className="mt-2 space-y-2">
                   {fees.map((fee) => (
-                    <div key={fee.id} className="flex items-center gap-2">
+                    // flex-wrap : à 375 px, libellés + champ + deux boutons sur
+                    // une seule ligne à largeurs fixes sortaient de l'écran.
+                    <div key={fee.id} className="flex flex-wrap items-center gap-2">
                       <span className="w-20 text-xs text-slate-500">{regimeLabel(fee.regime, language)}</span>
                       <span className="w-24 text-xs text-slate-500">{feeTypeLabel(fee.fee_type, language)}</span>
                       <form action={updateFeeStructureAmount} className="flex items-center gap-2">
