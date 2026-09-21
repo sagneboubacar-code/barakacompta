@@ -514,6 +514,7 @@ export interface Database {
           school_id: string;
           category:
             | "salaires"
+            | "location"
             | "fournitures"
             | "eau"
             | "electricite"
@@ -536,6 +537,7 @@ export interface Database {
           school_id: string;
           category?:
             | "salaires"
+            | "location"
             | "fournitures"
             | "eau"
             | "electricite"

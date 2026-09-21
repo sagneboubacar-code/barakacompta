@@ -3,6 +3,7 @@ import type { Language } from "@/lib/i18n/config";
 
 export const EXPENSE_CATEGORIES: { key: ExpenseCategory; label: string }[] = [
   { key: "salaires", label: "Salaires" },
+  { key: "location", label: "Location" },
   { key: "fournitures", label: "Fournitures" },
   { key: "eau", label: "Eau" },
   { key: "electricite", label: "Électricité" },
@@ -15,6 +16,7 @@ export const EXPENSE_CATEGORIES: { key: ExpenseCategory; label: string }[] = [
 
 const EXPENSE_CATEGORY_LABELS_AR: Record<string, string> = {
   salaires: "الرواتب",
+  location: "الإيجار",
   fournitures: "اللوازم",
   eau: "الماء",
   electricite: "الكهرباء",

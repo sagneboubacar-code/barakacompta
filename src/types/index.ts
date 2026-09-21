@@ -194,6 +194,7 @@ export interface Discount {
 
 export type ExpenseCategory =
   | "salaires"
+  | "location"
   | "fournitures"
   | "eau"
   | "electricite"
