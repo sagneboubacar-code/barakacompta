@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PLANS } from "@/lib/constants/plans";
+import { PLANS, FREE_ACCESS_UNTIL, isFreeAccessPeriod } from "@/lib/constants/plans";
 import { formatCurrency } from "@/lib/format";
 import { Reveal } from "@/components/Reveal";
 import { PublicHeader } from "@/components/PublicHeader";
@@ -13,6 +13,16 @@ export default function LandingPage() {
   const language = getLanguage();
   const t = landingDict[language];
   const { features: FEATURES, painPoints: PAIN_POINTS, steps: STEPS } = t;
+
+  // Tant que la période de lancement court, la page annonce la gratuité au
+  // lieu des conditions d'essai habituelles. Même constante que celle qui
+  // ouvre réellement les fonctions : l'annonce et la réalité ne peuvent pas
+  // diverger, et tout disparaît seul le lendemain de la date.
+  const promo = isFreeAccessPeriod();
+  const promoDate = new Date(`${FREE_ACCESS_UNTIL}T00:00:00Z`).toLocaleDateString(
+    language === "ar" ? "ar-SN" : "fr-FR",
+    { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }
+  );
 
   return (
     <div className="bg-white text-ink">
@@ -29,7 +39,7 @@ export default function LandingPage() {
           <Reveal>
             <p className="mx-auto inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-light px-3 py-1 text-xs font-semibold uppercase tracking-widest text-brand-dark">
               <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-              {t.heroBadge}
+              {promo ? t.promoBadge(promoDate) : t.heroBadge}
             </p>
             <h1 className="mx-auto mt-5 max-w-2xl text-balance font-display text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-[3.25rem]">
               {t.heroTitle}
@@ -52,7 +62,7 @@ export default function LandingPage() {
               </Link>
             </div>
             <p className="mt-4 text-xs text-slate-400">
-              {t.heroFootnote}
+              {promo ? t.promoFootnote : t.heroFootnote}
             </p>
           </Reveal>
         </div>
@@ -203,9 +213,21 @@ export default function LandingPage() {
           </div>
         </Reveal>
 
+        {promo && (
+          <Reveal>
+            <div className="mt-10 rounded-2xl border border-brand/30 bg-brand-light px-6 py-5">
+              <p className="text-xs font-semibold uppercase tracking-widest text-brand-dark">{t.promoTitle}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-ink">{t.promoText(promoDate)}</p>
+            </div>
+          </Reveal>
+        )}
+
         <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {PLANS.map((plan, i) => {
             const featured = plan.key === "pro";
+            // Pendant la période de lancement, la carte d'essai décrit ce
+            // qu'une école obtient réellement en s'inscrivant aujourd'hui.
+            const promoCard = promo && plan.key === "trial";
             return (
               <Reveal key={plan.key} delay={i * 70}>
                 <div
@@ -227,19 +249,25 @@ export default function LandingPage() {
                   {plan.priceXOF !== 0 && (
                     <p className={`text-xs ${featured ? "text-white/60" : "text-slate-400"}`}>{t.perMonth}</p>
                   )}
-                  {plan.trialDays && (
-                    <p className={`mt-1 text-xs ${featured ? "text-white/60" : "text-slate-400"}`}>
-                      {plan.trialDays} {t.days}
-                    </p>
+                  {promoCard ? (
+                    <p className="mt-1 text-xs font-semibold text-brand">{t.promoUntil(promoDate)}</p>
+                  ) : (
+                    plan.trialDays && (
+                      <p className={`mt-1 text-xs ${featured ? "text-white/60" : "text-slate-400"}`}>
+                        {plan.trialDays} {t.days}
+                      </p>
+                    )
                   )}
 
                   <ul className={`mt-5 flex-1 space-y-2 text-sm ${featured ? "text-white/80" : "text-slate-600"}`}>
                     <li>
-                      {plan.maxStudents === null ? t.unlimitedStudents : t.upToStudents(plan.maxStudents)}
+                      {promoCard || plan.maxStudents === null
+                        ? t.unlimitedStudents
+                        : t.upToStudents(plan.maxStudents)}
                     </li>
                     <li>{t.coreLine}</li>
-                    {plan.modules.includes("collections") && <li>{t.collectionsLine}</li>}
-                    {plan.modules.includes("reports") && <li>{t.reportsLine}</li>}
+                    {(promoCard || plan.modules.includes("collections")) && <li>{t.collectionsLine}</li>}
+                    {(promoCard || plan.modules.includes("reports")) && <li>{t.reportsLine}</li>}
                   </ul>
 
                   <Link

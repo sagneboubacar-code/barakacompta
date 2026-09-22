@@ -7,6 +7,14 @@ export const landingDict = {
     ctaSignup: "Commencer gratuitement",
     ctaLogin: "Se connecter",
     heroFootnote: "Sans engagement · Aucune carte bancaire requise",
+    // Période de lancement (FREE_ACCESS_UNTIL) : textes affichés à la place des
+    // conditions habituelles tant que la gratuité court.
+    promoBadge: (date: string) => `Gratuit jusqu'au ${date}`,
+    promoFootnote: "Toutes les fonctionnalités · Élèves illimités · Aucune carte bancaire",
+    promoTitle: "Période de lancement",
+    promoText: (date: string) =>
+      `Tout est gratuit jusqu'au ${date} : Recouvrement, Rapports PDF, élèves illimités. Les tarifs ci-dessous s'appliqueront ensuite, sans engagement.`,
+    promoUntil: (date: string) => `Jusqu'au ${date}`,
 
     painPoints: [
       { title: "Suivi manuel, source d'erreurs", text: "Cahiers et fichiers Excel dispersés entre plusieurs responsables." },
@@ -72,6 +80,12 @@ export const landingDict = {
     ctaSignup: "ابدأ مجانًا",
     ctaLogin: "تسجيل الدخول",
     heroFootnote: "بدون التزام · لا حاجة لبطاقة بنكية",
+    promoBadge: (date: string) => `مجانًا حتى ${date}`,
+    promoFootnote: "جميع الميزات · عدد غير محدود من التلاميذ · لا حاجة لبطاقة بنكية",
+    promoTitle: "فترة الإطلاق",
+    promoText: (date: string) =>
+      `كل شيء مجاني حتى ${date}: التحصيل، التقارير بصيغة PDF، عدد غير محدود من التلاميذ. تُطبَّق الأسعار أدناه بعد ذلك، بدون التزام.`,
+    promoUntil: (date: string) => `حتى ${date}`,
 
     painPoints: [
       { title: "متابعة يدوية، مصدر للأخطاء", text: "دفاتر وملفات إكسل موزعة بين عدة مسؤولين." },
