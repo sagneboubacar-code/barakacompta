@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth/guard";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
-import { getPlan } from "@/lib/constants/plans";
+import { effectiveMaxStudents } from "@/lib/constants/plans";
 import type { FeeRegime, StudentStatus } from "@/types";
 
 const LIST_PATH = "/dashboard/students";
@@ -91,7 +91,7 @@ export async function createStudent(formData: FormData) {
     .select("plan")
     .eq("id", appUser.school_id ?? "")
     .maybeSingle();
-  const maxStudents = getPlan(school?.plan ?? "trial").maxStudents;
+  const maxStudents = effectiveMaxStudents(school?.plan ?? "trial");
 
   if (maxStudents !== null) {
     const { count: activeStudentCount } = await supabase
