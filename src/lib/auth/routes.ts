@@ -9,6 +9,7 @@ import type { GatedModule } from "@/lib/constants/plans";
 export const NAV_ITEMS: { href: string; label: string; roles: UserRole[]; moduleKey?: GatedModule }[] = [
   { href: "/dashboard", label: "Tableau de bord", roles: ["owner", "admin", "accountant"] },
   { href: "/dashboard/students", label: "Élèves", roles: ["owner", "admin"] },
+  { href: "/dashboard/families", label: "Familles", roles: ["owner", "admin"] },
   { href: "/dashboard/fee-structures", label: "Tarifs", roles: ["owner", "admin"] },
   { href: "/dashboard/collections", label: "Recouvrement", roles: ["owner", "admin"], moduleKey: "collections" },
   { href: "/dashboard/reports", label: "Rapports", roles: ["owner", "admin"], moduleKey: "reports" },

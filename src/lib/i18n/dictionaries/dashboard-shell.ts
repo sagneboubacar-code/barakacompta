@@ -1,6 +1,7 @@
 export const navLabelsDict: Record<string, { fr: string; ar: string }> = {
   "/dashboard": { fr: "Tableau de bord", ar: "لوحة التحكم" },
   "/dashboard/students": { fr: "Élèves", ar: "التلاميذ" },
+  "/dashboard/families": { fr: "Familles", ar: "العائلات" },
   "/dashboard/fee-structures": { fr: "Tarifs", ar: "الرسوم" },
   "/dashboard/collections": { fr: "Recouvrement", ar: "التحصيل" },
   "/dashboard/reports": { fr: "Rapports", ar: "التقارير" },

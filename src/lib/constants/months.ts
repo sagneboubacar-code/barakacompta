@@ -34,6 +34,16 @@ export function monthNames(language: Language = "fr"): string[] {
   return language === "ar" ? MONTH_NAMES_AR : MONTH_NAMES;
 }
 
+// Mois FACTURÉ d'une mensualité, au format "YYYY-MM". Depuis 0032 les
+// mensualités se paient à terme échu (octobre est dû le 5 novembre) : on part
+// du mois de la grille tarifaire (fee_structures.month) et l'année se déduit
+// de l'échéance — décembre dû en janvier appartient à l'année précédente.
+export function mensualiteMonthKey(feeMonth: number, dueDate: string): string {
+  const [dueYear, dueMonth] = dueDate.slice(0, 7).split("-").map(Number);
+  const year = feeMonth <= dueMonth ? dueYear : dueYear - 1;
+  return `${year}-${String(feeMonth).padStart(2, "0")}`;
+}
+
 // monthKey au format "YYYY-MM"
 export function formatMonthLabel(monthKey: string, language: Language = "fr"): string {
   const [year, month] = monthKey.split("-").map(Number);

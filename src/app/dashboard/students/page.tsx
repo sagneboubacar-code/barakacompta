@@ -7,6 +7,7 @@ import { REGIMES, regimeLabel } from "@/lib/constants/fees";
 import { PrintButton } from "@/components/PrintButton";
 import { getLanguage } from "@/lib/i18n/get-language";
 import { dashboardStudentsDict } from "@/lib/i18n/dictionaries/dashboard-students";
+import { studentFamilyFieldDict } from "@/lib/i18n/dictionaries/dashboard-families";
 import { formatDate } from "@/lib/format";
 
 export default async function StudentsPage({
@@ -18,6 +19,7 @@ export default async function StudentsPage({
     class_id?: string;
     regime?: string;
     status?: string;
+    add_family?: string;
     error?: string;
     success?: string;
   };
@@ -25,18 +27,29 @@ export default async function StudentsPage({
   const appUser = await requireRole(["owner", "admin"]);
   const language = getLanguage();
   const t = dashboardStudentsDict[language];
+  const tf = studentFamilyFieldDict[language];
   const supabase = createClient();
 
-  const [{ data: rawClasses }, { data: school }] = await Promise.all([
+  const [{ data: rawClasses }, { data: school }, { data: families }, { data: familyMembers }] = await Promise.all([
     supabase.from("classes").select("id, name, level, sort_order").order("sort_order"),
     supabase.from("schools").select("name, address").eq("id", appUser.school_id ?? "").maybeSingle(),
+    supabase.from("families").select("id, name, guardian_name, guardian_phone").order("name"),
+    supabase.from("students").select("family_id").eq("status", "active").not("family_id", "is", null),
   ]);
   const classes = sortByCycle(rawClasses ?? []);
+  const familyById = new Map((families ?? []).map((family) => [family.id, family]));
+  const familySize = new Map<string, number>();
+  for (const member of familyMembers ?? []) {
+    if (member.family_id) familySize.set(member.family_id, (familySize.get(member.family_id) ?? 0) + 1);
+  }
+  // Arrivée depuis « Ajouter un enfant » d'une fiche famille : formulaire
+  // ouvert, famille choisie, nom et parent pré-remplis.
+  const presetFamily = searchParams.add_family ? familyById.get(searchParams.add_family) : undefined;
 
   let query = supabase
     .from("students")
     .select(
-      "id, matricule, first_name, last_name, regime, status, class_id, date_of_birth, place_of_birth, guardian_phone, classes(name, level)"
+      "id, matricule, first_name, last_name, regime, status, class_id, family_id, date_of_birth, place_of_birth, guardian_phone, classes(name, level)"
     )
     .order("last_name");
 
@@ -221,11 +234,12 @@ export default async function StudentsPage({
           La largeur minimale est indispensable — sans elle, `w-full` écrase les
           colonnes dans les 375 px et le défilement ne se déclenche jamais. */}
       <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white print:hidden">
-        <table className="min-w-[720px] w-full text-left text-sm">
+        <table className="min-w-[820px] w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-4 py-2 font-medium">{t.colMatricule}</th>
               <th className="px-4 py-2 font-medium">{t.colName}</th>
+              <th className="px-4 py-2 font-medium">{t.colFamily}</th>
               <th className="px-4 py-2 font-medium">{t.colClass}</th>
               <th className="px-4 py-2 font-medium">{t.colCycle}</th>
               <th className="px-4 py-2 font-medium">{t.colRegime}</th>
@@ -246,6 +260,15 @@ export default async function StudentsPage({
                     >
                       {student.last_name} {student.first_name}
                     </Link>
+                  </td>
+                  <td className="px-4 py-2 text-slate-600">
+                    {student.family_id && familyById.has(student.family_id) ? (
+                      <Link href={`/dashboard/families/${student.family_id}`} className="underline">
+                        {familyById.get(student.family_id)?.name}
+                      </Link>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                   <td className="px-4 py-2 text-slate-600">{klass?.name ?? "—"}</td>
                   <td className="px-4 py-2 text-slate-600">{cycleLabel(klass?.level ?? null, language)}</td>
@@ -269,7 +292,7 @@ export default async function StudentsPage({
             })}
             {(students ?? []).length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={8} className="px-4 py-6 text-center text-slate-400">
                   {t.noResults}
                 </td>
               </tr>
@@ -278,12 +301,38 @@ export default async function StudentsPage({
         </table>
       </div>
 
-      <details className="rounded-lg border border-slate-200 bg-white p-4 print:hidden">
+      <details
+        id="ajout"
+        open={!!presetFamily}
+        className="rounded-lg border border-slate-200 bg-white p-4 print:hidden"
+      >
         <summary className="cursor-pointer text-sm font-semibold text-slate-900">
           {t.addStudentSummary}
         </summary>
         <form action={createStudent} className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <input type="hidden" name="redirect_to" value={redirectTo} />
+          <input
+            type="hidden"
+            name="redirect_to"
+            value={presetFamily ? `/dashboard/families/${presetFamily.id}` : redirectTo}
+          />
+          <label className="space-y-1 text-sm sm:col-span-2">
+            <span className="text-slate-600">{tf.label}</span>
+            <select
+              name="family_choice"
+              defaultValue={presetFamily?.id ?? ""}
+              className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+            >
+              <option value="">{tf.none}</option>
+              <option value="new">{tf.createNew}</option>
+              {(families ?? []).map((family) => (
+                <option key={family.id} value={family.id}>
+                  {family.name}
+                  {family.guardian_name ? ` — ${family.guardian_name}` : ""} ({tf.childrenCount(familySize.get(family.id) ?? 0)})
+                </option>
+              ))}
+            </select>
+            <span className="block text-xs text-slate-500">{tf.hint}</span>
+          </label>
           <label className="space-y-1 text-sm">
             <span className="text-slate-600">{t.formFirstName}</span>
             <input
@@ -297,6 +346,7 @@ export default async function StudentsPage({
             <input
               name="last_name"
               required
+              defaultValue={presetFamily?.name ?? ""}
               className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
             />
           </label>
@@ -347,6 +397,7 @@ export default async function StudentsPage({
             <span className="text-slate-600">{t.formGuardianName}</span>
             <input
               name="guardian_name"
+              defaultValue={presetFamily?.guardian_name ?? ""}
               className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
             />
           </label>
@@ -354,6 +405,7 @@ export default async function StudentsPage({
             <span className="text-slate-600">{t.formGuardianPhone}</span>
             <input
               name="guardian_phone"
+              defaultValue={presetFamily?.guardian_phone ?? ""}
               className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
             />
           </label>

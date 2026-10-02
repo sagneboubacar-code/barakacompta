@@ -8,17 +8,27 @@ import { cycleLabel } from "@/lib/constants/cycles";
 import { getLanguage } from "@/lib/i18n/get-language";
 import { dashboardPaymentsDict } from "@/lib/i18n/dictionaries/dashboard-payments";
 import { formatDate } from "@/lib/format";
+import { FamilyPaymentSection } from "./family-payment-section";
 
 export default async function PaymentsPage({
   searchParams,
 }: {
-  searchParams: { student_id?: string; q?: string; error?: string; success?: string };
+  searchParams: {
+    student_id?: string;
+    q?: string;
+    mode?: string;
+    family_id?: string;
+    period?: string;
+    error?: string;
+    success?: string;
+  };
 }) {
   // Accessible aux 3 rôles : c'est le cœur du périmètre "accountant".
-  await requireRole(["owner", "admin", "accountant"]);
+  const appUser = await requireRole(["owner", "admin", "accountant"]);
   const language = getLanguage();
   const t = dashboardPaymentsDict[language];
   const supabase = createClient();
+  const familyMode = searchParams.mode === "family";
 
   let studentsQuery = supabase
     .from("students")
@@ -81,10 +91,10 @@ export default async function PaymentsPage({
 
   let paymentsQuery = supabase
     .from("payments")
-    .select("id, amount, payment_method, paid_at, students(first_name, last_name)")
+    .select("id, amount, payment_method, paid_at, family_payment_id, students(first_name, last_name), family_payments(family_name)")
     .order("paid_at", { ascending: false });
 
-  if (selectedStudent) {
+  if (selectedStudent && !familyMode) {
     paymentsQuery = paymentsQuery.eq("student_id", selectedStudent.id);
   }
 
@@ -94,7 +104,23 @@ export default async function PaymentsPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-slate-900">{t.pageTitle}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-semibold text-slate-900">{t.pageTitle}</h1>
+        <nav className="inline-flex rounded-md border border-slate-300 bg-white p-0.5 text-sm">
+          <Link
+            href="/dashboard/payments"
+            className={`rounded px-3 py-1 ${!familyMode ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+          >
+            {t.modeStudent}
+          </Link>
+          <Link
+            href="/dashboard/payments?mode=family"
+            className={`rounded px-3 py-1 ${familyMode ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+          >
+            {t.modeFamily}
+          </Link>
+        </nav>
+      </div>
 
       {searchParams.error && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{searchParams.error}</p>
@@ -103,6 +129,17 @@ export default async function PaymentsPage({
         <p className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">{searchParams.success}</p>
       )}
 
+      {familyMode && (
+        <FamilyPaymentSection
+          familyId={searchParams.family_id}
+          period={searchParams.period}
+          language={language}
+          schoolId={appUser.school_id ?? ""}
+          cashManagers={cashManagers ?? []}
+        />
+      )}
+
+      {!familyMode && (
       <form method="get" className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4">
         <label className="space-y-1 text-sm">
           <span className="text-slate-600">{t.searchLabel}</span>
@@ -143,8 +180,9 @@ export default async function PaymentsPage({
           </Link>
         )}
       </form>
+      )}
 
-      {selectedStudent && (
+      {selectedStudent && !familyMode && (
         <section className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-sm font-semibold text-slate-900">
@@ -348,7 +386,7 @@ export default async function PaymentsPage({
           La largeur minimale est indispensable — sans elle, `w-full` écrase les
           colonnes dans les 375 px et le défilement ne se déclenche jamais. */}
       <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-        {selectedStudent && (
+        {selectedStudent && !familyMode && (
           <h2 className="border-b border-slate-200 px-4 py-2 text-sm font-semibold text-slate-900">
             {t.paymentHistory(`${selectedStudent.last_name} ${selectedStudent.first_name}`)}
           </h2>
@@ -368,6 +406,9 @@ export default async function PaymentsPage({
               const student = Array.isArray(payment.students)
                 ? payment.students[0]
                 : payment.students;
+              const familyPayment = Array.isArray(payment.family_payments)
+                ? payment.family_payments[0]
+                : payment.family_payments;
               return (
                 <tr key={payment.id} className="border-t border-slate-100">
                   <td className="px-4 py-2 text-slate-600">
@@ -375,6 +416,11 @@ export default async function PaymentsPage({
                   </td>
                   <td className="px-4 py-2 text-slate-900">
                     {student ? `${student.last_name} ${student.first_name}` : t.dash}
+                    {familyPayment && (
+                      <span className="ms-2 rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
+                        {t.familyTag(familyPayment.family_name)}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-2 text-slate-600">{payment.amount}</td>
                   <td className="px-4 py-2 text-slate-600">
@@ -387,6 +433,14 @@ export default async function PaymentsPage({
                     >
                       {t.viewReceipt}
                     </Link>
+                    {payment.family_payment_id && (
+                      <Link
+                        href={`/dashboard/payments/family/${payment.family_payment_id}`}
+                        className="ms-3 text-emerald-700 underline"
+                      >
+                        {t.familyReceipt}
+                      </Link>
+                    )}
                   </td>
                 </tr>
               );

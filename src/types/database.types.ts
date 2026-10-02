@@ -260,6 +260,7 @@ export interface Database {
           subscribes_renforcement: boolean;
           subscribes_transport: boolean;
           transport_zone: number | null;
+          family_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -284,6 +285,7 @@ export interface Database {
           subscribes_renforcement?: boolean;
           subscribes_transport?: boolean;
           transport_zone?: number | null;
+          family_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -303,6 +305,58 @@ export interface Database {
             referencedRelation: "classes";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "students_family_id_fkey";
+            columns: ["family_id"];
+            isOneToOne: false;
+            referencedRelation: "families";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      families: {
+        Row: {
+          id: string;
+          school_id: string;
+          name: string;
+          guardian_name: string | null;
+          guardian_phone: string | null;
+          free_student_id: string | null;
+          free_since: string | null;
+          free_year: string | null;
+          free_from_start: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        // Les colonnes free_* ne s'écrivent que via set_family_free()
+        // (0036_prise_en_charge_au_choix.sql) : l'app n'a le droit d'écrire
+        // directement que l'identité de la famille.
+        Insert: {
+          school_id: string;
+          name: string;
+          guardian_name?: string | null;
+          guardian_phone?: string | null;
+        };
+        Update: {
+          name?: string;
+          guardian_name?: string | null;
+          guardian_phone?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "families_school_id_fkey";
+            columns: ["school_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "families_free_student_id_fkey";
+            columns: ["free_student_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
         ];
       };
       payment_schedules: {
@@ -317,6 +371,7 @@ export interface Database {
           amount_paid: number;
           amount_remaining: number;
           status: "pending" | "partial" | "paid" | "overdue" | "cancelled";
+          family_free: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -371,6 +426,7 @@ export interface Database {
           received_by: string | null;
           cash_manager_id: string | null;
           notes: string | null;
+          family_payment_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -414,6 +470,49 @@ export interface Database {
           },
           {
             foreignKeyName: "payments_cash_manager_id_fkey";
+            columns: ["cash_manager_id"];
+            isOneToOne: false;
+            referencedRelation: "cash_managers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payments_family_payment_id_fkey";
+            columns: ["family_payment_id"];
+            isOneToOne: false;
+            referencedRelation: "family_payments";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      // Reçu unique d'une famille : créé uniquement par record_family_payment()
+      // (0037_paiement_famille.sql), lecture seule pour l'app.
+      family_payments: {
+        Row: {
+          id: string;
+          school_id: string;
+          family_id: string | null;
+          family_name: string;
+          total: number;
+          payment_method: "cash" | "wave" | "orange_money" | "bank_transfer";
+          paid_at: string;
+          reference: string | null;
+          notes: string | null;
+          received_by: string | null;
+          cash_manager_id: string | null;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: "family_payments_family_id_fkey";
+            columns: ["family_id"];
+            isOneToOne: false;
+            referencedRelation: "families";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "family_payments_cash_manager_id_fkey";
             columns: ["cash_manager_id"];
             isOneToOne: false;
             referencedRelation: "cash_managers";
@@ -717,6 +816,26 @@ export interface Database {
         Args: {
           p_student_id: string;
           p_academic_year: string | null;
+        };
+        Returns: undefined;
+      };
+      record_family_payment: {
+        Args: {
+          p_family_id: string;
+          p_schedule_ids: string[];
+          p_paid_at: string;
+          p_payment_method: string;
+          p_reference?: string | null;
+          p_notes?: string | null;
+          p_cash_manager_id?: string | null;
+        };
+        Returns: string;
+      };
+      set_family_free: {
+        Args: {
+          p_family_id: string;
+          p_student_id: string | null;
+          p_from_start: boolean;
         };
         Returns: undefined;
       };

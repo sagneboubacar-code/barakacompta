@@ -13,7 +13,10 @@ const VALID_GENDERS = ["M", "F"];
 
 function targetPath(formData: FormData, fallback: string): string {
   const redirectTo = String(formData.get("redirect_to") ?? fallback);
-  return redirectTo.startsWith("/dashboard/students") ? redirectTo : fallback;
+  // Fiche famille : on y revient après l'ajout d'un enfant depuis celle-ci.
+  return redirectTo.startsWith("/dashboard/students") || redirectTo.startsWith("/dashboard/families/")
+    ? redirectTo
+    : fallback;
 }
 
 function fail(base: string, message: string): never {
@@ -76,6 +79,36 @@ function readStudentFields(formData: FormData) {
   };
 }
 
+// Choix de la famille dans les formulaires élève : "" = aucune, "new" =
+// nouvelle famille au nom de l'élève (avec le parent saisi), sinon l'id
+// d'une famille existante. Renvoie l'id à enregistrer, et celui d'une
+// famille tout juste créée pour pouvoir l'effacer si l'élève est refusé.
+async function resolveFamily(
+  supabase: ReturnType<typeof createServerSupabase>,
+  formData: FormData,
+  schoolId: string,
+  fields: ReturnType<typeof readStudentFields>["fields"],
+  base: string
+): Promise<{ familyId: string | null; createdFamilyId: string | null }> {
+  const choice = String(formData.get("family_choice") ?? "").trim();
+  if (!choice) return { familyId: null, createdFamilyId: null };
+  if (choice !== "new") return { familyId: choice, createdFamilyId: null };
+
+  const { data, error } = await supabase
+    .from("families")
+    .insert({
+      school_id: schoolId,
+      name: fields.last_name,
+      guardian_name: fields.guardian_name,
+      guardian_phone: fields.guardian_phone,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) fail(base, "Impossible de créer la famille : " + (error?.message ?? ""));
+  return { familyId: data.id, createdFamilyId: data.id };
+}
+
 export async function createStudent(formData: FormData) {
   const appUser = await requireRole(["owner", "admin"]);
   const base = targetPath(formData, LIST_PATH);
@@ -107,19 +140,25 @@ export async function createStudent(formData: FormData) {
     }
   }
 
+  const { familyId, createdFamilyId } = await resolveFamily(supabase, formData, appUser.school_id ?? "", fields, base);
+
   // matricule volontairement absent : généré par le trigger DB (voir 0005_students_module.sql).
   const { error } = await supabase.from("students").insert({
     school_id: appUser.school_id ?? "",
     ...fields,
+    family_id: familyId,
   });
 
-  if (error) fail(base, "Impossible de créer l'élève : " + error.message);
+  if (error) {
+    if (createdFamilyId) await supabase.from("families").delete().eq("id", createdFamilyId);
+    fail(base, "Impossible de créer l'élève : " + error.message);
+  }
 
   ok(base, "Élève ajouté.");
 }
 
 export async function updateStudent(formData: FormData) {
-  await requireRole(["owner", "admin"]);
+  const appUser = await requireRole(["owner", "admin"]);
   const id = String(formData.get("id") ?? "");
   const base = targetPath(formData, `/dashboard/students/${id}`);
   const supabase = createServerSupabase();
@@ -129,9 +168,18 @@ export async function updateStudent(formData: FormData) {
     fail(base, "Merci de renseigner au minimum le prénom, le nom, le sexe, le régime et le statut.");
   }
 
-  const { error } = await supabase.from("students").update(fields).eq("id", id);
+  const { familyId, createdFamilyId } = await resolveFamily(supabase, formData, appUser.school_id ?? "", fields, base);
 
-  if (error) fail(base, "Impossible de modifier l'élève : " + error.message);
+  // Un formulaire sans champ famille ne doit pas détacher l'élève de la sienne.
+  const { error } = await supabase
+    .from("students")
+    .update(formData.has("family_choice") ? { ...fields, family_id: familyId } : fields)
+    .eq("id", id);
+
+  if (error) {
+    if (createdFamilyId) await supabase.from("families").delete().eq("id", createdFamilyId);
+    fail(base, "Impossible de modifier l'élève : " + error.message);
+  }
 
   ok(base, "Fiche élève mise à jour.");
 }

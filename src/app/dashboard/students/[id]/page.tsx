@@ -9,6 +9,7 @@ import { REGIMES, feeTypeLabel, regimeLabel } from "@/lib/constants/fees";
 import { paymentMethodLabel } from "@/lib/constants/payments";
 import { getLanguage } from "@/lib/i18n/get-language";
 import { dashboardStudentDetailDict } from "@/lib/i18n/dictionaries/dashboard-student-detail";
+import { studentFamilyFieldDict } from "@/lib/i18n/dictionaries/dashboard-families";
 import { formatDate } from "@/lib/format";
 
 export default async function StudentDetailPage({
@@ -18,15 +19,16 @@ export default async function StudentDetailPage({
   params: { id: string };
   searchParams: { error?: string; success?: string };
 }) {
-  await requireRole(["owner", "admin"]);
+  const appUser = await requireRole(["owner", "admin"]);
   const language = getLanguage();
   const t = dashboardStudentDetailDict[language];
+  const tf = studentFamilyFieldDict[language];
   const supabase = createClient();
 
   const { data: student } = await supabase
     .from("students")
     .select(
-      "id, first_name, last_name, matricule, gender, date_of_birth, place_of_birth, class_id, regime, guardian_name, guardian_phone, address, enrolled_at, status, subscribes_cantine, subscribes_transport, transport_zone, subscribes_renforcement"
+      "id, first_name, last_name, matricule, gender, date_of_birth, place_of_birth, class_id, regime, guardian_name, guardian_phone, address, enrolled_at, status, subscribes_cantine, subscribes_transport, transport_zone, subscribes_renforcement, family_id"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -38,12 +40,20 @@ export default async function StudentDetailPage({
     redirect("/unauthorized");
   }
 
-  const [{ data: rawClasses }, { data: schedules }, { data: payments }, { data: discounts }] = await Promise.all([
+  const [
+    { data: rawClasses },
+    { data: schedules },
+    { data: payments },
+    { data: discounts },
+    { data: families },
+    { data: familyMembers },
+    { data: school },
+  ] = await Promise.all([
     supabase.from("classes").select("id, name, level, sort_order").order("sort_order"),
     supabase
       .from("payment_schedules")
       .select(
-        "id, due_date, amount_due, discount_amount, amount_paid, amount_remaining, status, fee_structures(fee_type)"
+        "id, due_date, amount_due, discount_amount, amount_paid, amount_remaining, status, family_free, fee_structures(fee_type)"
       )
       .eq("student_id", student.id)
       .order("due_date"),
@@ -57,8 +67,20 @@ export default async function StudentDetailPage({
       .select("id, label, discount_type, value, starts_on, ends_on")
       .eq("student_id", student.id)
       .order("starts_on", { ascending: false }),
+    supabase.from("families").select("id, name, guardian_name, free_student_id, free_year").order("name"),
+    supabase.from("students").select("family_id").eq("status", "active").not("family_id", "is", null),
+    supabase.from("schools").select("school_year_label").eq("id", appUser.school_id ?? "").maybeSingle(),
   ]);
   const classes = sortByCycle(rawClasses ?? []);
+  const familySize = new Map<string, number>();
+  for (const member of familyMembers ?? []) {
+    if (member.family_id) familySize.set(member.family_id, (familySize.get(member.family_id) ?? 0) + 1);
+  }
+  const family = (families ?? []).find((f) => f.id === student.family_id);
+  // Une prise en charge vaut pour une année scolaire : celle d'une année
+  // précédente ne s'affiche plus.
+  const isFamilyFree =
+    !!family && family.free_student_id === student.id && family.free_year === school?.school_year_label;
 
   const balance = (schedules ?? [])
     .filter((s) => s.status !== "cancelled")
@@ -84,10 +106,45 @@ export default async function StudentDetailPage({
         <p className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">{searchParams.success}</p>
       )}
 
+      {family && (
+        <div
+          className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border px-4 py-3 text-sm ${
+            isFamilyFree ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-slate-200 bg-white text-slate-700"
+          }`}
+        >
+          <span>
+            {isFamilyFree
+              ? t.familyFreeBanner(family.name, family.free_year ?? "")
+              : t.familyMember(family.name, familySize.get(family.id) ?? 0)}
+          </span>
+          <Link href={`/dashboard/families/${family.id}`} className="font-medium underline">
+            {t.viewFamily}
+          </Link>
+        </div>
+      )}
+
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">{t.sectionInfo}</h2>
         <form action={updateStudent} className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <input type="hidden" name="id" value={student.id} />
+          <label className="space-y-1 text-sm sm:col-span-2">
+            <span className="text-slate-600">{tf.label}</span>
+            <select
+              name="family_choice"
+              defaultValue={student.family_id ?? ""}
+              className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+            >
+              <option value="">{tf.none}</option>
+              <option value="new">{tf.createNew}</option>
+              {(families ?? []).map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name}
+                  {f.guardian_name ? ` — ${f.guardian_name}` : ""} ({tf.childrenCount(familySize.get(f.id) ?? 0)})
+                </option>
+              ))}
+            </select>
+            <span className="block text-xs text-slate-500">{tf.hint}</span>
+          </label>
           <label className="space-y-1 text-sm">
             <span className="text-slate-600">{t.formFirstName}</span>
             <input
@@ -297,6 +354,11 @@ export default async function StudentDetailPage({
                   <td className="py-1.5 text-slate-600">{schedule.amount_due}</td>
                   <td className="py-1.5 text-slate-600">
                     {schedule.discount_amount > 0 ? `- ${schedule.discount_amount}` : "—"}
+                    {schedule.family_free && (
+                      <span className="ms-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700">
+                        {t.familyFreeTag}
+                      </span>
+                    )}
                   </td>
                   <td className="py-1.5 text-slate-600">{schedule.amount_paid}</td>
                   <td className="py-1.5 text-slate-600">{schedule.amount_remaining}</td>

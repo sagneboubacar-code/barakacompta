@@ -62,3 +62,52 @@ export async function recordPayment(formData: FormData) {
 
   ok(base, "Paiement enregistré.");
 }
+
+// Encaisse en une fois les échéances cochées des enfants d'une famille, avec
+// un seul reçu. Tout se passe dans record_family_payment() (voir
+// 0037_paiement_famille.sql) : les montants sont relus en base, et soit toute
+// la famille est encaissée, soit rien ne l'est.
+export async function recordFamilyPayment(formData: FormData) {
+  await requireRole(["owner", "admin", "accountant"]);
+  const supabase = createServerSupabase();
+
+  const familyId = String(formData.get("family_id") ?? "");
+  const period = String(formData.get("period") ?? "");
+  const base = `/dashboard/payments?mode=family${familyId ? `&family_id=${familyId}` : ""}${
+    period ? `&period=${encodeURIComponent(period)}` : ""
+  }`;
+
+  const scheduleIds = formData
+    .getAll("schedule_ids")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+  const paidAt = String(formData.get("paid_at") ?? "").trim();
+  const paymentMethod = String(formData.get("payment_method") ?? "");
+  const reference = String(formData.get("reference") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+  const cashManagerId = String(formData.get("cash_manager_id") ?? "").trim() || null;
+
+  if (!familyId || scheduleIds.length === 0) {
+    fail(base, "Cochez au moins une ligne à encaisser.");
+  }
+  if (!paidAt || isNaN(Date.parse(paidAt)) || !VALID_METHODS.includes(paymentMethod as PaymentMethod)) {
+    fail(base, "Merci de renseigner une date valide et un mode de paiement valide.");
+  }
+
+  const { data: familyPaymentId, error } = await supabase.rpc("record_family_payment", {
+    p_family_id: familyId,
+    p_schedule_ids: scheduleIds,
+    p_paid_at: new Date(paidAt).toISOString(),
+    p_payment_method: paymentMethod,
+    p_reference: reference,
+    p_notes: notes,
+    p_cash_manager_id: cashManagerId,
+  });
+
+  if (error || !familyPaymentId) {
+    fail(base, "Impossible d'enregistrer le paiement de la famille : " + (error?.message ?? ""));
+  }
+
+  // Directement sur le reçu, prêt à imprimer pour le parent.
+  ok(`/dashboard/payments/family/${familyPaymentId}`, "Paiement de la famille enregistré.");
+}

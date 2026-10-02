@@ -62,6 +62,11 @@ export const dashboardStudentDetailDict = {
     colReceipt: "Reçu",
     viewReceipt: "Voir",
     noPayments: "Aucun paiement enregistré.",
+    familyMember: (name: string, n: number) => `Famille ${name} — ${n} enfant${n > 1 ? "s" : ""} inscrit${n > 1 ? "s" : ""}.`,
+    familyFreeBanner: (name: string, year: string) =>
+      `Pris(e) en charge par l'école (famille ${name}) : inscription et mensualités ${year} offertes.`,
+    viewFamily: "Voir la famille",
+    familyFreeTag: "Offert (famille)",
   },
   ar: {
     backToList: "→ العودة إلى القائمة",
@@ -126,5 +131,10 @@ export const dashboardStudentDetailDict = {
     colReceipt: "الإيصال",
     viewReceipt: "عرض",
     noPayments: "لا توجد مدفوعات مسجّلة.",
+    familyMember: (name: string, n: number) => `عائلة ${name} — ${n} طفل مسجل.`,
+    familyFreeBanner: (name: string, year: string) =>
+      `تتكفل به المدرسة (عائلة ${name}): التسجيل والأقساط الشهرية لسنة ${year} مجانية.`,
+    viewFamily: "عرض العائلة",
+    familyFreeTag: "مجاني (العائلة)",
   },
 };
