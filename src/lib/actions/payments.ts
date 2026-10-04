@@ -63,10 +63,11 @@ export async function recordPayment(formData: FormData) {
   ok(base, "Paiement enregistré.");
 }
 
-// Encaisse en une fois les échéances cochées des enfants d'une famille, avec
-// un seul reçu. Tout se passe dans record_family_payment() (voir
-// 0037_paiement_famille.sql) : les montants sont relus en base, et soit toute
-// la famille est encaissée, soit rien ne l'est.
+// Encaisse en une fois, avec un seul reçu, ce que la famille verse sur les
+// échéances de ses enfants — tout, ou une avance répartie ligne par ligne.
+// Tout se passe dans record_family_payment() (0037, montants par ligne en
+// 0038) : chaque montant est revérifié contre le reste à payer en base, et
+// soit toute la famille est encaissée, soit rien ne l'est.
 export async function recordFamilyPayment(formData: FormData) {
   await requireRole(["owner", "admin", "accountant"]);
   const supabase = createServerSupabase();
@@ -77,18 +78,24 @@ export async function recordFamilyPayment(formData: FormData) {
     period ? `&period=${encodeURIComponent(period)}` : ""
   }`;
 
-  const scheduleIds = formData
-    .getAll("schedule_ids")
-    .map((value) => String(value).trim())
-    .filter(Boolean);
+  // Une ligne = une échéance et le montant versé dessus, dans le même ordre.
+  const scheduleIds = formData.getAll("schedule_ids").map((value) => String(value).trim());
+  const amounts = formData.getAll("amounts").map((value) => Number(value));
   const paidAt = String(formData.get("paid_at") ?? "").trim();
   const paymentMethod = String(formData.get("payment_method") ?? "");
   const reference = String(formData.get("reference") ?? "").trim() || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const cashManagerId = String(formData.get("cash_manager_id") ?? "").trim() || null;
 
-  if (!familyId || scheduleIds.length === 0) {
-    fail(base, "Cochez au moins une ligne à encaisser.");
+  if (
+    !familyId ||
+    scheduleIds.length === 0 ||
+    scheduleIds.length !== amounts.length ||
+    scheduleIds.some((id) => !id) ||
+    amounts.some((amount) => !Number.isFinite(amount) || amount < 0) ||
+    amounts.every((amount) => amount === 0)
+  ) {
+    fail(base, "Saisissez le montant versé par le parent.");
   }
   if (!paidAt || isNaN(Date.parse(paidAt)) || !VALID_METHODS.includes(paymentMethod as PaymentMethod)) {
     fail(base, "Merci de renseigner une date valide et un mode de paiement valide.");
@@ -97,6 +104,7 @@ export async function recordFamilyPayment(formData: FormData) {
   const { data: familyPaymentId, error } = await supabase.rpc("record_family_payment", {
     p_family_id: familyId,
     p_schedule_ids: scheduleIds,
+    p_amounts: amounts,
     p_paid_at: new Date(paidAt).toISOString(),
     p_payment_method: paymentMethod,
     p_reference: reference,

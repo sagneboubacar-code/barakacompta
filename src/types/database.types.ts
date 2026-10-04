@@ -819,10 +819,13 @@ export interface Database {
         };
         Returns: undefined;
       };
+      // Signature de 0038 (montant par ligne). Celle de 0037, sans p_amounts,
+      // existe encore en base pour l'ancienne version de l'app.
       record_family_payment: {
         Args: {
           p_family_id: string;
           p_schedule_ids: string[];
+          p_amounts: number[];
           p_paid_at: string;
           p_payment_method: string;
           p_reference?: string | null;

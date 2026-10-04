@@ -210,8 +210,12 @@ export async function FamilyPaymentSection({
               labels={{
                 child: t.linesChild,
                 item: t.linesItem,
-                amount: t.linesAmount,
-                total: t.linesTotal,
+                due: t.linesDue,
+                paid: t.linesPaid,
+                totalDue: t.linesTotal,
+                received: t.receivedLabel,
+                receivedHint: t.receivedHint,
+                remainingAfter: t.remainingAfter,
                 submit: t.familySubmit,
               }}
             >

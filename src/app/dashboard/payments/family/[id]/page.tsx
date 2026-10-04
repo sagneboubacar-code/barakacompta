@@ -45,7 +45,7 @@ export default async function FamilyReceiptPage({
       supabase
         .from("payments")
         .select(
-          "id, amount, students(first_name, last_name, classes(name)), payment_allocations(id, amount, payment_schedules(due_date, fee_structures(fee_type, month)))"
+          "id, amount, students(first_name, last_name, classes(name)), payment_allocations(id, amount, payment_schedules(id, due_date, amount_remaining, fee_structures(fee_type, month)))"
         )
         .eq("family_payment_id", receipt.id),
       receipt.received_by
@@ -66,8 +66,13 @@ export default async function FamilyReceiptPage({
   const money = (amount: number) => formatCurrency(amount, school?.currency, language);
   const one = <T,>(value: T | T[] | null): T | null => (Array.isArray(value) ? value[0] ?? null : value);
 
-  // Une ligne par échéance réglée, regroupées par enfant.
-  const byChild = new Map<string, { name: string; klass: string | null; items: { id: string; label: string; amount: number }[] }>();
+  // Une ligne par échéance réglée, regroupées par enfant. `remaining` : ce
+  // qui reste dû sur l'échéance à ce jour (avance du parent).
+  const byChild = new Map<
+    string,
+    { name: string; klass: string | null; items: { id: string; label: string; amount: number; remaining: number }[] }
+  >();
+  const remainingBySchedule = new Map<string, number>();
   for (const payment of payments ?? []) {
     const student = one(payment.students);
     const name = student ? `${student.last_name} ${student.first_name}` : t.dash;
@@ -81,11 +86,14 @@ export default async function FamilyReceiptPage({
           : fee
             ? feeTypeLabel(fee.fee_type, language)
             : t.dash;
-      entry.items.push({ id: allocation.id, label, amount: Number(allocation.amount) });
+      const remaining = Math.max(Number(schedule?.amount_remaining ?? 0), 0);
+      if (schedule) remainingBySchedule.set(schedule.id, remaining);
+      entry.items.push({ id: allocation.id, label, amount: Number(allocation.amount), remaining });
     }
     byChild.set(name, entry);
   }
   const children = Array.from(byChild.values()).sort((a, b) => a.name.localeCompare(b.name));
+  const totalRemaining = Array.from(remainingBySchedule.values()).reduce((sum, value) => sum + value, 0);
 
   // Rappel utile au parent : l'enfant pris en charge cette année n'apparaît
   // pas dans les montants, ce n'est pas un oubli.
@@ -165,7 +173,12 @@ export default async function FamilyReceiptPage({
                         </>
                       ) : null}
                     </td>
-                    <td className="py-1 pe-3 text-slate-700">{item.label}</td>
+                    <td className="py-1 pe-3 text-slate-700">
+                      {item.label}
+                      {item.remaining > 0 && (
+                        <span className="block text-xs text-red-700">{t.itemRemaining(money(item.remaining))}</span>
+                      )}
+                    </td>
                     <td className="py-1 text-end tabular-nums text-slate-900">{money(item.amount)}</td>
                   </tr>
                 ))}
@@ -190,6 +203,14 @@ export default async function FamilyReceiptPage({
                 {money(Number(receipt.total))}
               </td>
             </tr>
+            {totalRemaining > 0 && (
+              <tr>
+                <td colSpan={2} className="pt-1 text-sm text-red-700">
+                  {t.remainingToday}
+                </td>
+                <td className="pt-1 text-end text-sm font-medium tabular-nums text-red-700">{money(totalRemaining)}</td>
+              </tr>
+            )}
           </tfoot>
         </table>
 
