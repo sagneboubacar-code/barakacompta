@@ -7,6 +7,7 @@ import {
   computeCashManagerBreakdown,
 } from "@/lib/reports/financial";
 import { renderFinancialReportPdf } from "@/lib/reports/pdf/financial-report";
+import { fetchPdfLogo } from "@/lib/pdf/logo";
 
 // @react-pdf/renderer s'appuie sur des API Node (streams, Buffer) : le
 // runtime Edge par défaut ne suffit pas.
@@ -27,14 +28,15 @@ export async function GET(request: NextRequest) {
 
   const { data: school } = await supabase
     .from("schools")
-    .select("name, address, phone, email, currency")
+    .select("name, address, phone, email, currency, logo_url")
     .eq("id", appUser.school_id ?? "")
     .maybeSingle();
 
-  const [report, dailyBreakdown, cashManagerBreakdown] = await Promise.all([
+  const [report, dailyBreakdown, cashManagerBreakdown, logo] = await Promise.all([
     computeFinancialReport(supabase, from, to),
     computeDailyBreakdown(supabase, from, to),
     computeCashManagerBreakdown(supabase, from, to),
+    fetchPdfLogo(school?.logo_url),
   ]);
 
   // Le rendu PDF dépend de ressources résolues à l'exécution : une panne se
@@ -48,6 +50,7 @@ export async function GET(request: NextRequest) {
         address: school?.address ?? null,
         phone: school?.phone ?? null,
         email: school?.email ?? null,
+        logo,
       },
       currency: school?.currency ?? "XOF",
       from,

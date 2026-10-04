@@ -9,21 +9,22 @@ export const dashboardReportsDict = {
     filterTo: "Au",
     apply: "Appliquer",
 
-    tileExpected: "Attendu",
-    tileCollected: "Encaissé",
-    tileRemaining: "À recouvrer",
-    tileBalance: "Solde (recettes − dépenses)",
+    tileCollected: "Recettes encaissées",
+    tileCollectedHint: (n: number) => `${n} paiement${n > 1 ? "s" : ""} reçu${n > 1 ? "s" : ""} sur la période`,
+    tileExpenses: "Dépenses",
+    tileBalance: "Solde de caisse",
+    tileBalanceHint: "Recettes − dépenses de la période",
 
-    sectionRevenue: "Recettes détaillées",
+    sectionRevenue: "Recettes par type",
     colType: "Type",
-    colExpected: "Attendu",
     colCollected: "Encaissé",
-    colRemaining: "Reste",
     total: "Total",
+    noRevenue: "Aucun paiement reçu sur la période.",
 
     sectionExpenses: "Dépenses par catégorie",
     colCategory: "Catégorie",
     colAmount: "Montant",
+    noExpenses: "Aucune dépense sur la période.",
 
     sectionByManager: "Par responsable",
     colManager: "Responsable",
@@ -34,16 +35,20 @@ export const dashboardReportsDict = {
     unassigned: "Non attribué",
 
     sectionDaily: "Détail journalier",
+    dailyHint: "Seuls les jours où de l'argent est entré ou sorti sont listés.",
     colDate: "Date",
     colRevenues: "Recettes",
     colExpenses: "Dépenses",
+    colDayBalance: "Solde du jour",
+    colCumul: "Cumul",
+    noMovement: "Aucun mouvement de caisse sur la période.",
 
-    revenueLabels: {
-      inscription: "Inscriptions",
-      uniforme: "Uniforme",
-      mensualite: "Mensualités",
-      autres: "Autres frais",
-    } as Record<string, string>,
+    // Libellés des types de recettes (« Inscriptions »...) : le français est
+    // fourni par le calcul du rapport, seul l'arabe passe par ici.
+    revenueLabels: {} as Record<string, string>,
+
+    collectionsNote: "Ce rapport suit l'argent réellement reçu et dépensé. Les montants attendus et les impayés sont dans",
+    collectionsLink: "Recouvrement",
 
     discountCount: (n: number) =>
       `${n} réduction${n > 1 ? "s" : ""} active${n > 1 ? "s" : ""} sur la période sélectionnée.`,
@@ -61,21 +66,22 @@ export const dashboardReportsDict = {
     filterTo: "إلى",
     apply: "تطبيق",
 
-    tileExpected: "المتوقع",
-    tileCollected: "المحصّل",
-    tileRemaining: "المتبقي تحصيله",
-    tileBalance: "الرصيد (الإيرادات − المصاريف)",
+    tileCollected: "الإيرادات المحصلة",
+    tileCollectedHint: (n: number) => `${n} دفعة مستلمة خلال الفترة`,
+    tileExpenses: "المصاريف",
+    tileBalance: "رصيد الصندوق",
+    tileBalanceHint: "إيرادات − مصاريف الفترة",
 
-    sectionRevenue: "الإيرادات التفصيلية",
+    sectionRevenue: "الإيرادات حسب النوع",
     colType: "النوع",
-    colExpected: "المتوقع",
     colCollected: "المحصّل",
-    colRemaining: "المتبقي",
     total: "المجموع",
+    noRevenue: "لم تُستلم أي دفعة خلال الفترة.",
 
     sectionExpenses: "المصاريف حسب الفئة",
     colCategory: "الفئة",
     colAmount: "المبلغ",
+    noExpenses: "لا توجد مصاريف خلال الفترة.",
 
     sectionByManager: "حسب المسؤول",
     colManager: "المسؤول",
@@ -86,16 +92,24 @@ export const dashboardReportsDict = {
     unassigned: "غير مسند",
 
     sectionDaily: "التفصيل اليومي",
+    dailyHint: "تُعرض فقط الأيام التي دخلت أو خرجت فيها أموال.",
     colDate: "التاريخ",
     colRevenues: "الإيرادات",
     colExpenses: "المصاريف",
+    colDayBalance: "رصيد اليوم",
+    colCumul: "المجموع التراكمي",
+    noMovement: "لا توجد حركة في الصندوق خلال الفترة.",
 
     revenueLabels: {
       inscription: "التسجيل",
-      uniforme: "الزي الموحد",
       mensualite: "الشهريات",
-      autres: "رسوم أخرى",
+      uniforme: "الزي الموحد",
+      transport: "النقل",
+      non_affecte: "دفعات مسبقة غير مخصصة بعد",
     } as Record<string, string>,
+
+    collectionsNote: "يتتبع هذا التقرير الأموال المستلمة والمصروفة فعلاً. المبالغ المتوقعة والمتأخرات موجودة في",
+    collectionsLink: "التحصيل",
 
     discountCount: (n: number) => `${n} تخفيض نشط خلال الفترة المحددة.`,
 
