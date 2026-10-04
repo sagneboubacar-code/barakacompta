@@ -52,7 +52,9 @@ export async function GET(request: NextRequest) {
   }
   lines.push("");
   lines.push(toCsvRow(["Élèves en retard", report.overdueCount]));
-  lines.push(toCsvRow(["À recouvrer sur le mois", report.totalDue]));
+  lines.push(toCsvRow(["Recette totale du mois (si tous les élèves paient)", report.expectedTotal]));
+  lines.push(toCsvRow(["Déjà encaissé", report.collectedTotal]));
+  lines.push(toCsvRow(["Reste à encaisser", report.totalDue]));
   lines.push(toCsvRow(["Dont déjà en retard", report.overdueTotal]));
   lines.push(toCsvRow(["Dont à encaisser (pas encore échu)", report.upcomingTotal]));
 

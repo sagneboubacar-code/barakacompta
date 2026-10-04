@@ -7,6 +7,9 @@ import type { Language } from "@/lib/i18n/config";
 type ScheduleRow = {
   student_id: string;
   due_date: string;
+  amount_due: number;
+  discount_amount: number;
+  amount_paid: number;
   amount_remaining: number;
   status: string;
   fee_structures: { fee_type: string; month: number } | { fee_type: string; month: number }[] | null;
@@ -34,6 +37,10 @@ export interface CollectionsReport {
   availableMonths: string[];
   selectedMonth: string;
   overdueCount: number;
+  // Recette totale du mois si tous les élèves paient (après réductions et
+  // prises en charge) = déjà encaissé + reste à payer.
+  expectedTotal: number;
+  collectedTotal: number;
   // Reste à payer sur le mois choisi = en retard + à encaisser.
   totalDue: number;
   overdueTotal: number;
@@ -62,7 +69,9 @@ async function fetchSchedules(supabase: SupabaseClient<Database>, dueBefore: str
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase
       .from("payment_schedules")
-      .select("student_id, due_date, amount_remaining, status, fee_structures(fee_type, month)")
+      .select(
+        "student_id, due_date, amount_due, discount_amount, amount_paid, amount_remaining, status, fee_structures(fee_type, month)"
+      )
       .neq("status", "cancelled")
       .lt("due_date", dueBefore)
       .order("id")
@@ -126,9 +135,16 @@ export async function computeCollectionsReport(
   const selectedMonth = filters.month || currentMonth;
 
   let upcomingDueDate: string | null = null;
+  let expectedTotal = 0;
+  let collectedTotal = 0;
   const rows: CollectionsRow[] = (students ?? []).map((student) => {
     const klass = Array.isArray(student.classes) ? student.classes[0] : student.classes;
     const monthSchedules = (schedulesByStudent.get(student.id) ?? []).filter((s) => s.month === selectedMonth);
+
+    for (const s of monthSchedules) {
+      expectedTotal += Math.max(Number(s.amount_due) - Number(s.discount_amount), 0);
+      collectedTotal += Number(s.amount_paid);
+    }
 
     let totalRemaining = 0;
     let overdueRemaining = 0;
@@ -168,6 +184,8 @@ export async function computeCollectionsReport(
     availableMonths,
     selectedMonth,
     overdueCount: rows.filter((r) => r.colorStatus === "rouge" || r.colorStatus === "orange").length,
+    expectedTotal,
+    collectedTotal,
     totalDue,
     overdueTotal,
     upcomingTotal: totalDue - overdueTotal,

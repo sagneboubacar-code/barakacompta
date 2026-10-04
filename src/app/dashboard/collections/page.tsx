@@ -39,8 +39,18 @@ export default async function CollectionsPage({
   ]);
   const classes = sortByCycle(rawClasses ?? []);
 
-  const { rows, availableMonths, selectedMonth, overdueCount, totalDue, overdueTotal, upcomingTotal, upcomingDueDate } =
-    report;
+  const {
+    rows,
+    availableMonths,
+    selectedMonth,
+    overdueCount,
+    expectedTotal,
+    collectedTotal,
+    totalDue,
+    overdueTotal,
+    upcomingTotal,
+    upcomingDueDate,
+  } = report;
   const money = (amount: number) => formatCurrency(amount, school?.currency, language);
   const monthLabel = formatMonthLabel(selectedMonth, language);
 
@@ -136,7 +146,13 @@ export default async function CollectionsPage({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="rounded-lg border border-slate-200 bg-white p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{t.tileTotal(monthLabel)}</p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{money(totalDue)}</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{money(expectedTotal)}</p>
+          <p className="mt-0.5 text-xs text-slate-500">{t.tileTotalHint}</p>
+          <p className="mt-2 text-xs text-slate-600">
+            {t.tileCollected} <strong className="text-green-700">{money(collectedTotal)}</strong>
+            {" · "}
+            {t.tileRemaining} <strong className="text-slate-900">{money(totalDue)}</strong>
+          </p>
         </div>
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-red-700">{t.tileOverdue}</p>
