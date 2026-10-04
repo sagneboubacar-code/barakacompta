@@ -28,9 +28,14 @@ export async function GET(request: NextRequest) {
   lines.push("");
 
   lines.push(
-    toCsvRow(["Élève", "Classe", "Cycle", "Parent", "Téléphone parent", "Montant restant", "Statut"])
+    toCsvRow(["Élève", "Classe", "Cycle", "Parent", "Téléphone parent", "Reste à payer", "Dont en retard", "Statut"])
   );
-  const statusLabels: Record<string, string> = { vert: "À jour", orange: "Partiel ce mois", rouge: "Impayé" };
+  const statusLabels: Record<string, string> = {
+    vert: "À jour",
+    orange: "Partiel, en retard",
+    rouge: "Impayé",
+    attente: "À encaisser",
+  };
   for (const row of report.rows) {
     lines.push(
       toCsvRow([
@@ -40,13 +45,16 @@ export async function GET(request: NextRequest) {
         row.guardianName,
         row.guardianPhone,
         row.totalRemaining,
+        row.overdueRemaining,
         statusLabels[row.colorStatus],
       ])
     );
   }
   lines.push("");
-  lines.push(toCsvRow(["Élèves impayés", report.overdueCount]));
-  lines.push(toCsvRow(["Total restant dû", report.totalDue]));
+  lines.push(toCsvRow(["Élèves en retard", report.overdueCount]));
+  lines.push(toCsvRow(["À recouvrer sur le mois", report.totalDue]));
+  lines.push(toCsvRow(["Dont déjà en retard", report.overdueTotal]));
+  lines.push(toCsvRow(["Dont à encaisser (pas encore échu)", report.upcomingTotal]));
 
   return buildCsvResponse(lines, `recouvrement-${report.selectedMonth}.csv`);
 }

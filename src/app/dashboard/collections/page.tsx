@@ -6,6 +6,7 @@ import { computeCollectionsReport, type CollectionsColorStatus } from "@/lib/rep
 import { PrintButton } from "@/components/PrintButton";
 import { getLanguage } from "@/lib/i18n/get-language";
 import { dashboardCollectionsDict } from "@/lib/i18n/dictionaries/dashboard-collections";
+import { formatCurrency, formatDate } from "@/lib/format";
 
 export default async function CollectionsPage({
   searchParams,
@@ -19,12 +20,13 @@ export default async function CollectionsPage({
     vert: { label: t.statusOk, className: "border-green-200 bg-green-50 text-green-700" },
     orange: { label: t.statusPartial, className: "border-orange-200 bg-orange-50 text-orange-700" },
     rouge: { label: t.statusOverdue, className: "border-red-200 bg-red-50 text-red-700" },
+    attente: { label: t.statusUpcoming, className: "border-sky-200 bg-sky-50 text-sky-800" },
   };
   const supabase = createClient();
 
   const [{ data: rawClasses }, { data: school }, report] = await Promise.all([
     supabase.from("classes").select("id, name, level, sort_order").order("sort_order"),
-    supabase.from("schools").select("name, address").eq("id", appUser.school_id ?? "").maybeSingle(),
+    supabase.from("schools").select("name, address, currency").eq("id", appUser.school_id ?? "").maybeSingle(),
     computeCollectionsReport(
       supabase,
       {
@@ -37,7 +39,10 @@ export default async function CollectionsPage({
   ]);
   const classes = sortByCycle(rawClasses ?? []);
 
-  const { rows, availableMonths, selectedMonth, overdueCount, totalDue } = report;
+  const { rows, availableMonths, selectedMonth, overdueCount, totalDue, overdueTotal, upcomingTotal, upcomingDueDate } =
+    report;
+  const money = (amount: number) => formatCurrency(amount, school?.currency, language);
+  const monthLabel = formatMonthLabel(selectedMonth, language);
 
   const exportParams = new URLSearchParams();
   if (searchParams.cycle) exportParams.set("cycle", searchParams.cycle);
@@ -54,9 +59,7 @@ export default async function CollectionsPage({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-slate-900 print:hidden">{t.title}</h1>
-          <p className="text-sm text-slate-500">
-            {t.summary(overdueCount, formatMonthLabel(selectedMonth, language), totalDue)}
-          </p>
+          <p className="text-sm text-slate-500">{t.summary(overdueCount, monthLabel)}</p>
         </div>
         <div className="flex gap-2 print:hidden">
           <PrintButton />
@@ -128,6 +131,27 @@ export default async function CollectionsPage({
         </button>
       </form>
 
+      {/* Le montant du mois choisi, en grand : c'est la question qu'on vient
+          poser à cette page. Le total de l'année reste au tableau de bord. */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{t.tileTotal(monthLabel)}</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{money(totalDue)}</p>
+        </div>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-red-700">{t.tileOverdue}</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-red-700">{money(overdueTotal)}</p>
+          <p className="mt-0.5 text-xs text-red-700/80">{t.tileOverdueHint}</p>
+        </div>
+        <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-sky-800">{t.tileUpcoming}</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-sky-800">{money(upcomingTotal)}</p>
+          <p className="mt-0.5 text-xs text-sky-800/80">
+            {upcomingDueDate ? t.tileUpcomingHint(formatDate(upcomingDueDate, language)) : t.tileUpcomingNone}
+          </p>
+        </div>
+      </div>
+
       {/* overflow-x-auto et non overflow-hidden : `hidden` coupait purement et
           simplement les dernières colonnes sur téléphone, sans moyen d'y accéder.
           La largeur minimale est indispensable — sans elle, `w-full` écrase les
@@ -140,7 +164,7 @@ export default async function CollectionsPage({
               <th className="px-4 py-2 font-medium">{t.colClass}</th>
               <th className="px-4 py-2 font-medium">{t.colParent}</th>
               <th className="px-4 py-2 font-medium">{t.colParentPhone}</th>
-              <th className="px-4 py-2 font-medium">{t.colRemaining}</th>
+              <th className="px-4 py-2 font-medium">{t.colRemaining(monthLabel)}</th>
               <th className="px-4 py-2 font-medium">{t.colStatus}</th>
             </tr>
           </thead>
@@ -155,7 +179,7 @@ export default async function CollectionsPage({
                   </td>
                   <td className="px-4 py-2 text-slate-600">{row.guardianName}</td>
                   <td className="px-4 py-2 text-slate-600">{row.guardianPhone}</td>
-                  <td className="px-4 py-2 text-slate-900">{row.totalRemaining}</td>
+                  <td className="px-4 py-2 tabular-nums text-slate-900">{money(row.totalRemaining)}</td>
                   <td className="px-4 py-2">
                     <span
                       className={`inline-block rounded-full border px-2 py-0.5 text-xs font-medium ${style.className}`}
