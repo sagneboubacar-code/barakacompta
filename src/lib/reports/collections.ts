@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { cycleLabel } from "@/lib/constants/cycles";
-import { mensualiteMonthKey } from "@/lib/constants/months";
 import type { Language } from "@/lib/i18n/config";
 
 type ScheduleRow = {
@@ -12,12 +11,11 @@ type ScheduleRow = {
   amount_paid: number;
   amount_remaining: number;
   status: string;
-  fee_structures: { fee_type: string; month: number } | { fee_type: string; month: number }[] | null;
 };
 
 // vert : rien à payer sur le mois ; rouge : impayé en retard ; orange : en
-// retard mais partiellement réglé ; attente : dû, mais l'échéance n'est pas
-// encore passée (la mensualité du mois en cours se paie le 5 du mois suivant).
+// retard mais partiellement réglé ; attente : attendu ce mois-ci, mais
+// l'échéance n'est pas encore passée (ex. le 5 du mois).
 export type CollectionsColorStatus = "vert" | "orange" | "rouge" | "attente";
 
 export interface CollectionsRow {
@@ -53,27 +51,25 @@ function monthKeyOf(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
-// Le mois d'une échéance, tel que l'école en parle : pour une mensualité, le
-// mois FACTURÉ (« octobre », payable le 5 novembre depuis 0032) ; pour les
-// autres frais (inscription, uniforme...), le mois où ils sont dus.
-function billingMonth(schedule: ScheduleRow): string {
-  const fee = Array.isArray(schedule.fee_structures) ? schedule.fee_structures[0] : schedule.fee_structures;
-  if (fee?.fee_type === "mensualite" && fee.month) return mensualiteMonthKey(fee.month, schedule.due_date);
+// Le mois d'une échéance = le mois où l'école ATTEND l'argent, c'est-à-dire
+// sa date d'échéance. « Octobre » = tout ce qui doit rentrer en octobre (les
+// inscriptions du 1er, les mensualités du 5) ; « Novembre » = ce qui rentrera
+// début novembre. C'est ainsi que l'école organise son recouvrement.
+function collectionMonth(schedule: ScheduleRow): string {
   return schedule.due_date.slice(0, 7);
 }
 
 // PostgREST plafonne chaque réponse à 1000 lignes : une école de quelques
 // centaines d'élèves les dépasse vite. On pagine.
-async function fetchSchedules(supabase: SupabaseClient<Database>, dueBefore: string): Promise<ScheduleRow[]> {
+async function fetchSchedules(supabase: SupabaseClient<Database>): Promise<ScheduleRow[]> {
   const rows: ScheduleRow[] = [];
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase
       .from("payment_schedules")
       .select(
-        "student_id, due_date, amount_due, discount_amount, amount_paid, amount_remaining, status, fee_structures(fee_type, month)"
+        "student_id, due_date, amount_due, discount_amount, amount_paid, amount_remaining, status"
       )
       .neq("status", "cancelled")
-      .lt("due_date", dueBefore)
       .order("id")
       .range(from, from + 999);
     if (error) throw new Error("Lecture des échéances impossible : " + error.message);
@@ -114,18 +110,15 @@ export async function computeCollectionsReport(
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
   const currentMonth = monthKeyOf(now);
-  // Mois proposés : jusqu'au mois en cours inclus. Sa mensualité n'est due que
-  // le 5 du mois suivant : on lit donc les échéances jusqu'à la fin de ce
-  // mois suivant.
-  const dueBefore = monthKeyOf(new Date(now.getFullYear(), now.getMonth() + 2, 1)) + "-01";
 
-  const [{ data: students }, schedules] = await Promise.all([studentsQuery, fetchSchedules(supabase, dueBefore)]);
+  const [{ data: students }, schedules] = await Promise.all([studentsQuery, fetchSchedules(supabase)]);
 
+  // Tous les mois de l'échéancier sont proposés, y compris ceux à venir :
+  // l'école prépare le recouvrement de début novembre dès fin octobre.
   const schedulesByStudent = new Map<string, (ScheduleRow & { month: string })[]>();
   const monthsSet = new Set<string>();
   for (const schedule of schedules) {
-    const month = billingMonth(schedule);
-    if (month > currentMonth) continue;
+    const month = collectionMonth(schedule);
     const list = schedulesByStudent.get(schedule.student_id) ?? [];
     list.push({ ...schedule, month });
     schedulesByStudent.set(schedule.student_id, list);

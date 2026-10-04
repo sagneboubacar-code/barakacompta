@@ -195,7 +195,14 @@ export default async function CollectionsPage({
                   </td>
                   <td className="px-4 py-2 text-slate-600">{row.guardianName}</td>
                   <td className="px-4 py-2 text-slate-600">{row.guardianPhone}</td>
-                  <td className="px-4 py-2 tabular-nums text-slate-900">{money(row.totalRemaining)}</td>
+                  <td className="px-4 py-2 tabular-nums text-slate-900">
+                    {money(row.totalRemaining)}
+                    {/* Ligne rouge dont seule une partie est en retard : on le
+                        dit, sinon tout le montant passe pour un impayé. */}
+                    {row.overdueRemaining > 0 && row.overdueRemaining < row.totalRemaining && (
+                      <span className="block text-xs text-red-700">{t.rowOverduePart(money(row.overdueRemaining))}</span>
+                    )}
+                  </td>
                   <td className="px-4 py-2">
                     <span
                       className={`inline-block rounded-full border px-2 py-0.5 text-xs font-medium ${style.className}`}

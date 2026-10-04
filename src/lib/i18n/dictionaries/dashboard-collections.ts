@@ -6,7 +6,8 @@ export const dashboardCollectionsDict = {
         ? `Aucun élève en retard sur ${monthLabel}.`
         : `${overdueCount} élève${overdueCount > 1 ? "s" : ""} en retard sur ${monthLabel}.`,
     tileTotal: (monthLabel: string) => `Recette totale — ${monthLabel}`,
-    tileTotalHint: "Si tous les élèves paient",
+    tileTotalHint: "Tout ce qui doit rentrer ce mois-ci, si tous les élèves paient",
+    rowOverduePart: (amount: string) => `dont ${amount} en retard`,
     tileCollected: "Déjà encaissé :",
     tileRemaining: "Reste :",
     tileOverdue: "Déjà en retard",
@@ -45,7 +46,8 @@ export const dashboardCollectionsDict = {
       return `${label} في ${monthLabel}.`;
     },
     tileTotal: (monthLabel: string) => `مجموع المداخيل — ${monthLabel}`,
-    tileTotalHint: "إذا دفع جميع التلاميذ",
+    tileTotalHint: "كل ما يجب تحصيله هذا الشهر إذا دفع جميع التلاميذ",
+    rowOverduePart: (amount: string) => `منها ${amount} متأخرة`,
     tileCollected: "تم تحصيله:",
     tileRemaining: "المتبقي:",
     tileOverdue: "متأخر",
