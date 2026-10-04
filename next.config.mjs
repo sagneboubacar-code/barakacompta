@@ -15,9 +15,14 @@ const nextConfig = {
     serverComponentsExternalPackages: ["@react-pdf/renderer"],
     // Les deux clés couvrent les deux formes d'identifiant de route selon la
     // version de Next — l'une ou l'autre s'applique, jamais rien de superflu.
+    // Toute nouvelle route qui produit un PDF doit être ajoutée ici.
     outputFileTracingIncludes: {
       "/api/reports/financial/pdf": PDF_FONT_FILES,
       "/api/reports/financial/pdf/route": PDF_FONT_FILES,
+      "/api/payments/[id]/receipt/pdf": PDF_FONT_FILES,
+      "/api/payments/[id]/receipt/pdf/route": PDF_FONT_FILES,
+      "/api/payments/family/[id]/pdf": PDF_FONT_FILES,
+      "/api/payments/family/[id]/pdf/route": PDF_FONT_FILES,
     },
   },
 };

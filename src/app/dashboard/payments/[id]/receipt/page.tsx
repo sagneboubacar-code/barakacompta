@@ -105,7 +105,14 @@ export default async function ReceiptPage({ params }: { params: { id: string } }
 
       <p className="text-center text-xs text-slate-400">{t.receiptNumber(payment.id.slice(0, 8))}</p>
 
-      <div className="flex justify-center print:hidden">
+      <div className="flex justify-center gap-2 print:hidden">
+        <a
+          href={`/api/payments/${payment.id}/receipt/pdf`}
+          download
+          className="rounded-md border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+        >
+          {t.downloadPdf}
+        </a>
         <PrintButton />
       </div>
     </div>

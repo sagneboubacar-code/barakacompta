@@ -83,6 +83,7 @@ export const dashboardPaymentsDict = {
     familyHint: "Le reçu indique ce qui a été versé et ce qui reste à payer.",
     familyTag: (name: string) => `Famille ${name}`,
     familyReceipt: "Reçu famille",
+    pdf: "PDF",
   },
   ar: {
     pageTitle: "المدفوعات",
@@ -167,5 +168,6 @@ export const dashboardPaymentsDict = {
     familyHint: "يبيّن الإيصال ما تم دفعه وما تبقى للدفع.",
     familyTag: (name: string) => `عائلة ${name}`,
     familyReceipt: "إيصال العائلة",
+    pdf: "PDF",
   },
 };

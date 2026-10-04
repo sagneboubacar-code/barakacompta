@@ -433,6 +433,13 @@ export default async function PaymentsPage({
                     >
                       {t.viewReceipt}
                     </Link>
+                    <a
+                      href={`/api/payments/${payment.id}/receipt/pdf`}
+                      download
+                      className="ms-3 text-slate-500 underline"
+                    >
+                      {t.pdf}
+                    </a>
                     {payment.family_payment_id && (
                       <Link
                         href={`/dashboard/payments/family/${payment.family_payment_id}`}

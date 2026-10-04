@@ -11,6 +11,7 @@ import type {
   DailyBreakdown,
   CashManagerTotal,
 } from "@/lib/reports/financial";
+import { pdfLongDate, pdfMoney } from "@/lib/pdf/format";
 
 // Document comptable destiné à être imprimé, classé et présenté (banque,
 // bailleur, assemblée de parents). D'où le parti pris : pas de couleur
@@ -121,29 +122,8 @@ export interface FinancialPdfInput {
 // Les polices PDF standard (Helvetica) sont limitées au jeu WinAnsi : pas de
 // signe moins U+2212, pas d'espace fine insécable. N'écrire dans ce fichier
 // que des caractères latin-1 (le tiret ordinaire, l'espace ordinaire).
-//
-// Helvetica ne couvre que le latin-1 : les espaces fines insécables que
-// produit Intl.NumberFormat("fr-FR") s'y afficheraient en caractères parasites.
-// D'où ce formatage maison, à l'espace ordinaire.
-function money(amount: number, currency: string): string {
-  const rounded = Math.round(amount);
-  const sign = rounded < 0 ? "-" : "";
-  const grouped = Math.abs(rounded)
-    .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  return `${sign}${grouped} ${currency === "XOF" ? "F CFA" : currency}`;
-}
-
-const MONTHS = [
-  "janvier", "février", "mars", "avril", "mai", "juin",
-  "juillet", "août", "septembre", "octobre", "novembre", "décembre",
-];
-
-function longDate(iso: string): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  if (!y || !m || !d) return iso;
-  return `${d} ${MONTHS[m - 1]} ${y}`;
-}
+const money = pdfMoney;
+const longDate = pdfLongDate;
 
 function stamp(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
