@@ -23,6 +23,8 @@ const nextConfig = {
       "/api/payments/[id]/receipt/pdf/route": PDF_FONT_FILES,
       "/api/payments/family/[id]/pdf": PDF_FONT_FILES,
       "/api/payments/family/[id]/pdf/route": PDF_FONT_FILES,
+      "/api/reports/collections/pdf": PDF_FONT_FILES,
+      "/api/reports/collections/pdf/route": PDF_FONT_FILES,
     },
   },
 };

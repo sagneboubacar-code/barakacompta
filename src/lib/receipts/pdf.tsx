@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
+import { Document, Font, Page, Text, View, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
 import { paymentMethodLabel } from "@/lib/constants/payments";
 import { pdfLongDate, pdfMoney } from "@/lib/pdf/format";
 import type { ReceiptData } from "@/lib/receipts/data";
@@ -10,6 +10,9 @@ import type { ReceiptData } from "@/lib/receipts/data";
 //
 // Helvetica ne couvre que le latin-1 (WinAnsi) : n'écrire ici que des
 // caractères latin-1, et formater les montants avec pdfMoney.
+
+// Pas de coupure de mots en fin de ligne : un nom coupé en deux se lit mal.
+Font.registerHyphenationCallback((word) => [word]);
 
 const INK = "#0f172a";
 const MUTED = "#64748b";

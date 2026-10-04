@@ -74,6 +74,12 @@ export default async function CollectionsPage({
         <div className="flex gap-2 print:hidden">
           <PrintButton />
           <a
+            href={`/api/reports/collections/pdf?${exportParams.toString()}`}
+            className="rounded-md border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          >
+            {t.exportPdf}
+          </a>
+          <a
             href={`/api/reports/collections/csv?${exportParams.toString()}`}
             className="rounded-md border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
           >
