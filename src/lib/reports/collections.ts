@@ -27,6 +27,9 @@ export interface CollectionsRow {
   guardianPhone: string;
   totalRemaining: number;
   overdueRemaining: number;
+  // Prochaine échéance pas encore passée sur laquelle il reste à payer
+  // (« à payer aujourd'hui » le jour même).
+  nextDueDate: string | null;
   colorStatus: CollectionsColorStatus;
 }
 
@@ -45,6 +48,7 @@ export interface CollectionsReport {
   upcomingTotal: number;
   // Prochaine échéance de la part « à encaisser » (ex. 5 novembre).
   upcomingDueDate: string | null;
+  today: string;
 }
 
 function monthKeyOf(date: Date): string {
@@ -141,12 +145,17 @@ export async function computeCollectionsReport(
 
     let totalRemaining = 0;
     let overdueRemaining = 0;
+    let nextDueDate: string | null = null;
     for (const s of monthSchedules) {
       const remaining = Math.max(Number(s.amount_remaining), 0);
       if (remaining <= 0) continue;
       totalRemaining += remaining;
-      if (s.due_date < today) overdueRemaining += remaining;
-      else if (!upcomingDueDate || s.due_date < upcomingDueDate) upcomingDueDate = s.due_date;
+      if (s.due_date < today) {
+        overdueRemaining += remaining;
+      } else {
+        if (!nextDueDate || s.due_date < nextDueDate) nextDueDate = s.due_date;
+        if (!upcomingDueDate || s.due_date < upcomingDueDate) upcomingDueDate = s.due_date;
+      }
     }
 
     let colorStatus: CollectionsColorStatus = "vert";
@@ -165,9 +174,15 @@ export async function computeCollectionsReport(
       guardianPhone: student.guardian_phone ?? "—",
       totalRemaining,
       overdueRemaining,
+      nextDueDate,
       colorStatus,
     };
   });
+
+  // Ceux qui doivent quelque chose d'abord (en retard, puis à payer), les
+  // élèves à jour à la fin : c'est une liste de relance.
+  const order: Record<CollectionsColorStatus, number> = { rouge: 0, orange: 1, attente: 2, vert: 3 };
+  rows.sort((a, b) => order[a.colorStatus] - order[b.colorStatus] || a.name.localeCompare(b.name));
 
   const totalDue = rows.reduce((sum, r) => sum + r.totalRemaining, 0);
   const overdueTotal = rows.reduce((sum, r) => sum + r.overdueRemaining, 0);
@@ -183,5 +198,6 @@ export async function computeCollectionsReport(
     overdueTotal,
     upcomingTotal: totalDue - overdueTotal,
     upcomingDueDate,
+    today,
   };
 }

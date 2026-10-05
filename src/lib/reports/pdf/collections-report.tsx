@@ -182,7 +182,7 @@ function CollectionsDocument({ school, monthLabel, filtersLabel, report, generat
     { label: "DÉJÀ ENCAISSÉ", value: report.collectedTotal, color: GREEN, bar: GREEN, hint: `${rate} % de la recette` },
     { label: "EN RETARD", value: report.overdueTotal, color: RED, bar: RED, hint: "échéance passée" },
     {
-      label: "À ENCAISSER",
+      label: "DOIVENT PAYER",
       value: report.upcomingTotal,
       color: BLUE,
       bar: BLUE,
@@ -263,13 +263,13 @@ function CollectionsDocument({ school, monthLabel, filtersLabel, report, generat
             <View style={styles.section}>
               <View style={[styles.sectionHead, { backgroundColor: BLUE_BG }]} wrap={false}>
                 <Text style={[styles.sectionTitle, { color: BLUE }]}>
-                  À ENCAISSER{report.upcomingDueDate ? ` — ÉCHÉANCE LE ${pdfLongDate(report.upcomingDueDate).toUpperCase()}` : ""}
+                  DOIVENT PAYER{report.upcomingDueDate ? ` — ÉCHÉANCE LE ${pdfLongDate(report.upcomingDueDate).toUpperCase()}` : ""}
                 </Text>
                 <Text style={[styles.sectionMeta, { color: BLUE }]}>{plural(upcoming.length, "élève")}</Text>
               </View>
               <DebtTable rows={upcoming} money={m} showOverduePart={false} />
               <View style={styles.subtotal} wrap={false}>
-                <Text style={styles.subtotalLabel}>Total à encaisser</Text>
+                <Text style={styles.subtotalLabel}>Total à payer</Text>
                 <Text style={[styles.subtotalValue, { color: BLUE }]}>{m(upcomingTotal)}</Text>
               </View>
             </View>

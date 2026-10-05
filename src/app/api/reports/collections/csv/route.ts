@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     vert: "À jour",
     orange: "Partiel, en retard",
     rouge: "Impayé",
-    attente: "À encaisser",
+    attente: "À payer",
   };
   for (const row of report.rows) {
     lines.push(
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
   lines.push(toCsvRow(["Déjà encaissé", report.collectedTotal]));
   lines.push(toCsvRow(["Reste à encaisser", report.totalDue]));
   lines.push(toCsvRow(["Dont déjà en retard", report.overdueTotal]));
-  lines.push(toCsvRow(["Dont à encaisser (pas encore échu)", report.upcomingTotal]));
+  lines.push(toCsvRow(["Dont à payer (échéance pas encore passée)", report.upcomingTotal]));
 
   return buildCsvResponse(lines, `recouvrement-${report.selectedMonth}.csv`);
 }

@@ -7,11 +7,12 @@ import { PrintButton } from "@/components/PrintButton";
 import { getLanguage } from "@/lib/i18n/get-language";
 import { dashboardCollectionsDict } from "@/lib/i18n/dictionaries/dashboard-collections";
 import { formatCurrency, formatDate } from "@/lib/format";
+import Link from "next/link";
 
 export default async function CollectionsPage({
   searchParams,
 }: {
-  searchParams: { cycle?: string; class_id?: string; month?: string };
+  searchParams: { cycle?: string; class_id?: string; month?: string; show?: string };
 }) {
   const appUser = await requireRole(["owner", "admin"]);
   const language = getLanguage();
@@ -50,9 +51,33 @@ export default async function CollectionsPage({
     overdueTotal,
     upcomingTotal,
     upcomingDueDate,
+    today,
   } = report;
   const money = (amount: number) => formatCurrency(amount, school?.currency, language);
   const monthLabel = formatMonthLabel(selectedMonth, language);
+
+  // Par défaut, seulement les élèves qui doivent payer : c'est pour eux qu'on
+  // ouvre cette page. Les élèves à jour restent accessibles par le filtre.
+  const SHOW = {
+    due: (r: (typeof rows)[number]) => r.totalRemaining > 0,
+    late: (r: (typeof rows)[number]) => r.colorStatus === "rouge" || r.colorStatus === "orange",
+    ok: (r: (typeof rows)[number]) => r.colorStatus === "vert",
+    all: () => true,
+  };
+  const show: keyof typeof SHOW = searchParams.show && searchParams.show in SHOW ? (searchParams.show as keyof typeof SHOW) : "due";
+  const visibleRows = rows.filter(SHOW[show]);
+  const showCounts = {
+    due: rows.filter(SHOW.due).length,
+    late: rows.filter(SHOW.late).length,
+    ok: rows.filter(SHOW.ok).length,
+    all: rows.length,
+  };
+  const statusLabel = (row: (typeof rows)[number]) =>
+    row.colorStatus === "attente" && row.nextDueDate
+      ? row.nextDueDate === today
+        ? t.statusDueToday
+        : t.statusDueBefore(formatDate(row.nextDueDate, language))
+      : STATUS_STYLES[row.colorStatus].label;
 
   const exportParams = new URLSearchParams();
   if (searchParams.cycle) exportParams.set("cycle", searchParams.cycle);
@@ -139,6 +164,7 @@ export default async function CollectionsPage({
             ))}
           </select>
         </label>
+        <input type="hidden" name="show" value={show} />
         <button
           type="submit"
           className="rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
@@ -169,10 +195,34 @@ export default async function CollectionsPage({
           <p className="text-xs font-medium uppercase tracking-wide text-sky-800">{t.tileUpcoming}</p>
           <p className="mt-1 text-2xl font-semibold tabular-nums text-sky-800">{money(upcomingTotal)}</p>
           <p className="mt-0.5 text-xs text-sky-800/80">
-            {upcomingDueDate ? t.tileUpcomingHint(formatDate(upcomingDueDate, language)) : t.tileUpcomingNone}
+            {upcomingDueDate === today
+              ? t.tileUpcomingToday
+              : upcomingDueDate
+                ? t.tileUpcomingHint(formatDate(upcomingDueDate, language))
+                : t.tileUpcomingNone}
           </p>
         </div>
       </div>
+
+      <nav className="flex flex-wrap gap-2 print:hidden">
+        {(["due", "late", "ok", "all"] as const).map((key) => {
+          const params = new URLSearchParams(exportParams);
+          params.set("show", key);
+          return (
+            <Link
+              key={key}
+              href={`/dashboard/collections?${params.toString()}`}
+              className={`rounded-full border px-3 py-1 text-sm ${
+                show === key
+                  ? "border-slate-900 bg-slate-900 text-white"
+                  : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+              }`}
+            >
+              {t.show[key]} ({showCounts[key]})
+            </Link>
+          );
+        })}
+      </nav>
 
       {/* overflow-x-auto et non overflow-hidden : `hidden` coupait purement et
           simplement les dernières colonnes sur téléphone, sans moyen d'y accéder.
@@ -191,7 +241,7 @@ export default async function CollectionsPage({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
+            {visibleRows.map((row) => {
               const style = STATUS_STYLES[row.colorStatus];
               return (
                 <tr key={row.id} className={`border-t border-s-4 ${style.className}`}>
@@ -213,16 +263,16 @@ export default async function CollectionsPage({
                     <span
                       className={`inline-block rounded-full border px-2 py-0.5 text-xs font-medium ${style.className}`}
                     >
-                      {style.label}
+                      {statusLabel(row)}
                     </span>
                   </td>
                 </tr>
               );
             })}
-            {rows.length === 0 && (
+            {visibleRows.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
-                  {t.noStudents}
+                  {show === "due" && rows.length > 0 ? t.nobodyDue : t.noStudents}
                 </td>
               </tr>
             )}
