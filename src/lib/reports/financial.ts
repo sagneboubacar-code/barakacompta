@@ -33,8 +33,13 @@ export interface ExpenseItem {
 }
 
 export interface ExpenseCategoryTotal {
+  // Catégorie de la liste (« salaires »), ou « autres:<nom> » pour une
+  // dépense hors liste.
   key: string;
   label: string;
+  // true : `label` est le nom saisi par l'école, à afficher tel quel (et non
+  // un libellé de catégorie à traduire).
+  freeText: boolean;
   amount: number;
   // Les dépenses de la catégorie, par date : le total seul ne disait pas à
   // la direction ce qui avait été acheté.
@@ -190,23 +195,34 @@ export async function computeFinancialReport(supabase: Client, from: string, to:
     });
   const totalCollected = payments.reduce((sum, p) => sum + Number(p.amount), 0);
 
-  const expenseItems = new Map<string, ExpenseItem[]>();
+  // Une ligne « Autres » ne disait rien de ce qui avait été payé : une
+  // dépense hors liste apparaît sous le nom saisi en description (« Achat de
+  // cartouches »), et les dépenses de même nom sont additionnées.
+  const groups = new Map<string, ExpenseCategoryTotal>();
   for (const expense of expenses) {
-    const items = expenseItems.get(expense.category) ?? [];
-    items.push({ id: expense.id, date: expense.expense_date, label: expense.label, amount: Number(expense.amount) });
-    expenseItems.set(expense.category, items);
+    const name = expense.label.trim().replace(/\s+/g, " ");
+    const freeText = expense.category === "autres";
+    const key = freeText ? `autres:${name.toLocaleLowerCase("fr")}` : expense.category;
+    let group = groups.get(key);
+    if (!group) {
+      const label = freeText ? name : EXPENSE_CATEGORIES.find((c) => c.key === expense.category)?.label ?? expense.category;
+      group = { key, label, freeText, amount: 0, items: [] };
+      groups.set(key, group);
+    }
+    group.amount += Number(expense.amount);
+    group.items.push({ id: expense.id, date: expense.expense_date, label: name, amount: Number(expense.amount) });
   }
-  const expensesByCategory = EXPENSE_CATEGORIES.map((category) => {
-    const items = (expenseItems.get(category.key) ?? []).sort(
-      (a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label, "fr")
-    );
-    return {
-      key: category.key,
-      label: category.label,
-      amount: items.reduce((sum, item) => sum + item.amount, 0),
-      items,
-    };
-  }).filter((category) => category.amount > 0);
+  // Catégories dans l'ordre de la liste, puis les dépenses hors liste par nom.
+  const rank = (group: ExpenseCategoryTotal) => {
+    const index = EXPENSE_CATEGORIES.findIndex((c) => c.key === group.key);
+    return index === -1 ? EXPENSE_CATEGORIES.length : index;
+  };
+  const expensesByCategory = Array.from(groups.values())
+    .filter((group) => group.amount > 0)
+    .sort((a, b) => rank(a) - rank(b) || a.label.localeCompare(b.label, "fr"));
+  for (const group of expensesByCategory) {
+    group.items.sort((a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label, "fr"));
+  }
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
   return {

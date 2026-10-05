@@ -207,7 +207,7 @@ function FinancialReportDocument(input: FinancialPdfInput) {
               </View>
               {report.expensesByCategory.map((category, index) => (
                 <View key={category.key} style={[styles.tr, index % 2 === 1 ? { backgroundColor: ZEBRA } : {}]}>
-                  <Text style={[styles.cell, { flex: 3 }]}>{category.label}</Text>
+                  <Text style={[styles.cell, { flex: 3 }]}>{pdfText(category.label)}</Text>
                   <Text style={[styles.cellNum, { flex: 2, color: ROSE }]}>{m(category.amount)}</Text>
                 </View>
               ))}
@@ -280,7 +280,7 @@ function FinancialReportDocument(input: FinancialPdfInput) {
                     <View wrap={false}>
                       <View style={styles.groupRow}>
                         <Text style={[styles.cell, styles.bold, { flex: 6.4, color: INK }]}>
-                          {category.label.toUpperCase()}
+                          {pdfText(category.label.toUpperCase())}
                         </Text>
                         <Text style={[styles.cellNum, styles.bold, { flex: 2, color: ROSE }]}>{m(category.amount)}</Text>
                       </View>

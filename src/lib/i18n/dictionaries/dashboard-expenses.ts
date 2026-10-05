@@ -23,6 +23,9 @@ export const dashboardExpensesDict = {
     addExpense: "Ajouter une dépense",
     date: "Date",
     description: "Description",
+    descriptionPlaceholder: "Ex. Achat de cartouches",
+    descriptionHint:
+      "Dépense absente de la liste des catégories ? Choisissez « Autres » et écrivez son nom ici : c'est ce nom qui apparaîtra dans le rapport.",
     amount: "Montant",
     managerOptional: "Responsable (optionnel)",
     receiptOptional: "Justificatif (image ou PDF)",
@@ -52,6 +55,8 @@ export const dashboardExpensesDict = {
     addExpense: "إضافة مصروف",
     date: "التاريخ",
     description: "الوصف",
+    descriptionPlaceholder: "مثال: شراء خراطيش الحبر",
+    descriptionHint: "مصروف غير موجود في قائمة الفئات؟ اختر « أخرى » واكتب اسمه هنا: هذا الاسم هو الذي سيظهر في التقرير.",
     amount: "المبلغ",
     managerOptional: "المسؤول (اختياري)",
     receiptOptional: "الإثبات (صورة أو PDF)",

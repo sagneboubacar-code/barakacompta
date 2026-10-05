@@ -301,8 +301,10 @@ export default async function ExpensesPage({
             <input
               name="label"
               required
+              placeholder={t.descriptionPlaceholder}
               className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
             />
+            <span className="block text-xs text-slate-500">{t.descriptionHint}</span>
           </label>
           <label className="space-y-1 text-sm">
             <span className="text-slate-600">{t.amount}</span>

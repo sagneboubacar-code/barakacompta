@@ -89,6 +89,9 @@ export default async function ReportsPage({
   ];
   const revenueLabel = (bucket: { key: string; label: string }) =>
     language === "fr" ? bucket.label : t.revenueLabels[bucket.key] ?? feeTypeLabel(bucket.key, language);
+  // Dépense hors liste : le nom saisi par l'école, tel quel, dans toutes les langues.
+  const expenseLabel = (category: { key: string; label: string; freeText: boolean }) =>
+    category.freeText ? category.label : expenseCategoryLabel(category.key, language);
 
   return (
     <div className="space-y-8 print:space-y-6">
@@ -237,7 +240,7 @@ export default async function ReportsPage({
             <tbody>
               {report.expensesByCategory.map((category) => (
                 <tr key={category.key} className="border-t border-slate-100">
-                  <td className="py-2 text-slate-900">{expenseCategoryLabel(category.key, language)}</td>
+                  <td className="py-2 text-slate-900">{expenseLabel(category)}</td>
                   <td className="py-2 text-right font-mono tabular-nums text-rose-700">
                     {money(category.amount)}
                   </td>
@@ -340,7 +343,7 @@ export default async function ReportsPage({
                 <tbody key={category.key} className="break-inside-avoid">
                   <tr className="border-t border-slate-200 bg-slate-50">
                     <td colSpan={2} className="px-2 py-1.5 font-semibold text-slate-900">
-                      {expenseCategoryLabel(category.key, language)}
+                      {expenseLabel(category)}
                     </td>
                     <td className="px-2 py-1.5 text-right font-mono font-semibold tabular-nums text-rose-700">
                       {money(category.amount)}
