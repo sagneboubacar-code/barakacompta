@@ -8,6 +8,7 @@ import { cycleLabel } from "@/lib/constants/cycles";
 import { getLanguage } from "@/lib/i18n/get-language";
 import { dashboardPaymentsDict } from "@/lib/i18n/dictionaries/dashboard-payments";
 import { formatDate } from "@/lib/format";
+import { effectiveScheduleStatus } from "@/lib/schedules";
 import { FamilyPaymentSection } from "./family-payment-section";
 
 export default async function PaymentsPage({
@@ -257,7 +258,7 @@ export default async function PaymentsPage({
                         <td className="py-1 pr-3 text-slate-600">{schedule.amount_paid}</td>
                         <td className="py-1 pr-3 text-slate-600">{schedule.amount_remaining}</td>
                         <td className="py-1 pr-3 text-slate-600">
-                          {t.scheduleStatus[schedule.status] ?? schedule.status}
+                          {t.scheduleStatus[effectiveScheduleStatus(schedule)] ?? schedule.status}
                         </td>
                       </tr>
                     );

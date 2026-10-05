@@ -11,6 +11,7 @@ import { getLanguage } from "@/lib/i18n/get-language";
 import { dashboardStudentDetailDict } from "@/lib/i18n/dictionaries/dashboard-student-detail";
 import { studentFamilyFieldDict } from "@/lib/i18n/dictionaries/dashboard-families";
 import { formatDate } from "@/lib/format";
+import { effectiveScheduleStatus } from "@/lib/schedules";
 
 export default async function StudentDetailPage({
   params,
@@ -363,7 +364,7 @@ export default async function StudentDetailPage({
                   <td className="py-1.5 text-slate-600">{schedule.amount_paid}</td>
                   <td className="py-1.5 text-slate-600">{schedule.amount_remaining}</td>
                   <td className="py-1.5 text-slate-600">
-                    {t.scheduleStatus[schedule.status] ?? schedule.status}
+                    {t.scheduleStatus[effectiveScheduleStatus(schedule)] ?? schedule.status}
                   </td>
                 </tr>
               );
