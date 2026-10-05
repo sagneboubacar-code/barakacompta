@@ -25,10 +25,20 @@ export interface RevenueBucket {
   collected: number;
 }
 
+export interface ExpenseItem {
+  id: string;
+  date: string; // "2026-09-12"
+  label: string; // description saisie : « Achat de cartouches »
+  amount: number;
+}
+
 export interface ExpenseCategoryTotal {
   key: string;
   label: string;
   amount: number;
+  // Les dépenses de la catégorie, par date : le total seul ne disait pas à
+  // la direction ce qui avait été acheté.
+  items: ExpenseItem[];
 }
 
 export interface FinancialReport {
@@ -101,7 +111,14 @@ type PaymentRow = {
   payment_allocations: unknown;
 };
 
-type ExpenseRow = { amount: number; expense_date: string; category: string; cash_manager_id: string | null };
+type ExpenseRow = {
+  id: string;
+  amount: number;
+  expense_date: string;
+  category: string;
+  label: string;
+  cash_manager_id: string | null;
+};
 
 function fetchPayments(supabase: Client, from: string, to: string) {
   return fetchAll<PaymentRow>((a, b) =>
@@ -119,7 +136,7 @@ function fetchExpenses(supabase: Client, from: string, to: string) {
   return fetchAll<ExpenseRow>((a, b) =>
     supabase
       .from("expenses")
-      .select("amount, expense_date, category, cash_manager_id")
+      .select("id, amount, expense_date, category, label, cash_manager_id")
       .gte("expense_date", from)
       .lte("expense_date", to)
       .order("id")
@@ -173,15 +190,23 @@ export async function computeFinancialReport(supabase: Client, from: string, to:
     });
   const totalCollected = payments.reduce((sum, p) => sum + Number(p.amount), 0);
 
-  const expenseTotals = new Map<string, number>();
+  const expenseItems = new Map<string, ExpenseItem[]>();
   for (const expense of expenses) {
-    expenseTotals.set(expense.category, (expenseTotals.get(expense.category) ?? 0) + Number(expense.amount));
+    const items = expenseItems.get(expense.category) ?? [];
+    items.push({ id: expense.id, date: expense.expense_date, label: expense.label, amount: Number(expense.amount) });
+    expenseItems.set(expense.category, items);
   }
-  const expensesByCategory = EXPENSE_CATEGORIES.map((category) => ({
-    key: category.key,
-    label: category.label,
-    amount: expenseTotals.get(category.key) ?? 0,
-  })).filter((category) => category.amount > 0);
+  const expensesByCategory = EXPENSE_CATEGORIES.map((category) => {
+    const items = (expenseItems.get(category.key) ?? []).sort(
+      (a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label, "fr")
+    );
+    return {
+      key: category.key,
+      label: category.label,
+      amount: items.reduce((sum, item) => sum + item.amount, 0),
+      items,
+    };
+  }).filter((category) => category.amount > 0);
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
   return {

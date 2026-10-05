@@ -68,6 +68,18 @@ export async function GET(request: NextRequest) {
     lines.push("");
   }
 
+  if (report.expensesByCategory.length > 0) {
+    lines.push(toCsvRow(["Détail des dépenses"]));
+    lines.push(toCsvRow(["Date", "Catégorie", "Description", "Montant"]));
+    for (const category of report.expensesByCategory) {
+      for (const item of category.items) {
+        lines.push(toCsvRow([item.date.split("-").reverse().join("/"), category.label, item.label, item.amount]));
+      }
+    }
+    lines.push(toCsvRow(["Total", "", "", report.totalExpenses]));
+    lines.push("");
+  }
+
   lines.push(toCsvRow(["Détail journalier"]));
   lines.push(toCsvRow(["Date", "Recettes", "Dépenses", "Solde du jour", "Cumul"]));
   for (const day of dailyBreakdown) {

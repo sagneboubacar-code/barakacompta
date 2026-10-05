@@ -1,6 +1,6 @@
 import { Document, Font, Image, Page, Text, View, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
-import type { FinancialReport, DailyBreakdown, CashManagerTotal } from "@/lib/reports/financial";
-import { pdfLongDate, pdfMoney } from "@/lib/pdf/format";
+import type { FinancialReport, DailyBreakdown, CashManagerTotal, ExpenseItem } from "@/lib/reports/financial";
+import { pdfLongDate, pdfMoney, pdfShortDate, pdfText } from "@/lib/pdf/format";
 
 // Rapport financier = journal de caisse de la période : l'argent réellement
 // reçu et dépensé, et le solde qui doit être en caisse. Document remis à la
@@ -60,6 +60,7 @@ const styles = StyleSheet.create({
   cellNum: { fontSize: 8, textAlign: "right" },
   empty: { fontSize: 7.5, color: FAINT, paddingVertical: 6, paddingHorizontal: 6 },
   totalRow: { flexDirection: "row", paddingVertical: 5, paddingHorizontal: 6, borderTopWidth: 1, borderTopColor: INK },
+  groupRow: { flexDirection: "row", paddingVertical: 4, paddingHorizontal: 6, marginTop: 4, backgroundColor: "#f1f5f9" },
   bold: { fontFamily: "Helvetica-Bold" },
 
   note: { fontSize: 7, color: MUTED, marginTop: 10 },
@@ -250,6 +251,48 @@ function FinancialReportDocument(input: FinancialPdfInput) {
                 <Text style={[styles.cellNum, styles.bold, { flex: 2, color: report.balance >= 0 ? INK : ROSE }]}>
                   {m(report.balance)}
                 </Text>
+              </View>
+            </View>
+          )}
+
+          {report.expensesByCategory.length > 0 && (
+            <View style={styles.section}>
+              <View wrap={false} minPresenceAhead={40}>
+                <Text style={styles.sectionTitle}>DÉTAIL DES DÉPENSES</Text>
+                <View style={styles.th}>
+                  <Text style={[styles.thText, { flex: 1.4 }]}>DATE</Text>
+                  <Text style={[styles.thText, { flex: 5 }]}>DESCRIPTION</Text>
+                  <Text style={[styles.thText, { flex: 2, textAlign: "right" }]}>MONTANT</Text>
+                </View>
+              </View>
+              {report.expensesByCategory.map((category) => {
+                const [first, ...rest] = category.items;
+                const row = (item: ExpenseItem) => (
+                  <View key={item.id} style={styles.tr} wrap={false}>
+                    <Text style={[styles.cell, { flex: 1.4, color: MUTED }]}>{pdfShortDate(item.date)}</Text>
+                    <Text style={[styles.cell, { flex: 5, color: INK }]}>{pdfText(item.label)}</Text>
+                    <Text style={[styles.cellNum, { flex: 2 }]}>{m(item.amount)}</Text>
+                  </View>
+                );
+                return (
+                  <View key={category.key}>
+                    {/* L'intitulé de la catégorie ne reste jamais seul en bas de page. */}
+                    <View wrap={false}>
+                      <View style={styles.groupRow}>
+                        <Text style={[styles.cell, styles.bold, { flex: 6.4, color: INK }]}>
+                          {category.label.toUpperCase()}
+                        </Text>
+                        <Text style={[styles.cellNum, styles.bold, { flex: 2, color: ROSE }]}>{m(category.amount)}</Text>
+                      </View>
+                      {first ? row(first) : null}
+                    </View>
+                    {rest.map(row)}
+                  </View>
+                );
+              })}
+              <View style={styles.totalRow} wrap={false}>
+                <Text style={[styles.cell, styles.bold, { flex: 6.4, color: INK }]}>TOTAL</Text>
+                <Text style={[styles.cellNum, styles.bold, { flex: 2, color: ROSE }]}>{m(report.totalExpenses)}</Text>
               </View>
             </View>
           )}

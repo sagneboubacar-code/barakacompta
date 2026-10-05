@@ -320,6 +320,58 @@ export default async function ReportsPage({
         </section>
       )}
 
+      {report.expensesByCategory.length > 0 && (
+        <section className="space-y-3">
+          <SectionHeading>{t.sectionExpenseDetails}</SectionHeading>
+          <p className="text-xs text-slate-500">{t.expenseDetailsHint}</p>
+          {/* Le tableau défile horizontalement dans sa carte plutôt que de pousser
+              toute la page : sur un écran de téléphone, les colonnes de montants
+              sortaient de l'écran. L'impression, elle, reste intacte. */}
+          <div className="overflow-x-auto print:overflow-visible">
+            <table className="min-w-[420px] w-full text-left text-sm">
+              <thead>
+                <tr className="text-[11px] uppercase tracking-wide text-slate-400">
+                  <th className="w-28 py-2 pl-2 font-medium">{t.colDate}</th>
+                  <th className="py-2 font-medium">{t.colDescription}</th>
+                  <th className="py-2 pr-2 text-right font-medium">{t.colAmount}</th>
+                </tr>
+              </thead>
+              {report.expensesByCategory.map((category) => (
+                <tbody key={category.key} className="break-inside-avoid">
+                  <tr className="border-t border-slate-200 bg-slate-50">
+                    <td colSpan={2} className="px-2 py-1.5 font-semibold text-slate-900">
+                      {expenseCategoryLabel(category.key, language)}
+                    </td>
+                    <td className="px-2 py-1.5 text-right font-mono font-semibold tabular-nums text-rose-700">
+                      {money(category.amount)}
+                    </td>
+                  </tr>
+                  {category.items.map((item) => (
+                    <tr key={item.id} className="border-t border-slate-100">
+                      <td className="py-1.5 pl-2 text-slate-500">{formatDate(item.date, language)}</td>
+                      <td className="py-1.5 text-slate-900">{item.label}</td>
+                      <td className="py-1.5 pr-2 text-right font-mono tabular-nums text-slate-700">
+                        {money(item.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              ))}
+              <tbody>
+                <tr className="border-t-2 border-slate-900 font-semibold">
+                  <td colSpan={2} className="py-2 pl-2 text-slate-900">
+                    {t.total}
+                  </td>
+                  <td className="py-2 pr-2 text-right font-mono tabular-nums text-rose-700">
+                    {money(report.totalExpenses)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
       <section className="space-y-3">
         <SectionHeading>{t.sectionDaily}</SectionHeading>
         <p className="text-xs text-slate-500">{t.dailyHint}</p>

@@ -26,6 +26,10 @@ export const dashboardReportsDict = {
     colAmount: "Montant",
     noExpenses: "Aucune dépense sur la période.",
 
+    sectionExpenseDetails: "Détail des dépenses",
+    expenseDetailsHint: "Chaque dépense de la période, avec sa description, regroupée par catégorie.",
+    colDescription: "Description",
+
     sectionByManager: "Par responsable",
     colManager: "Responsable",
     colRevenue: "Recette",
@@ -82,6 +86,10 @@ export const dashboardReportsDict = {
     colCategory: "الفئة",
     colAmount: "المبلغ",
     noExpenses: "لا توجد مصاريف خلال الفترة.",
+
+    sectionExpenseDetails: "تفاصيل المصاريف",
+    expenseDetailsHint: "كل مصروف خلال الفترة مع وصفه، مجمّعة حسب الفئة.",
+    colDescription: "الوصف",
 
     sectionByManager: "حسب المسؤول",
     colManager: "المسؤول",
