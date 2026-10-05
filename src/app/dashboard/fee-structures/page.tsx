@@ -274,6 +274,7 @@ export default async function FeeStructuresPage({
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">{t.otherFeesTitle}</h2>
+        <p className="mt-1 text-xs text-slate-500">{t.otherFeesHint}</p>
         <div className="mt-3 space-y-6">
           {classesInScope.map((klass) => {
             const fees = otherFeesByClass.get(klass.id) ?? [];

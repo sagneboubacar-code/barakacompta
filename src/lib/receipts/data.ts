@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { feeTypeLabel } from "@/lib/constants/fees";
-import { formatMonthLabel, mensualiteMonthKey } from "@/lib/constants/months";
+import { scheduleItemLabel } from "@/lib/schedules";
 import type { Language } from "@/lib/i18n/config";
 
 // Données d'un reçu, communes à l'écran et au PDF : les deux doivent dire
@@ -52,17 +51,14 @@ type Client = SupabaseClient<Database>;
 
 const one = <T,>(value: T | T[] | null | undefined): T | null => (Array.isArray(value) ? value[0] ?? null : value ?? null);
 
-// « Mensualité Octobre 2026 » plutôt qu'une date d'échéance : c'est ainsi que
-// l'école et les parents parlent des mois (paiement à terme échu depuis 0032).
+// « Mensualité Septembre 2026 », « Cantine Octobre 2026 » plutôt qu'une date
+// d'échéance : c'est ainsi que l'école et les parents parlent des mois.
 function itemLabel(
   schedule: { due_date: string; fee_structures: unknown } | null,
   language: Language
 ): string {
   const fee = one(schedule?.fee_structures as { fee_type: string; month: number } | { fee_type: string; month: number }[] | null);
-  if (fee?.fee_type === "mensualite" && fee.month && schedule) {
-    return `${feeTypeLabel("mensualite", language)} ${formatMonthLabel(mensualiteMonthKey(fee.month, schedule.due_date), language)}`;
-  }
-  return fee ? feeTypeLabel(fee.fee_type, language) : "—";
+  return schedule ? scheduleItemLabel(fee, schedule.due_date, language) : "—";
 }
 
 type AllocationRow = {

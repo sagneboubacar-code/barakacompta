@@ -23,6 +23,8 @@ export const dashboardFeeStructuresDict = {
     emptyCellHint:
       "Laissez une case vide pour supprimer le tarif correspondant. Chaque ligne s'enregistre indépendamment.",
     otherFeesTitle: "Autres frais (cantine, internat, transport…)",
+    otherFeesHint:
+      "Cantine, transport et cours de renforcement : montant PAR MOIS, payé d'avance au début de chaque mois par les élèves abonnés. Les autres frais se paient une seule fois.",
     noOtherFees: "Aucun autre frais pour cette classe.",
     installmentAllowed: "Échelonnable",
     addTariff: "Ajouter un tarif",
@@ -54,6 +56,8 @@ export const dashboardFeeStructuresDict = {
     emptyCellHint:
       "اترك الخانة فارغة لحذف الرسم المقابل. يُحفظ كل صف بشكل مستقل.",
     otherFeesTitle: "رسوم أخرى (المطعم، الداخلي، النقل…)",
+    otherFeesHint:
+      "المطعم والنقل ودروس الدعم: مبلغ شهري يُدفع مسبقاً في بداية كل شهر من طرف التلاميذ المشتركين. الرسوم الأخرى تُدفع مرة واحدة.",
     noOtherFees: "لا توجد رسوم أخرى لهذا القسم.",
     installmentAllowed: "قابل للتقسيط",
     addTariff: "إضافة رسم",

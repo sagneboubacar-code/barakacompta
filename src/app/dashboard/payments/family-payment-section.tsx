@@ -2,14 +2,13 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { recordFamilyPayment } from "@/lib/actions/payments";
 import { PAYMENT_METHODS, paymentMethodLabel } from "@/lib/constants/payments";
-import { feeTypeLabel } from "@/lib/constants/fees";
-import { formatMonthLabel, mensualiteMonthKey } from "@/lib/constants/months";
+import { scheduleItemLabel } from "@/lib/schedules";
+import { formatMonthLabel } from "@/lib/constants/months";
 import { FamilyPaymentLines, type FamilyPaymentLine } from "@/components/FamilyPaymentLines";
 import { dashboardPaymentsDict } from "@/lib/i18n/dictionaries/dashboard-payments";
 import type { Language } from "@/lib/i18n/config";
 import { formatCurrency } from "@/lib/format";
 
-const OTHER_PERIOD = "other";
 
 // Onglet « Par famille » de la page Paiements : la famille choisie, ce
 // qu'elle doit période par période (mois de mensualité, ou inscription et
@@ -72,31 +71,25 @@ export async function FamilyPaymentSection({
           .order("due_date")
       : { data: [] };
 
-  // Chaque échéance due est rangée dans sa période : le mois facturé pour une
-  // mensualité, « inscription et autres frais » pour tout le reste.
+  // Chaque échéance due est rangée dans le mois où elle est à payer, comme au
+  // recouvrement : début novembre, la famille règle ensemble la mensualité
+  // d'octobre (terme échu) et la cantine de novembre (payée d'avance). Le
+  // libellé de chaque ligne dit de quel mois il s'agit.
   const due = (schedules ?? []).map((schedule) => {
     const fee = Array.isArray(schedule.fee_structures) ? schedule.fee_structures[0] : schedule.fee_structures;
-    const isMonthly = fee?.fee_type === "mensualite" && !!fee.month;
-    const monthKey = isMonthly ? mensualiteMonthKey(fee.month, schedule.due_date) : null;
     return {
       id: schedule.id,
       studentId: schedule.student_id,
       amount: Number(schedule.amount_remaining),
-      periodKey: monthKey ?? OTHER_PERIOD,
-      label: monthKey
-        ? `${feeTypeLabel("mensualite", language)} ${formatMonthLabel(monthKey, language)}`
-        : fee
-          ? feeTypeLabel(fee.fee_type, language)
-          : t.dash,
+      periodKey: schedule.due_date.slice(0, 7),
+      label: scheduleItemLabel(fee ?? null, schedule.due_date, language),
     };
   });
 
   const periodTotals = new Map<string, number>();
   for (const item of due) periodTotals.set(item.periodKey, (periodTotals.get(item.periodKey) ?? 0) + item.amount);
-  const periods = Array.from(periodTotals.keys()).sort((a, b) =>
-    a === OTHER_PERIOD ? -1 : b === OTHER_PERIOD ? 1 : a.localeCompare(b)
-  );
-  const periodLabel = (key: string) => (key === OTHER_PERIOD ? t.periodOther : formatMonthLabel(key, language));
+  const periods = Array.from(periodTotals.keys()).sort((a, b) => a.localeCompare(b));
+  const periodLabel = (key: string) => formatMonthLabel(key, language);
 
   const selectedPeriod = period && periodTotals.has(period) ? period : undefined;
   const lines: FamilyPaymentLine[] = selectedPeriod
