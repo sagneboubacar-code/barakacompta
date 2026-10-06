@@ -61,6 +61,7 @@ export const dashboardStudentDetailDict = {
     colMethod: "Moyen",
     colReceipt: "Reçu",
     viewReceipt: "Voir",
+    editPayment: "Modifier",
     noPayments: "Aucun paiement enregistré.",
     familyMember: (name: string, n: number) => `Famille ${name} — ${n} enfant${n > 1 ? "s" : ""} inscrit${n > 1 ? "s" : ""}.`,
     familyFreeBanner: (name: string, year: string) =>
@@ -130,6 +131,7 @@ export const dashboardStudentDetailDict = {
     colMethod: "الطريقة",
     colReceipt: "الإيصال",
     viewReceipt: "عرض",
+    editPayment: "تعديل",
     noPayments: "لا توجد مدفوعات مسجّلة.",
     familyMember: (name: string, n: number) => `عائلة ${name} — ${n} طفل مسجل.`,
     familyFreeBanner: (name: string, year: string) =>

@@ -30,6 +30,8 @@ export default async function PaymentsPage({
   const t = dashboardPaymentsDict[language];
   const supabase = createClient();
   const familyMode = searchParams.mode === "family";
+  // Corriger ou supprimer un paiement : direction seulement (voir updatePayment).
+  const canEdit = appUser.role === "owner" || appUser.role === "admin";
 
   let studentsQuery = supabase
     .from("students")
@@ -447,6 +449,11 @@ export default async function PaymentsPage({
                         className="ms-3 text-emerald-700 underline"
                       >
                         {t.familyReceipt}
+                      </Link>
+                    )}
+                    {canEdit && (
+                      <Link href={`/dashboard/payments/${payment.id}/edit`} className="ms-3 text-slate-500 underline">
+                        {t.edit}
                       </Link>
                     )}
                   </td>

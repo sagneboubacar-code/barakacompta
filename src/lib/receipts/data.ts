@@ -178,7 +178,7 @@ export async function loadFamilyReceipt(
     loadNames(supabase, receipt.received_by, receipt.cash_manager_id),
     supabase
       .from("payments")
-      .select(`id, students(first_name, last_name, classes(name)), ${ALLOCATIONS}` as const)
+      .select(`id, amount, students(first_name, last_name, classes(name)), ${ALLOCATIONS}` as const)
       .eq("family_payment_id", receipt.id),
     receipt.family_id
       ? supabase
@@ -226,7 +226,10 @@ export async function loadFamilyReceipt(
     paymentMethod: receipt.payment_method,
     reference: receipt.reference,
     children,
-    total: Number(receipt.total),
+    // Somme des lignes, et non family_payments.total figé à l'encaissement :
+    // une ligne corrigée ou supprimée après coup (updatePayment,
+    // deletePayment) doit se retrouver dans le total du reçu.
+    total: (payments ?? []).reduce((sum, payment) => sum + Number(payment.amount), 0),
     totalRemaining,
     ...names,
     freeChildName,

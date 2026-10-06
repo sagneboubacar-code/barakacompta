@@ -83,6 +83,22 @@ export const dashboardPaymentsDict = {
     familyTag: (name: string) => `Famille ${name}`,
     familyReceipt: "Reçu famille",
     pdf: "PDF",
+    edit: "Modifier",
+    editTitle: "Modifier un paiement",
+    editIntro:
+      "Corrigez ce qui est faux, puis enregistrez. Le paiement est de nouveau réparti sur les échéances et le reçu est mis à jour.",
+    editCurrent: "Aujourd'hui, ce paiement règle :",
+    editUnallocated: "Avance pas encore affectée à une échéance",
+    editFamilyNote: (name: string) =>
+      `Ce paiement fait partie du reçu de la famille ${name}. Sa date, son mode de paiement et son responsable sont ceux du reçu famille : ici, vous pouvez corriger le montant, le mois concerné et la note.`,
+    monthAuto: "— Automatique (échéance la plus ancienne) —",
+    editSave: "Enregistrer les corrections",
+    editCancel: "Annuler",
+    deleteTitle: "Supprimer ce paiement",
+    deleteHint:
+      "Seulement si ce paiement n'aurait jamais dû être enregistré (saisi sur le mauvais élève, ou en double). Les échéances qu'il réglait redeviennent à payer. La suppression est définitive.",
+    deleteConfirm: "Je confirme la suppression de ce paiement",
+    deleteButton: "Supprimer définitivement",
   },
   ar: {
     pageTitle: "المدفوعات",
@@ -167,5 +183,20 @@ export const dashboardPaymentsDict = {
     familyTag: (name: string) => `عائلة ${name}`,
     familyReceipt: "إيصال العائلة",
     pdf: "PDF",
+    edit: "تعديل",
+    editTitle: "تعديل دفعة",
+    editIntro: "صحّح ما هو خاطئ ثم احفظ. يُعاد توزيع الدفعة على الاستحقاقات ويُحدَّث الإيصال.",
+    editCurrent: "حالياً، تسدّد هذه الدفعة:",
+    editUnallocated: "دفعة مسبقة لم تُخصَّص بعد لأي استحقاق",
+    editFamilyNote: (name: string) =>
+      `هذه الدفعة جزء من إيصال عائلة ${name}. تاريخها وطريقة دفعها والمسؤول عنها هي نفسها في إيصال العائلة: هنا يمكنك تصحيح المبلغ والشهر المعني والملاحظة.`,
+    monthAuto: "— تلقائي (أقدم استحقاق) —",
+    editSave: "حفظ التصحيحات",
+    editCancel: "إلغاء",
+    deleteTitle: "حذف هذه الدفعة",
+    deleteHint:
+      "فقط إذا كان يجب ألا تُسجَّل هذه الدفعة أبداً (سُجّلت لتلميذ خاطئ أو مرتين). تعود الاستحقاقات التي كانت تسدّدها مستحقة الدفع. الحذف نهائي.",
+    deleteConfirm: "أؤكد حذف هذه الدفعة",
+    deleteButton: "حذف نهائي",
   },
 };

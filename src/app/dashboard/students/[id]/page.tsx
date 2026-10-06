@@ -508,6 +508,9 @@ export default async function StudentDetailPage({
                   >
                     {t.viewReceipt}
                   </Link>
+                  <Link href={`/dashboard/payments/${payment.id}/edit`} className="ms-3 text-slate-500 underline">
+                    {t.editPayment}
+                  </Link>
                 </td>
               </tr>
             ))}

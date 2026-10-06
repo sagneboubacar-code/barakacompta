@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth/guard";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import type { PaymentMethod } from "@/types";
+import type { Database } from "@/types/database.types";
 
 const VALID_METHODS: PaymentMethod[] = ["cash", "wave", "orange_money", "bank_transfer"];
 
@@ -61,6 +62,108 @@ export async function recordPayment(formData: FormData) {
   if (error) fail(base, "Impossible d'enregistrer le paiement : " + error.message);
 
   ok(base, "Paiement enregistré.");
+}
+
+// Corrige un paiement saisi par erreur. Seuls les champs réellement changés
+// sont envoyés : quand le montant ou le mois concerné change, la base
+// réaffecte d'elle-même le paiement sur les échéances (trigger
+// trg_after_payment_update_reallocate, 0007) ; une simple correction de date
+// ne touche pas à la répartition. Réservé à owner + admin, comme la
+// suppression : revenir sur une recette encaissée relève de la direction.
+export async function updatePayment(formData: FormData) {
+  await requireRole(["owner", "admin"]);
+  const supabase = createServerSupabase();
+
+  const id = String(formData.get("id") ?? "");
+  const base = `/dashboard/payments/${id}/edit`;
+
+  const { data: payment } = await supabase
+    .from("payments")
+    .select(
+      "id, student_id, amount, payment_schedule_id, payment_method, paid_at, reference, notes, cash_manager_id, family_payment_id"
+    )
+    .eq("id", id)
+    .maybeSingle();
+  if (!payment) fail("/dashboard/payments", "Paiement introuvable.");
+
+  const amount = Number(formData.get("amount"));
+  const scheduleId = String(formData.get("payment_schedule_id") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    fail(base, "Merci de saisir un montant positif.");
+  }
+
+  if (scheduleId && scheduleId !== payment.payment_schedule_id) {
+    const { data: schedule } = await supabase
+      .from("payment_schedules")
+      .select("id")
+      .eq("id", scheduleId)
+      .eq("student_id", payment.student_id)
+      .neq("status", "cancelled")
+      .maybeSingle();
+    if (!schedule) fail(base, "Ce mois concerné n'existe pas pour cet élève.");
+  }
+
+  const changes: Database["public"]["Tables"]["payments"]["Update"] = {};
+  if (amount !== Number(payment.amount)) changes.amount = amount;
+  if (scheduleId !== payment.payment_schedule_id) changes.payment_schedule_id = scheduleId;
+  if (notes !== payment.notes) changes.notes = notes;
+
+  // La date, le mode de paiement et le responsable d'une ligne de paiement
+  // famille sont ceux du reçu famille : le formulaire ne les propose pas.
+  if (!payment.family_payment_id) {
+    const paidAt = String(formData.get("paid_at") ?? "").trim();
+    const paymentMethod = String(formData.get("payment_method") ?? "");
+    const reference = String(formData.get("reference") ?? "").trim() || null;
+    const cashManagerId = String(formData.get("cash_manager_id") ?? "").trim() || null;
+
+    if (!paidAt || isNaN(Date.parse(paidAt)) || !VALID_METHODS.includes(paymentMethod as PaymentMethod)) {
+      fail(base, "Merci de renseigner une date valide et un mode de paiement valide.");
+    }
+    // Même jour : on garde l'heure d'origine plutôt que de la ramener à minuit.
+    if (paidAt !== payment.paid_at.slice(0, 10)) changes.paid_at = new Date(paidAt).toISOString();
+    if (paymentMethod !== payment.payment_method) changes.payment_method = paymentMethod as PaymentMethod;
+    if (reference !== payment.reference) changes.reference = reference;
+    if (cashManagerId !== payment.cash_manager_id) changes.cash_manager_id = cashManagerId;
+  }
+
+  const receipt = `/dashboard/payments/${id}/receipt`;
+  if (Object.keys(changes).length === 0) ok(receipt, "Aucune modification : le paiement est inchangé.");
+
+  const { error } = await supabase.from("payments").update(changes).eq("id", id);
+  if (error) fail(base, "Impossible de modifier le paiement : " + error.message);
+
+  ok(receipt, "Paiement modifié : le reçu ci-dessous est à jour.");
+}
+
+// Supprime un paiement qui n'aurait jamais dû exister (saisi sur le mauvais
+// élève, en double...). Ses répartitions partent avec lui (ON DELETE CASCADE)
+// et les échéances qu'il réglait redeviennent dues. La RLS réserve déjà la
+// suppression à owner + admin (0001).
+export async function deletePayment(formData: FormData) {
+  await requireRole(["owner", "admin"]);
+  const supabase = createServerSupabase();
+
+  const id = String(formData.get("id") ?? "");
+  const base = `/dashboard/payments/${id}/edit`;
+
+  const { data: payment } = await supabase.from("payments").select("id, student_id").eq("id", id).maybeSingle();
+  if (!payment) fail("/dashboard/payments", "Paiement introuvable.");
+
+  if (formData.get("confirm") !== "yes") {
+    fail(base, "Cochez la case pour confirmer la suppression.");
+  }
+
+  const { data: deleted, error } = await supabase.from("payments").delete().eq("id", id).select("id");
+  if (error || !deleted?.length) {
+    fail(base, "Impossible de supprimer le paiement" + (error ? " : " + error.message : "."));
+  }
+
+  ok(
+    `/dashboard/payments?student_id=${payment.student_id}`,
+    "Paiement supprimé : les échéances qu'il réglait sont de nouveau à payer."
+  );
 }
 
 // Encaisse en une fois, avec un seul reçu, ce que la famille verse sur les
