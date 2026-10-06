@@ -37,7 +37,15 @@ export default async function FamilyReceiptPage({
         <Link href="/dashboard/payments?mode=family" className="text-sm text-slate-500 underline">
           {t.backToPayments}
         </Link>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {(appUser.role === "owner" || appUser.role === "admin") && (
+            <Link
+              href={`/dashboard/payments/family/${params.id}/edit`}
+              className="rounded-md border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            >
+              {t.editFamilyPayment}
+            </Link>
+          )}
           <a
             href={`/api/payments/family/${params.id}/pdf`}
             download

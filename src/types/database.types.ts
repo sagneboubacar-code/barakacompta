@@ -834,6 +834,24 @@ export interface Database {
         };
         Returns: string;
       };
+      // 0041 : corriger (montant 0 = ligne retirée) ou annuler un paiement famille.
+      update_family_payment: {
+        Args: {
+          p_family_payment_id: string;
+          p_paid_at: string;
+          p_payment_method: string;
+          p_reference: string | null;
+          p_notes: string | null;
+          p_cash_manager_id: string | null;
+          p_payment_ids: string[];
+          p_amounts: number[];
+        };
+        Returns: undefined;
+      };
+      delete_family_payment: {
+        Args: { p_family_payment_id: string };
+        Returns: undefined;
+      };
       set_family_free: {
         Args: {
           p_family_id: string;

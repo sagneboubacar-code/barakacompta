@@ -166,6 +166,93 @@ export async function deletePayment(formData: FormData) {
   );
 }
 
+// Tant que le SQL 0041 n'a pas été exécuté dans Supabase, la fonction
+// n'existe pas : le dire plutôt que d'afficher le message technique.
+function familyRpcError(message: string): string {
+  return /could not find the function|does not exist|schema cache/i.test(message)
+    ? "la mise à jour de la base n'a pas encore été faite (SQL 0041 à exécuter dans Supabase)."
+    : message;
+}
+
+// Corrige un paiement famille d'un bloc (update_family_payment, 0041) : date,
+// mode, responsable, référence et note du reçu, recopiés sur chaque ligne, et
+// montant de chaque ligne (0 = ligne retirée). Tout ou rien, en une
+// transaction ; la base réaffecte les montants changés.
+export async function updateFamilyPayment(formData: FormData) {
+  await requireRole(["owner", "admin"]);
+  const supabase = createServerSupabase();
+
+  const id = String(formData.get("id") ?? "");
+  const base = `/dashboard/payments/family/${id}/edit`;
+
+  const { data: receipt } = await supabase.from("family_payments").select("id, paid_at").eq("id", id).maybeSingle();
+  if (!receipt) fail("/dashboard/payments?mode=family", "Paiement famille introuvable.");
+
+  // Une ligne = un paiement du reçu et son nouveau montant, dans le même ordre.
+  const paymentIds = formData.getAll("payment_ids").map((value) => String(value).trim());
+  const amounts = formData.getAll("amounts").map((value) => Number(value));
+  const paidAt = String(formData.get("paid_at") ?? "").trim();
+  const paymentMethod = String(formData.get("payment_method") ?? "");
+  const reference = String(formData.get("reference") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+  const cashManagerId = String(formData.get("cash_manager_id") ?? "").trim() || null;
+
+  if (
+    paymentIds.length === 0 ||
+    paymentIds.length !== amounts.length ||
+    paymentIds.some((paymentId) => !paymentId) ||
+    amounts.some((amount) => !Number.isFinite(amount) || amount < 0)
+  ) {
+    fail(base, "Merci de saisir un montant positif (ou 0) pour chaque ligne.");
+  }
+  if (amounts.every((amount) => amount === 0)) {
+    fail(base, "Tous les montants sont à 0 : pour tout annuler, utilisez « Annuler tout le paiement famille ».");
+  }
+  if (!paidAt || isNaN(Date.parse(paidAt)) || !VALID_METHODS.includes(paymentMethod as PaymentMethod)) {
+    fail(base, "Merci de renseigner une date valide et un mode de paiement valide.");
+  }
+
+  const { error } = await supabase.rpc("update_family_payment", {
+    p_family_payment_id: id,
+    // Même jour : on garde l'heure d'origine plutôt que de la ramener à minuit.
+    p_paid_at: paidAt === receipt.paid_at.slice(0, 10) ? receipt.paid_at : new Date(paidAt).toISOString(),
+    p_payment_method: paymentMethod,
+    p_reference: reference,
+    p_notes: notes,
+    p_cash_manager_id: cashManagerId,
+    p_payment_ids: paymentIds,
+    p_amounts: amounts,
+  });
+  if (error) fail(base, "Impossible de modifier le paiement famille : " + familyRpcError(error.message));
+
+  ok(`/dashboard/payments/family/${id}`, "Paiement famille modifié : le reçu ci-dessous est à jour.");
+}
+
+// Annule tout un paiement famille saisi par erreur (delete_family_payment,
+// 0041) : le reçu et toutes ses lignes ; les échéances redeviennent dues.
+export async function deleteFamilyPayment(formData: FormData) {
+  await requireRole(["owner", "admin"]);
+  const supabase = createServerSupabase();
+
+  const id = String(formData.get("id") ?? "");
+  const base = `/dashboard/payments/family/${id}/edit`;
+
+  const { data: receipt } = await supabase.from("family_payments").select("id, family_id").eq("id", id).maybeSingle();
+  if (!receipt) fail("/dashboard/payments?mode=family", "Paiement famille introuvable.");
+
+  if (formData.get("confirm") !== "yes") {
+    fail(base, "Cochez la case pour confirmer l'annulation.");
+  }
+
+  const { error } = await supabase.rpc("delete_family_payment", { p_family_payment_id: id });
+  if (error) fail(base, "Impossible d'annuler le paiement famille : " + familyRpcError(error.message));
+
+  ok(
+    `/dashboard/payments?mode=family${receipt.family_id ? `&family_id=${receipt.family_id}` : ""}`,
+    "Paiement famille annulé : les échéances qu'il réglait sont de nouveau à payer."
+  );
+}
+
 // Encaisse en une fois, avec un seul reçu, ce que la famille verse sur les
 // échéances de ses enfants — tout, ou une avance répartie ligne par ligne.
 // Tout se passe dans record_family_payment() (0037, montants par ligne en

@@ -90,7 +90,8 @@ export const dashboardPaymentsDict = {
     editCurrent: "Aujourd'hui, ce paiement règle :",
     editUnallocated: "Avance pas encore affectée à une échéance",
     editFamilyNote: (name: string) =>
-      `Ce paiement fait partie du reçu de la famille ${name}. Sa date, son mode de paiement et son responsable sont ceux du reçu famille : ici, vous pouvez corriger le montant, le mois concerné et la note.`,
+      `Ce paiement fait partie du reçu de la famille ${name}. Ici, vous pouvez corriger le montant, le mois concerné et la note. La date, le mode de paiement et le responsable se changent pour tout le reçu :`,
+    editFamilyLink: "modifier le paiement famille",
     monthAuto: "— Automatique (échéance la plus ancienne) —",
     editSave: "Enregistrer les corrections",
     editCancel: "Annuler",
@@ -99,6 +100,19 @@ export const dashboardPaymentsDict = {
       "Seulement si ce paiement n'aurait jamais dû être enregistré (saisi sur le mauvais élève, ou en double). Les échéances qu'il réglait redeviennent à payer. La suppression est définitive.",
     deleteConfirm: "Je confirme la suppression de ce paiement",
     deleteButton: "Supprimer définitivement",
+    familyEditTitle: (name: string) => `Modifier le paiement de la famille ${name}`,
+    familyEditIntro:
+      "Corrigez ce qui est faux, puis enregistrez. La date et le mode de paiement s'appliquent à tout le reçu ; chaque montant est de nouveau réparti sur les échéances.",
+    familyEditLines: "Montants par enfant",
+    familyEditDue: "Dû sur cette échéance",
+    familyEditAmount: "Montant payé",
+    familyEditZeroHint: "Mettez 0 pour retirer une ligne du reçu.",
+    familyEditMonth: "changer le mois",
+    familyDeleteTitle: "Annuler tout le paiement famille",
+    familyDeleteHint:
+      "Seulement si ce paiement famille n'aurait jamais dû être enregistré. Le reçu et toutes ses lignes sont supprimés, et les échéances qu'ils réglaient redeviennent à payer. L'annulation est définitive.",
+    familyDeleteConfirm: "Je confirme l'annulation de tout ce paiement famille",
+    familyDeleteButton: "Annuler définitivement",
   },
   ar: {
     pageTitle: "المدفوعات",
@@ -189,7 +203,8 @@ export const dashboardPaymentsDict = {
     editCurrent: "حالياً، تسدّد هذه الدفعة:",
     editUnallocated: "دفعة مسبقة لم تُخصَّص بعد لأي استحقاق",
     editFamilyNote: (name: string) =>
-      `هذه الدفعة جزء من إيصال عائلة ${name}. تاريخها وطريقة دفعها والمسؤول عنها هي نفسها في إيصال العائلة: هنا يمكنك تصحيح المبلغ والشهر المعني والملاحظة.`,
+      `هذه الدفعة جزء من إيصال عائلة ${name}. هنا يمكنك تصحيح المبلغ والشهر المعني والملاحظة. أما التاريخ وطريقة الدفع والمسؤول فتُغيَّر للإيصال كله:`,
+    editFamilyLink: "تعديل دفعة العائلة",
     monthAuto: "— تلقائي (أقدم استحقاق) —",
     editSave: "حفظ التصحيحات",
     editCancel: "إلغاء",
@@ -198,5 +213,18 @@ export const dashboardPaymentsDict = {
       "فقط إذا كان يجب ألا تُسجَّل هذه الدفعة أبداً (سُجّلت لتلميذ خاطئ أو مرتين). تعود الاستحقاقات التي كانت تسدّدها مستحقة الدفع. الحذف نهائي.",
     deleteConfirm: "أؤكد حذف هذه الدفعة",
     deleteButton: "حذف نهائي",
+    familyEditTitle: (name: string) => `تعديل دفعة عائلة ${name}`,
+    familyEditIntro:
+      "صحّح ما هو خاطئ ثم احفظ. التاريخ وطريقة الدفع يُطبَّقان على الإيصال كله، ويُعاد توزيع كل مبلغ على الاستحقاقات.",
+    familyEditLines: "المبالغ حسب الطفل",
+    familyEditDue: "المستحق على هذا الاستحقاق",
+    familyEditAmount: "المبلغ المدفوع",
+    familyEditZeroHint: "ضع 0 لحذف سطر من الإيصال.",
+    familyEditMonth: "تغيير الشهر",
+    familyDeleteTitle: "إلغاء دفعة العائلة بالكامل",
+    familyDeleteHint:
+      "فقط إذا كان يجب ألا تُسجَّل دفعة العائلة هذه أبداً. يُحذف الإيصال وكل أسطره، وتعود الاستحقاقات التي كانت تسدّدها مستحقة الدفع. الإلغاء نهائي.",
+    familyDeleteConfirm: "أؤكد إلغاء دفعة العائلة هذه بالكامل",
+    familyDeleteButton: "إلغاء نهائي",
   },
 };

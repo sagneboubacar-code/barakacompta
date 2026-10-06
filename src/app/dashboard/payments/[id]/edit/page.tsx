@@ -132,7 +132,11 @@ export default async function EditPaymentPage({
         <input type="hidden" name="id" value={payment.id} />
         {isFamilyLine && familyName && (
           <p className="rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-800 sm:col-span-2">
-            {t.editFamilyNote(familyName)}
+            {t.editFamilyNote(familyName)}{" "}
+            <Link href={`/dashboard/payments/family/${payment.family_payment_id}/edit`} className="font-medium underline">
+              {t.editFamilyLink}
+            </Link>
+            .
           </p>
         )}
         {!isFamilyLine && (
