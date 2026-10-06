@@ -101,7 +101,22 @@ export default async function PaymentsPage({
     paymentsQuery = paymentsQuery.eq("student_id", selectedStudent.id);
   }
 
-  const { data: payments } = await paymentsQuery;
+  // Onglet « Par famille » : la liste montre les reçus famille (un par
+  // encaissement), pas les lignes de chaque enfant, pour qu'on retrouve et
+  // corrige un paiement famille d'un clic.
+  let familyReceiptsQuery = supabase
+    .from("family_payments")
+    .select("id, family_name, payment_method, paid_at, payments(amount)")
+    .order("paid_at", { ascending: false })
+    .limit(100);
+  if (searchParams.family_id) {
+    familyReceiptsQuery = familyReceiptsQuery.eq("family_id", searchParams.family_id);
+  }
+
+  const [{ data: payments }, { data: familyReceipts }] = await Promise.all([
+    familyMode ? Promise.resolve({ data: null }) : paymentsQuery,
+    familyMode ? familyReceiptsQuery : Promise.resolve({ data: null }),
+  ]);
 
   const { data: cashManagers } = await supabase.from("cash_managers").select("id, name").order("sort_order");
 
@@ -388,88 +403,150 @@ export default async function PaymentsPage({
           simplement les dernières colonnes sur téléphone, sans moyen d'y accéder.
           La largeur minimale est indispensable — sans elle, `w-full` écrase les
           colonnes dans les 375 px et le défilement ne se déclenche jamais. */}
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-        {selectedStudent && !familyMode && (
+      {!familyMode && (
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+          {selectedStudent && (
+            <h2 className="border-b border-slate-200 px-4 py-2 text-sm font-semibold text-slate-900">
+              {t.paymentHistory(`${selectedStudent.last_name} ${selectedStudent.first_name}`)}
+            </h2>
+          )}
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50 text-slate-500">
+              <tr>
+                <th className="px-4 py-2 font-medium">{t.paymentsTable.date}</th>
+                <th className="px-4 py-2 font-medium">{t.paymentsTable.student}</th>
+                <th className="px-4 py-2 font-medium">{t.paymentsTable.amount}</th>
+                <th className="px-4 py-2 font-medium">{t.paymentsTable.method}</th>
+                <th className="px-4 py-2 font-medium">{t.paymentsTable.receipt}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(payments ?? []).map((payment) => {
+                const student = Array.isArray(payment.students)
+                  ? payment.students[0]
+                  : payment.students;
+                const familyPayment = Array.isArray(payment.family_payments)
+                  ? payment.family_payments[0]
+                  : payment.family_payments;
+                return (
+                  <tr key={payment.id} className="border-t border-slate-100">
+                    <td className="px-4 py-2 text-slate-600">
+                      {formatDate(payment.paid_at, language)}
+                    </td>
+                    <td className="px-4 py-2 text-slate-900">
+                      {student ? `${student.last_name} ${student.first_name}` : t.dash}
+                      {familyPayment && (
+                        <span className="ms-2 rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
+                          {t.familyTag(familyPayment.family_name)}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-slate-600">{payment.amount}</td>
+                    <td className="px-4 py-2 text-slate-600">
+                      {paymentMethodLabel(payment.payment_method, language)}
+                    </td>
+                    <td className="px-4 py-2">
+                      <Link
+                        href={`/dashboard/payments/${payment.id}/receipt`}
+                        className="text-slate-900 underline"
+                      >
+                        {t.viewReceipt}
+                      </Link>
+                      <a
+                        href={`/api/payments/${payment.id}/receipt/pdf`}
+                        download
+                        className="ms-3 text-slate-500 underline"
+                      >
+                        {t.pdf}
+                      </a>
+                      {payment.family_payment_id && (
+                        <Link
+                          href={`/dashboard/payments/family/${payment.family_payment_id}`}
+                          className="ms-3 text-emerald-700 underline"
+                        >
+                          {t.familyReceipt}
+                        </Link>
+                      )}
+                      {canEdit && (
+                        <Link href={`/dashboard/payments/${payment.id}/edit`} className="ms-3 text-slate-500 underline">
+                          {t.edit}
+                        </Link>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+              {(payments ?? []).length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
+                    {t.noPayments}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {familyMode && (
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
           <h2 className="border-b border-slate-200 px-4 py-2 text-sm font-semibold text-slate-900">
-            {t.paymentHistory(`${selectedStudent.last_name} ${selectedStudent.first_name}`)}
+            {t.familyReceiptsTitle}
           </h2>
-        )}
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
-            <tr>
-              <th className="px-4 py-2 font-medium">{t.paymentsTable.date}</th>
-              <th className="px-4 py-2 font-medium">{t.paymentsTable.student}</th>
-              <th className="px-4 py-2 font-medium">{t.paymentsTable.amount}</th>
-              <th className="px-4 py-2 font-medium">{t.paymentsTable.method}</th>
-              <th className="px-4 py-2 font-medium">{t.paymentsTable.receipt}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(payments ?? []).map((payment) => {
-              const student = Array.isArray(payment.students)
-                ? payment.students[0]
-                : payment.students;
-              const familyPayment = Array.isArray(payment.family_payments)
-                ? payment.family_payments[0]
-                : payment.family_payments;
-              return (
-                <tr key={payment.id} className="border-t border-slate-100">
+          <table className="min-w-[560px] w-full text-left text-sm">
+            <thead className="bg-slate-50 text-slate-500">
+              <tr>
+                <th className="px-4 py-2 font-medium">{t.paymentsTable.date}</th>
+                <th className="px-4 py-2 font-medium">{t.familyLabel}</th>
+                <th className="px-4 py-2 font-medium">{t.paymentsTable.amount}</th>
+                <th className="px-4 py-2 font-medium">{t.paymentsTable.method}</th>
+                <th className="px-4 py-2 font-medium">{t.paymentsTable.receipt}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(familyReceipts ?? []).map((receipt) => (
+                <tr key={receipt.id} className="border-t border-slate-100">
+                  <td className="px-4 py-2 text-slate-600">{formatDate(receipt.paid_at, language)}</td>
+                  <td className="px-4 py-2 text-slate-900">{receipt.family_name}</td>
+                  {/* Somme des lignes, comme sur le reçu : family_payments.total
+                      ne suit pas une ligne corrigée seule (updatePayment). */}
                   <td className="px-4 py-2 text-slate-600">
-                    {formatDate(payment.paid_at, language)}
+                    {(receipt.payments ?? []).reduce((sum, line) => sum + Number(line.amount), 0)}
                   </td>
-                  <td className="px-4 py-2 text-slate-900">
-                    {student ? `${student.last_name} ${student.first_name}` : t.dash}
-                    {familyPayment && (
-                      <span className="ms-2 rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
-                        {t.familyTag(familyPayment.family_name)}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 text-slate-600">{payment.amount}</td>
-                  <td className="px-4 py-2 text-slate-600">
-                    {paymentMethodLabel(payment.payment_method, language)}
-                  </td>
+                  <td className="px-4 py-2 text-slate-600">{paymentMethodLabel(receipt.payment_method, language)}</td>
                   <td className="px-4 py-2">
-                    <Link
-                      href={`/dashboard/payments/${payment.id}/receipt`}
-                      className="text-slate-900 underline"
-                    >
+                    <Link href={`/dashboard/payments/family/${receipt.id}`} className="text-slate-900 underline">
                       {t.viewReceipt}
                     </Link>
                     <a
-                      href={`/api/payments/${payment.id}/receipt/pdf`}
+                      href={`/api/payments/family/${receipt.id}/pdf`}
                       download
                       className="ms-3 text-slate-500 underline"
                     >
                       {t.pdf}
                     </a>
-                    {payment.family_payment_id && (
-                      <Link
-                        href={`/dashboard/payments/family/${payment.family_payment_id}`}
-                        className="ms-3 text-emerald-700 underline"
-                      >
-                        {t.familyReceipt}
-                      </Link>
-                    )}
                     {canEdit && (
-                      <Link href={`/dashboard/payments/${payment.id}/edit`} className="ms-3 text-slate-500 underline">
+                      <Link
+                        href={`/dashboard/payments/family/${receipt.id}/edit`}
+                        className="ms-3 text-slate-500 underline"
+                      >
                         {t.edit}
                       </Link>
                     )}
                   </td>
                 </tr>
-              );
-            })}
-            {(payments ?? []).length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
-                  {t.noPayments}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              ))}
+              {(familyReceipts ?? []).length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
+                    {t.noFamilyReceipts}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
