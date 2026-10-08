@@ -6,6 +6,7 @@ import {
   computeDailyBreakdown,
   computeCashManagerBreakdown,
 } from "@/lib/reports/financial";
+import { computePeriodReceivables } from "@/lib/reports/collections";
 import { renderFinancialReportPdf } from "@/lib/reports/pdf/financial-report";
 import { fetchPdfLogo } from "@/lib/pdf/logo";
 
@@ -32,10 +33,12 @@ export async function GET(request: NextRequest) {
     .eq("id", appUser.school_id ?? "")
     .maybeSingle();
 
-  const [report, dailyBreakdown, cashManagerBreakdown, logo] = await Promise.all([
+  const [report, dailyBreakdown, cashManagerBreakdown, receivables, { count: studentCount }, logo] = await Promise.all([
     computeFinancialReport(supabase, from, to),
     computeDailyBreakdown(supabase, from, to),
     computeCashManagerBreakdown(supabase, from, to),
+    computePeriodReceivables(supabase, from, to),
+    supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active"),
     fetchPdfLogo(school?.logo_url),
   ]);
 
@@ -56,6 +59,8 @@ export async function GET(request: NextRequest) {
       from,
       to,
       report,
+      studentCount: studentCount ?? 0,
+      receivables,
       dailyBreakdown,
       cashManagerBreakdown,
       generatedAt: new Date(),

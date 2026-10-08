@@ -82,6 +82,51 @@ async function fetchSchedules(supabase: SupabaseClient<Database>): Promise<Sched
   }
 }
 
+export interface PeriodReceivables {
+  // Reste à payer sur les échéances de la période (en retard + à venir).
+  totalDue: number;
+  // Élèves en retard sur une échéance de la période déjà passée.
+  overdueStudentCount: number;
+}
+
+// Recouvrement d'une période quelconque, pour le rapport financier. Mêmes
+// règles que l'état de recouvrement (élèves actifs, mois = date d'échéance,
+// en retard = échéance passée) : choisir du 1er au 31 octobre donne les
+// mêmes chiffres que Recouvrement sur « Octobre ».
+export async function computePeriodReceivables(
+  supabase: SupabaseClient<Database>,
+  from: string,
+  to: string
+): Promise<PeriodReceivables> {
+  type Row = { student_id: string; due_date: string; amount_remaining: number; students: unknown };
+  const rows: Row[] = [];
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await supabase
+      .from("payment_schedules")
+      .select("student_id, due_date, amount_remaining, students!inner(status)")
+      .neq("status", "cancelled")
+      .gte("due_date", from)
+      .lte("due_date", to)
+      .order("id")
+      .range(offset, offset + 999);
+    if (error) throw new Error("Lecture des échéances impossible : " + error.message);
+    rows.push(...((data ?? []) as Row[]));
+    if ((data ?? []).length < 1000) break;
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  let totalDue = 0;
+  const overdueStudents = new Set<string>();
+  for (const row of rows) {
+    const student = (Array.isArray(row.students) ? row.students[0] : row.students) as { status: string } | null;
+    const remaining = Math.max(Number(row.amount_remaining), 0);
+    if (student?.status !== "active" || remaining <= 0) continue;
+    totalDue += remaining;
+    if (row.due_date < today) overdueStudents.add(row.student_id);
+  }
+  return { totalDue, overdueStudentCount: overdueStudents.size };
+}
+
 // Partagé entre la page /dashboard/collections et son export CSV, pour que
 // les deux restent exactement cohérents avec les mêmes filtres.
 export async function computeCollectionsReport(

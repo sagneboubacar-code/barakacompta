@@ -5,6 +5,7 @@ import {
   computeDailyBreakdown,
   computeCashManagerBreakdown,
 } from "@/lib/reports/financial";
+import { computePeriodReceivables } from "@/lib/reports/collections";
 import { formatCurrency, formatSignedCurrency, formatDate } from "@/lib/format";
 import { expenseCategoryLabel } from "@/lib/constants/expenses";
 import { feeTypeLabel } from "@/lib/constants/fees";
@@ -49,18 +50,27 @@ export default async function ReportsPage({
   const from = searchParams.from || defaults.from;
   const to = searchParams.to || defaults.to;
 
-  const [{ data: school }, report, dailyBreakdown, cashManagerBreakdown, { count: activeDiscountCount }] =
-    await Promise.all([
-      supabase.from("schools").select("name, address, currency").eq("id", appUser.school_id ?? "").maybeSingle(),
-      computeFinancialReport(supabase, from, to),
-      computeDailyBreakdown(supabase, from, to),
-      computeCashManagerBreakdown(supabase, from, to),
-      supabase
-        .from("discounts")
-        .select("id", { count: "exact", head: true })
-        .lte("starts_on", to)
-        .gte("ends_on", from),
-    ]);
+  const [
+    { data: school },
+    report,
+    dailyBreakdown,
+    cashManagerBreakdown,
+    receivables,
+    { count: studentCount },
+    { count: activeDiscountCount },
+  ] = await Promise.all([
+    supabase.from("schools").select("name, address, currency").eq("id", appUser.school_id ?? "").maybeSingle(),
+    computeFinancialReport(supabase, from, to),
+    computeDailyBreakdown(supabase, from, to),
+    computeCashManagerBreakdown(supabase, from, to),
+    computePeriodReceivables(supabase, from, to),
+    supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active"),
+    supabase
+      .from("discounts")
+      .select("id", { count: "exact", head: true })
+      .lte("starts_on", to)
+      .gte("ends_on", from),
+  ]);
 
   const currency = school?.currency ?? "XOF";
   const money = (amount: number) => formatCurrency(amount, currency, language);
@@ -70,21 +80,54 @@ export default async function ReportsPage({
     timeStyle: "short",
   });
 
-  // Journal de caisse : trois chiffres qui se recoupent avec toutes les
-  // sections ci-dessous (voir lib/reports/financial.ts).
+  // Les chiffres du tableau de bord, mais sur la période choisie. Recettes,
+  // dépenses et solde se recoupent avec toutes les sections ci-dessous (voir
+  // lib/reports/financial.ts) ; montant à recouvrir et élèves impayés suivent
+  // les règles de l'état de recouvrement.
+  const collectedOf = (key: string) => report.revenueByType.find((r) => r.key === key)?.collected ?? 0;
   const summaryTiles = [
     {
+      label: t.tileStudents,
+      value: String(studentCount ?? 0),
+      hint: t.tileStudentsHint,
+      accent: "border-t-slate-400 text-slate-900",
+    },
+    {
       label: t.tileCollected,
-      value: report.totalCollected,
+      value: money(report.totalCollected),
       hint: t.tileCollectedHint(report.paymentsCount),
       accent: "border-t-emerald-600 text-emerald-700",
     },
-    { label: t.tileExpenses, value: report.totalExpenses, hint: "", accent: "border-t-rose-600 text-rose-700" },
+    {
+      label: t.tileInscription,
+      value: money(collectedOf("inscription")),
+      hint: "",
+      accent: "border-t-emerald-600 text-emerald-700",
+    },
+    {
+      label: t.tileUniform,
+      value: money(collectedOf("uniforme")),
+      hint: "",
+      accent: "border-t-emerald-600 text-emerald-700",
+    },
+    { label: t.tileExpenses, value: money(report.totalExpenses), hint: "", accent: "border-t-rose-600 text-rose-700" },
     {
       label: t.tileBalance,
-      value: report.balance,
+      value: money(report.balance),
       hint: t.tileBalanceHint,
       accent: report.balance >= 0 ? "border-t-slate-900 text-slate-900" : "border-t-rose-600 text-rose-700",
+    },
+    {
+      label: t.tileReceivable,
+      value: money(receivables.totalDue),
+      hint: t.tileReceivableHint,
+      accent: "border-t-orange-500 text-orange-700",
+    },
+    {
+      label: t.tileOverdueStudents,
+      value: String(receivables.overdueStudentCount),
+      hint: t.tileOverdueStudentsHint,
+      accent: "border-t-rose-600 text-rose-700",
     },
   ];
   const revenueLabel = (bucket: { key: string; label: string }) =>
@@ -163,14 +206,18 @@ export default async function ReportsPage({
       {/* Bandeau chiffres clés : filet coloré en tête de tuile + chiffres en
           monospace tabulaire — signature visuelle du document, cohérente
           avec les tableaux ci-dessous. */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 print:gap-2">
+      {/* Quatre tuiles par ligne seulement quand « 1 478 000 F CFA » y tient
+          en entier ; en dessous, deux (puis une sur téléphone). */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 print:grid-cols-4 print:gap-2">
         {summaryTiles.map((tile) => (
           <div
             key={tile.label}
-            className={`border-t-2 bg-white p-4 shadow-sm print:border print:border-t-2 print:shadow-none ${tile.accent}`}
+            className={`min-w-0 border-t-2 bg-white p-4 shadow-sm print:border print:border-t-2 print:p-2.5 print:shadow-none ${tile.accent}`}
           >
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{tile.label}</p>
-            <p className="mt-1.5 font-mono text-xl font-semibold tabular-nums">{money(tile.value)}</p>
+            <p className="mt-1.5 font-mono text-xl font-semibold tabular-nums [overflow-wrap:anywhere] print:text-sm">
+              {tile.value}
+            </p>
             {tile.hint && <p className="mt-0.5 text-xs text-slate-500">{tile.hint}</p>}
           </div>
         ))}

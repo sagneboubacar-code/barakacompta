@@ -14,6 +14,14 @@ export const dashboardReportsDict = {
     tileExpenses: "Dépenses",
     tileBalance: "Solde de caisse",
     tileBalanceHint: "Recettes − dépenses de la période",
+    tileStudents: "Élèves",
+    tileStudentsHint: "Élèves actifs aujourd'hui",
+    tileInscription: "Inscription encaissée",
+    tileUniform: "Uniforme encaissé",
+    tileReceivable: "Montant à recouvrir",
+    tileReceivableHint: "Reste à payer sur les échéances de la période",
+    tileOverdueStudents: "Élèves impayés",
+    tileOverdueStudentsHint: "En retard sur une échéance de la période",
 
     sectionRevenue: "Recettes par type",
     colType: "Type",
@@ -51,7 +59,8 @@ export const dashboardReportsDict = {
     // fourni par le calcul du rapport, seul l'arabe passe par ici.
     revenueLabels: {} as Record<string, string>,
 
-    collectionsNote: "Ce rapport suit l'argent réellement reçu et dépensé. Les montants attendus et les impayés sont dans",
+    collectionsNote:
+      "Recettes, dépenses et solde : l'argent réellement reçu et dépensé pendant la période. Le détail des impayés, élève par élève, est dans",
     collectionsLink: "Recouvrement",
 
     discountCount: (n: number) =>
@@ -75,6 +84,14 @@ export const dashboardReportsDict = {
     tileExpenses: "المصاريف",
     tileBalance: "رصيد الصندوق",
     tileBalanceHint: "إيرادات − مصاريف الفترة",
+    tileStudents: "التلاميذ",
+    tileStudentsHint: "التلاميذ النشطون اليوم",
+    tileInscription: "التسجيل المحصّل",
+    tileUniform: "الزي المحصّل",
+    tileReceivable: "المبلغ المتبقي تحصيله",
+    tileReceivableHint: "المتبقي على استحقاقات الفترة",
+    tileOverdueStudents: "التلاميذ المتأخرون",
+    tileOverdueStudentsHint: "متأخرون في استحقاق من الفترة",
 
     sectionRevenue: "الإيرادات حسب النوع",
     colType: "النوع",
@@ -116,7 +133,8 @@ export const dashboardReportsDict = {
       non_affecte: "دفعات مسبقة غير مخصصة بعد",
     } as Record<string, string>,
 
-    collectionsNote: "يتتبع هذا التقرير الأموال المستلمة والمصروفة فعلاً. المبالغ المتوقعة والمتأخرات موجودة في",
+    collectionsNote:
+      "الإيرادات والمصاريف والرصيد: الأموال المستلمة والمصروفة فعلاً خلال الفترة. تفاصيل المتأخرات، تلميذاً تلميذاً، موجودة في",
     collectionsLink: "التحصيل",
 
     discountCount: (n: number) => `${n} تخفيض نشط خلال الفترة المحددة.`,

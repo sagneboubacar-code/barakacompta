@@ -1,5 +1,6 @@
 import { Document, Font, Image, Page, Text, View, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
 import type { FinancialReport, DailyBreakdown, CashManagerTotal, ExpenseItem } from "@/lib/reports/financial";
+import type { PeriodReceivables } from "@/lib/reports/collections";
 import { pdfLongDate, pdfMoney, pdfShortDate, pdfText } from "@/lib/pdf/format";
 
 // Rapport financier = journal de caisse de la période : l'argent réellement
@@ -22,6 +23,7 @@ const LINE = "#e2e8f0";
 const ZEBRA = "#f8fafc";
 const GREEN = "#047857";
 const ROSE = "#be123c";
+const ORANGE = "#c2410c";
 
 const styles = StyleSheet.create({
   page: { paddingBottom: 58, fontFamily: "Helvetica", fontSize: 8.5, color: INK },
@@ -41,10 +43,11 @@ const styles = StyleSheet.create({
   title: { fontFamily: "Helvetica-Bold", fontSize: 17, letterSpacing: -0.3, marginTop: 14 },
   subtitle: { fontSize: 8.5, color: MUTED, marginTop: 3 },
 
-  tiles: { flexDirection: "row", gap: 8, marginTop: 12 },
-  tile: { flex: 1, borderWidth: 0.8, borderColor: LINE, borderLeftWidth: 3, borderRadius: 3, paddingVertical: 9, paddingHorizontal: 10 },
+  tiles: { flexDirection: "row", gap: 8, marginTop: 8 },
+  tile: { flex: 1, borderWidth: 0.8, borderColor: LINE, borderLeftWidth: 3, borderRadius: 3, paddingVertical: 8, paddingHorizontal: 9 },
   tileLabel: { fontSize: 6.5, letterSpacing: 0.7, color: MUTED, fontFamily: "Helvetica-Bold" },
-  tileValue: { fontSize: 14, fontFamily: "Helvetica-Bold", marginTop: 4 },
+  // 12 pt : « 1 478 000 F CFA » tient sur une ligne, quatre tuiles de front.
+  tileValue: { fontSize: 12, fontFamily: "Helvetica-Bold", marginTop: 4 },
   tileHint: { fontSize: 6.5, color: MUTED, marginTop: 2 },
 
   twoCols: { flexDirection: "row", gap: 18 },
@@ -98,6 +101,9 @@ export interface FinancialPdfInput {
   from: string;
   to: string;
   report: FinancialReport;
+  // Élèves actifs aujourd'hui (comme au tableau de bord).
+  studentCount: number;
+  receivables: PeriodReceivables;
   dailyBreakdown: DailyBreakdown[];
   cashManagerBreakdown: CashManagerTotal[];
   generatedAt: Date;
@@ -111,29 +117,50 @@ function stamp(date: Date): string {
 }
 
 function FinancialReportDocument(input: FinancialPdfInput) {
-  const { school, currency, from, to, report, dailyBreakdown, cashManagerBreakdown, generatedAt } = input;
+  const { school, currency, from, to, report, studentCount, receivables, dailyBreakdown, cashManagerBreakdown, generatedAt } =
+    input;
   const m = (amount: number) => pdfMoney(amount, currency);
   const contactLine = [school.address, school.phone, school.email].filter(Boolean).join("  ·  ");
   const periodLabel = `Du ${pdfLongDate(from)} au ${pdfLongDate(to)}`;
   const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
 
+  // Les chiffres du tableau de bord, sur la période : mêmes tuiles qu'à l'écran.
+  const collectedOf = (key: string) => report.revenueByType.find((r) => r.key === key)?.collected ?? 0;
   const tiles = [
+    { label: "ÉLÈVES", value: String(studentCount), color: INK, bar: FAINT, hint: "élèves actifs aujourd'hui" },
     {
       label: "RECETTES ENCAISSÉES",
-      value: report.totalCollected,
+      value: m(report.totalCollected),
       color: GREEN,
       bar: GREEN,
       hint: `${plural(report.paymentsCount, "paiement")} sur la période`,
     },
-    { label: "DÉPENSES", value: report.totalExpenses, color: ROSE, bar: ROSE, hint: "sorties de caisse" },
+    { label: "INSCRIPTION ENCAISSÉE", value: m(collectedOf("inscription")), color: GREEN, bar: GREEN, hint: "sur la période" },
+    { label: "UNIFORME ENCAISSÉ", value: m(collectedOf("uniforme")), color: GREEN, bar: GREEN, hint: "sur la période" },
+    { label: "DÉPENSES", value: m(report.totalExpenses), color: ROSE, bar: ROSE, hint: "sorties de caisse" },
     {
       label: "SOLDE DE CAISSE",
-      value: report.balance,
+      value: m(report.balance),
       color: report.balance >= 0 ? INK : ROSE,
       bar: report.balance >= 0 ? INK : ROSE,
       hint: "recettes - dépenses",
     },
+    {
+      label: "MONTANT À RECOUVRIR",
+      value: m(receivables.totalDue),
+      color: ORANGE,
+      bar: ORANGE,
+      hint: "reste dû sur les échéances de la période",
+    },
+    {
+      label: "ÉLÈVES IMPAYÉS",
+      value: String(receivables.overdueStudentCount),
+      color: ROSE,
+      bar: ROSE,
+      hint: "en retard sur une échéance de la période",
+    },
   ];
+  const tileRows = [tiles.slice(0, 4), tiles.slice(4)];
 
   return (
     <Document
@@ -168,12 +195,16 @@ function FinancialReportDocument(input: FinancialPdfInput) {
           <Text style={styles.title}>Rapport financier</Text>
           <Text style={styles.subtitle}>{periodLabel}  ·  argent réellement reçu et dépensé</Text>
 
-          <View style={styles.tiles}>
-            {tiles.map((tile) => (
-              <View key={tile.label} style={[styles.tile, { borderLeftColor: tile.bar }]}>
-                <Text style={styles.tileLabel}>{tile.label}</Text>
-                <Text style={[styles.tileValue, { color: tile.color }]}>{m(tile.value)}</Text>
-                <Text style={styles.tileHint}>{tile.hint}</Text>
+          <View style={{ marginTop: 4 }} wrap={false}>
+            {tileRows.map((row) => (
+              <View key={row[0].label} style={styles.tiles}>
+                {row.map((tile) => (
+                  <View key={tile.label} style={[styles.tile, { borderLeftColor: tile.bar }]}>
+                    <Text style={styles.tileLabel}>{tile.label}</Text>
+                    <Text style={[styles.tileValue, { color: tile.color }]}>{tile.value}</Text>
+                    <Text style={styles.tileHint}>{tile.hint}</Text>
+                  </View>
+                ))}
               </View>
             ))}
           </View>
@@ -333,8 +364,9 @@ function FinancialReportDocument(input: FinancialPdfInput) {
           </View>
 
           <Text style={styles.note}>
-            Ce rapport suit l&apos;argent réellement reçu et dépensé pendant la période. Les montants attendus et
-            les impayés figurent dans l&apos;état de recouvrement.
+            Recettes, dépenses et solde : l&apos;argent réellement reçu et dépensé pendant la période. Montant à
+            recouvrir et élèves impayés : échéances de la période encore dues ; le détail élève par élève figure dans
+            l&apos;état de recouvrement.
           </Text>
 
           <View style={styles.signatures} wrap={false}>

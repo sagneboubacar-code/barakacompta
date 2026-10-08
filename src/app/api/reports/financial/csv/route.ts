@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireRole } from "@/lib/auth/guard";
 import { createClient } from "@/lib/supabase/server";
 import { computeFinancialReport, computeDailyBreakdown, computeCashManagerBreakdown } from "@/lib/reports/financial";
+import { computePeriodReceivables } from "@/lib/reports/collections";
 import { toCsvRow, buildCsvResponse } from "@/lib/reports/csv";
 
 // Journal de caisse de la période : mêmes chiffres que l'écran et le PDF.
@@ -23,11 +24,14 @@ export async function GET(request: NextRequest) {
     .eq("id", appUser.school_id ?? "")
     .maybeSingle();
 
-  const [report, dailyBreakdown, cashManagerBreakdown] = await Promise.all([
+  const [report, dailyBreakdown, cashManagerBreakdown, receivables, { count: studentCount }] = await Promise.all([
     computeFinancialReport(supabase, from, to),
     computeDailyBreakdown(supabase, from, to),
     computeCashManagerBreakdown(supabase, from, to),
+    computePeriodReceivables(supabase, from, to),
+    supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "active"),
   ]);
+  const collectedOf = (key: string) => report.revenueByType.find((r) => r.key === key)?.collected ?? 0;
 
   const lines: string[] = [];
   lines.push(toCsvRow([`Rapport financier — ${school?.name ?? ""}`]));
@@ -35,9 +39,14 @@ export async function GET(request: NextRequest) {
   lines.push("");
 
   lines.push(toCsvRow(["Synthèse"]));
+  lines.push(toCsvRow(["Élèves (actifs aujourd'hui)", studentCount ?? 0]));
   lines.push(toCsvRow(["Recettes encaissées", report.totalCollected]));
+  lines.push(toCsvRow(["Inscription encaissée", collectedOf("inscription")]));
+  lines.push(toCsvRow(["Uniforme encaissé", collectedOf("uniforme")]));
   lines.push(toCsvRow(["Dépenses", report.totalExpenses]));
   lines.push(toCsvRow(["Solde de caisse", report.balance]));
+  lines.push(toCsvRow(["Montant à recouvrir", receivables.totalDue]));
+  lines.push(toCsvRow(["Élèves impayés", receivables.overdueStudentCount]));
   lines.push("");
 
   lines.push(toCsvRow(["Recettes par type"]));
