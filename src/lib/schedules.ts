@@ -18,7 +18,8 @@ export function effectiveScheduleStatus(
   return schedule.status;
 }
 
-// Services facturés chaque mois, payés d'avance (0040_services_mensuels.sql).
+// Services facturés chaque mois, payés d'avance (0040_services_mensuels.sql),
+// et l'internat, payé chaque mois toute l'année (0043_internat_mensuel.sql).
 export const MONTHLY_SERVICE_FEE_TYPES = [
   "cantine",
   "renforcement",
@@ -26,6 +27,7 @@ export const MONTHLY_SERVICE_FEE_TYPES = [
   "transport_zone_1",
   "transport_zone_2",
   "transport_zone_3",
+  "internat",
 ];
 
 export function isMonthlyService(feeType: string | null | undefined): boolean {

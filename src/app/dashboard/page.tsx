@@ -11,26 +11,8 @@ import { expenseCategoryLabel } from "@/lib/constants/expenses";
 import { getLanguage } from "@/lib/i18n/get-language";
 import { dashboardHomeDict } from "@/lib/i18n/dictionaries/dashboard-home";
 import { formatDate } from "@/lib/format";
-
-// Année scolaire active complète (de son mois de début à son mois de fin),
-// pas seulement "depuis le début du mois" : la comptabilité affichée doit
-// courir sur toute l'année scolaire, jusqu'à son terme.
-function schoolYearBounds(school: {
-  school_year_label: string | null;
-  school_year_start_month: number;
-  school_year_end_month: number;
-}) {
-  const now = new Date();
-  const [startYearStr, endYearStr] = (school.school_year_label ?? "").split("-");
-  const startYear = Number(startYearStr) || now.getFullYear();
-  const endYear = Number(endYearStr) || startYear + 1;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const lastDay = new Date(endYear, school.school_year_end_month, 0).getDate();
-  return {
-    from: `${startYear}-${pad(school.school_year_start_month)}-01`,
-    to: `${endYear}-${pad(school.school_year_end_month)}-${pad(lastDay)}`,
-  };
-}
+import { schoolYearBounds } from "@/lib/school-year";
+import { KpiGrid, type Kpi } from "./kpi-grid";
 
 export default async function DashboardHomePage() {
   const appUser = await requireUser();
@@ -116,12 +98,31 @@ export default async function DashboardHomePage() {
   ).size;
   const inscriptionCollected = yearReport.revenueByType.find((r) => r.key === "inscription")?.collected ?? 0;
   const uniformeCollected = yearReport.revenueByType.find((r) => r.key === "uniforme")?.collected ?? 0;
+  const mensualiteCollected = yearReport.revenueByType.find((r) => r.key === "mensualite")?.collected ?? 0;
+  const internatCollected = yearReport.revenueByType.find((r) => r.key === "internat")?.collected ?? 0;
+  // Tout le reste (cantine, transport, renforcement, avances…) : avec
+  // seulement Inscription et Uniforme à l'écran, leur somme ne retrouvait
+  // pas les Recettes de l'année et l'école croyait à une erreur de calcul.
+  const otherCollected =
+    yearReport.totalCollected - inscriptionCollected - uniformeCollected - mensualiteCollected - internatCollected;
+  // Le bilan de l'internat est réservé à la direction (comme les rapports).
+  const canSeeInternat = appUser.role === "owner" || appUser.role === "admin";
 
-  const kpis = [
-    { label: t.kpiStudents, value: studentCount ?? 0, tone: "neutral" as const },
-    { label: t.kpiYearRevenue, value: yearReport.totalCollected, tone: "positive" as const },
+  // Première ligne : les recettes de l'année puis leur détail, qui
+  // s'additionnent pour la retrouver.
+  const kpis: Kpi[] = [
+    { label: t.kpiYearRevenue, value: yearReport.totalCollected, tone: "positive" as const, hint: t.kpiYearRevenueHint },
     { label: t.kpiInscription, value: inscriptionCollected, tone: "positive" as const },
     { label: t.kpiUniform, value: uniformeCollected, tone: "positive" as const },
+    { label: t.kpiMonthly, value: mensualiteCollected, tone: "positive" as const },
+    {
+      label: t.kpiInternat,
+      value: internatCollected,
+      tone: "positive" as const,
+      hint: canSeeInternat ? t.kpiInternatHint : undefined,
+      href: canSeeInternat ? "/dashboard/internat" : undefined,
+    },
+    { label: t.kpiOtherRevenue, value: otherCollected, tone: "positive" as const, hint: t.kpiOtherRevenueHint },
     { label: t.kpiYearExpenses, value: yearReport.totalExpenses, tone: "neutral" as const },
     {
       label: t.kpiBalance,
@@ -130,14 +131,8 @@ export default async function DashboardHomePage() {
     },
     { label: t.kpiReceivable, value: totalReceivable, tone: "warning" as const },
     { label: t.kpiOverdueStudents, value: overdueStudentCount, tone: "negative" as const },
+    { label: t.kpiStudents, value: studentCount ?? 0, tone: "neutral" as const },
   ];
-
-  const toneClasses: Record<string, string> = {
-    neutral: "text-slate-900",
-    positive: "text-green-700",
-    negative: "text-red-700",
-    warning: "text-orange-700",
-  };
 
   return (
     <div className="space-y-6">
@@ -148,14 +143,7 @@ export default async function DashboardHomePage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {kpis.map((kpi) => (
-          <div key={kpi.label} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
-            <p className="text-xs text-slate-500 sm:text-sm">{kpi.label}</p>
-            <p className={`mt-1 text-xl font-semibold sm:text-2xl ${toneClasses[kpi.tone]}`}>{kpi.value}</p>
-          </div>
-        ))}
-      </div>
+      <KpiGrid kpis={kpis} />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <section className="rounded-lg border border-slate-200 bg-white p-4">
@@ -221,6 +209,7 @@ export default async function DashboardHomePage() {
           <h2 className="text-sm font-semibold text-slate-900">
             {t.byManager(school?.school_year_label ?? t.ongoing)}
           </h2>
+          <p className="mt-0.5 text-xs text-slate-500">{t.byManagerHint}</p>
           <table className="mt-3 w-full text-left text-sm">
             <thead className="text-slate-500">
               <tr>
@@ -233,8 +222,25 @@ export default async function DashboardHomePage() {
             <tbody>
               {cashManagerBreakdown.map((manager) => (
                 <tr key={manager.cashManagerId ?? "none"} className="border-t border-slate-100">
-                  <td className="py-1.5 text-slate-900">{manager.name}</td>
-                  <td className="py-1.5 text-green-700">{manager.collected}</td>
+                  {/* Cliquer sur un responsable ouvre la liste des paiements
+                      derrière sa recette : sans elle, impossible de retrouver
+                      d'où vient un montant qui ne colle pas aux reçus. */}
+                  <td className="py-1.5">
+                    <Link
+                      href={`/dashboard/payments/by-manager?manager=${manager.cashManagerId ?? "none"}`}
+                      className="text-slate-900 underline"
+                    >
+                      {manager.name}
+                    </Link>
+                  </td>
+                  <td className="py-1.5">
+                    <Link
+                      href={`/dashboard/payments/by-manager?manager=${manager.cashManagerId ?? "none"}`}
+                      className="text-green-700 underline"
+                    >
+                      {manager.collected}
+                    </Link>
+                  </td>
                   <td className="py-1.5 text-red-700">{manager.spent}</td>
                   <td className={`py-1.5 font-medium ${manager.solde >= 0 ? "text-green-700" : "text-red-700"}`}>
                     {manager.solde}

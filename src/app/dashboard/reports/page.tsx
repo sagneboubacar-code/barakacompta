@@ -330,11 +330,22 @@ export default async function ReportsPage({
               <tbody>
                 {cashManagerBreakdown.map((manager) => (
                   <tr key={manager.cashManagerId ?? "none"} className="border-t border-slate-100">
-                    <td className="py-2 text-slate-900">
-                      {manager.cashManagerId === null ? t.unassigned : manager.name}
+                    {/* Lien vers les paiements derrière la recette, sur la même période. */}
+                    <td className="py-2">
+                      <Link
+                        href={`/dashboard/payments/by-manager?manager=${manager.cashManagerId ?? "none"}&from=${from}&to=${to}`}
+                        className="text-slate-900 underline print:no-underline"
+                      >
+                        {manager.cashManagerId === null ? t.unassigned : manager.name}
+                      </Link>
                     </td>
                     <td className="py-2 text-right font-mono tabular-nums text-emerald-700">
-                      {money(manager.collected)}
+                      <Link
+                        href={`/dashboard/payments/by-manager?manager=${manager.cashManagerId ?? "none"}&from=${from}&to=${to}`}
+                        className="underline print:no-underline"
+                      >
+                        {money(manager.collected)}
+                      </Link>
                     </td>
                     <td className="py-2 text-right font-mono tabular-nums text-rose-700">
                       {money(manager.spent)}

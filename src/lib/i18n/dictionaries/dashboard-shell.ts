@@ -5,6 +5,7 @@ export const navLabelsDict: Record<string, { fr: string; ar: string }> = {
   "/dashboard/fee-structures": { fr: "Tarifs", ar: "الرسوم" },
   "/dashboard/collections": { fr: "Recouvrement", ar: "التحصيل" },
   "/dashboard/reports": { fr: "Rapports", ar: "التقارير" },
+  "/dashboard/internat": { fr: "Internat", ar: "الداخلي" },
   "/dashboard/payments": { fr: "Paiements", ar: "المدفوعات" },
   "/dashboard/expenses": { fr: "Dépenses", ar: "المصاريف" },
   "/dashboard/transfers": { fr: "Transferts", ar: "التحويلات" },

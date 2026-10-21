@@ -628,6 +628,8 @@ export interface Database {
           paid_by: string | null;
           cash_manager_id: string | null;
           receipt_path: string | null;
+          // Dépense de l'internat (0043_internat_mensuel.sql).
+          internat: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -651,6 +653,7 @@ export interface Database {
           paid_by?: string | null;
           cash_manager_id?: string | null;
           receipt_path?: string | null;
+          internat?: boolean;
           created_at?: string;
           updated_at?: string;
         };

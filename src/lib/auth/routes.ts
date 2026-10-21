@@ -13,6 +13,7 @@ export const NAV_ITEMS: { href: string; label: string; roles: UserRole[]; module
   { href: "/dashboard/fee-structures", label: "Tarifs", roles: ["owner", "admin"] },
   { href: "/dashboard/collections", label: "Recouvrement", roles: ["owner", "admin"], moduleKey: "collections" },
   { href: "/dashboard/reports", label: "Rapports", roles: ["owner", "admin"], moduleKey: "reports" },
+  { href: "/dashboard/internat", label: "Internat", roles: ["owner", "admin"], moduleKey: "reports" },
   { href: "/dashboard/payments", label: "Paiements", roles: ["owner", "admin", "accountant"] },
   { href: "/dashboard/expenses", label: "Dépenses", roles: ["owner", "admin", "accountant"] },
   { href: "/dashboard/transfers", label: "Transferts", roles: ["owner", "admin", "accountant"] },

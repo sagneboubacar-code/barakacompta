@@ -88,7 +88,7 @@ export interface CashManagerTotal {
 
 // `paid_at` est un horodatage : comparé à « 2026-09-30 », il s'arrête à
 // minuit et oublie les paiements de la journée. On borne donc au lendemain.
-function dayAfter(isoDate: string): string {
+export function dayAfter(isoDate: string): string {
   const date = new Date(`${isoDate}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + 1);
   return date.toISOString().slice(0, 10);
@@ -96,7 +96,7 @@ function dayAfter(isoDate: string): string {
 
 // PostgREST plafonne chaque réponse à 1000 lignes ; une année de paiements
 // d'une école les dépasse vite. On pagine.
-async function fetchAll<T>(
+export async function fetchAll<T>(
   page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>
 ): Promise<T[]> {
   const rows: T[] = [];

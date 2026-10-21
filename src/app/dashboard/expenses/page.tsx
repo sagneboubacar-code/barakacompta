@@ -10,7 +10,15 @@ import type { ExpenseCategory } from "@/types";
 export default async function ExpensesPage({
   searchParams,
 }: {
-  searchParams: { q?: string; category?: string; from?: string; to?: string; error?: string; success?: string };
+  searchParams: {
+    q?: string;
+    category?: string;
+    section?: string;
+    from?: string;
+    to?: string;
+    error?: string;
+    success?: string;
+  };
 }) {
   const appUser = await requireRole(["owner", "admin", "accountant"]);
   const language = getLanguage();
@@ -19,7 +27,7 @@ export default async function ExpensesPage({
 
   let query = supabase
     .from("expenses")
-    .select("id, label, category, amount, expense_date, receipt_path, cash_manager_id")
+    .select("id, label, category, amount, expense_date, receipt_path, cash_manager_id, internat")
     .order("expense_date", { ascending: false });
 
   const q = searchParams.q?.trim().replace(/[,()%]/g, "");
@@ -28,6 +36,12 @@ export default async function ExpensesPage({
   }
   if (EXPENSE_CATEGORIES.some((c) => c.key === searchParams.category)) {
     query = query.eq("category", searchParams.category as ExpenseCategory);
+  }
+  // Rubrique : dépenses de l'internat seules, ou celles du reste de l'école.
+  if (searchParams.section === "internat") {
+    query = query.eq("internat", true);
+  } else if (searchParams.section === "ecole") {
+    query = query.eq("internat", false);
   }
   if (searchParams.from) {
     query = query.gte("expense_date", searchParams.from);
@@ -55,6 +69,7 @@ export default async function ExpensesPage({
   const query_ = new URLSearchParams();
   if (searchParams.q) query_.set("q", searchParams.q);
   if (searchParams.category) query_.set("category", searchParams.category);
+  if (searchParams.section) query_.set("section", searchParams.section);
   if (searchParams.from) query_.set("from", searchParams.from);
   if (searchParams.to) query_.set("to", searchParams.to);
   const redirectTo = `/dashboard/expenses${query_.toString() ? `?${query_.toString()}` : ""}`;
@@ -98,6 +113,18 @@ export default async function ExpensesPage({
                 {expenseCategoryLabel(category.key, language)}
               </option>
             ))}
+          </select>
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="text-slate-600">{t.section}</span>
+          <select
+            name="section"
+            defaultValue={searchParams.section ?? ""}
+            className="w-32 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+          >
+            <option value="">{t.all}</option>
+            <option value="ecole">{t.sectionSchool}</option>
+            <option value="internat">{t.sectionInternat}</option>
           </select>
         </label>
         <label className="space-y-1 text-sm">
@@ -149,7 +176,14 @@ export default async function ExpensesPage({
                   {formatDate(expense.expense_date, language)}
                 </td>
                 <td className="px-4 py-2 text-slate-600">{expenseCategoryLabel(expense.category, language)}</td>
-                <td className="px-4 py-2 text-slate-900">{expense.label}</td>
+                <td className="px-4 py-2 text-slate-900">
+                  {expense.label}
+                  {expense.internat && (
+                    <span className="ms-2 whitespace-nowrap rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700">
+                      {t.internatTag}
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-2 text-slate-600">{expense.amount}</td>
                 <td className="px-4 py-2">
                   {receiptUrls.has(expense.id) ? (
@@ -222,6 +256,10 @@ export default async function ExpensesPage({
                             ))}
                           </select>
                         )}
+                        <label className="flex items-center gap-2 text-xs text-slate-700">
+                          <input name="internat" type="checkbox" defaultChecked={expense.internat} />
+                          {t.internatCheckbox}
+                        </label>
                         <input
                           name="receipt"
                           type="file"
@@ -342,6 +380,13 @@ export default async function ExpensesPage({
               accept="image/png,image/jpeg,image/webp,application/pdf"
               className="w-full text-sm"
             />
+          </label>
+          <label className="flex items-start gap-2 text-sm sm:col-span-2">
+            <input name="internat" type="checkbox" className="mt-1" />
+            <span>
+              <span className="font-medium text-slate-900">{t.internatCheckbox}</span>
+              <span className="block text-xs text-slate-500">{t.internatHint}</span>
+            </span>
           </label>
           <div className="sm:col-span-2">
             <button

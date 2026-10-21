@@ -63,6 +63,8 @@ export async function createExpense(formData: FormData) {
   const label = String(formData.get("label") ?? "").trim();
   const amount = Number(formData.get("amount"));
   const cashManagerId = String(formData.get("cash_manager_id") ?? "").trim() || null;
+  // Case « Dépense de l'internat » : cochée = "on", absente sinon.
+  const internat = formData.get("internat") === "on";
 
   if (
     !expenseDate ||
@@ -86,6 +88,7 @@ export async function createExpense(formData: FormData) {
     paid_by: appUser.id,
     cash_manager_id: cashManagerId,
     receipt_path: receiptPath ?? null,
+    internat,
   });
 
   if (error) fail(base, "Impossible de créer la dépense : " + error.message);
@@ -104,6 +107,8 @@ export async function updateExpense(formData: FormData) {
   const label = String(formData.get("label") ?? "").trim();
   const amount = Number(formData.get("amount"));
   const cashManagerId = String(formData.get("cash_manager_id") ?? "").trim() || null;
+  // Case « Dépense de l'internat » : cochée = "on", absente sinon.
+  const internat = formData.get("internat") === "on";
 
   if (
     !id ||
@@ -127,6 +132,7 @@ export async function updateExpense(formData: FormData) {
       amount,
       expense_date: expenseDate,
       cash_manager_id: cashManagerId,
+      internat,
       ...(receiptPath !== undefined ? { receipt_path: receiptPath } : {}),
     })
     .eq("id", id);
