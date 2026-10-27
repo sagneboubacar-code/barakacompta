@@ -6,7 +6,7 @@ export const dashboardFixedExpensesDict = {
     backToExpenses: "Retour aux dépenses",
     month: "Mois",
     show: "Afficher",
-    monthTitle: (month: string) => `Dépenses fixes de ${month}`,
+    monthTitle: (month: string) => `Dépenses fixes : ${month}`,
     noLines: "La liste est vide. Ajoutez vos salaires et loyers ci-dessous : ils reviendront chaque mois.",
     noLinesAccountant: "La liste est vide. Le propriétaire ou l'administrateur doit d'abord ajouter les salaires et loyers.",
     allRecorded: (month: string) => `Toutes les dépenses fixes de ${month} sont enregistrées.`,
