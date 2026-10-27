@@ -24,6 +24,9 @@ export const dashboardSettingsDict = {
     classesByCycleDesc: (year: string) =>
       `Pré-remplies à la création de l'école (${year}), modifiables ci-dessous.`,
     noClassInCycle: "Aucune classe dans ce cycle.",
+    classInternat: "Rattachée à l'internat",
+    classInternatHint:
+      "Cochez « Rattachée à l'internat » pour une classe qui dépend de l'internat (ex. Coran spécial), puis Enregistrer : tout ce que ses élèves paient compte alors dans le bilan de l'internat.",
     classNamePlaceholder: "Nom de la classe",
     orderPlaceholder: "Ordre",
     add: "Ajouter",
@@ -77,6 +80,9 @@ export const dashboardSettingsDict = {
     classesByCycle: "الأقسام حسب الطور",
     classesByCycleDesc: (year: string) => `مُعبّأة مسبقًا عند إنشاء المدرسة (${year})، قابلة للتعديل أدناه.`,
     noClassInCycle: "لا يوجد قسم في هذا الطور.",
+    classInternat: "مرتبط بالداخلي",
+    classInternatHint:
+      "ضع علامة على « مرتبط بالداخلي » لقسم تابع للداخلي (مثل القرآن الخاص)، ثم احفظ: تُحتسب عندئذ كل مدفوعات تلاميذه في حصيلة الداخلي.",
     classNamePlaceholder: "اسم القسم",
     orderPlaceholder: "الترتيب",
     add: "إضافة",

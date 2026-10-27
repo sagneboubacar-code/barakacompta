@@ -129,7 +129,9 @@ function fetchPayments(supabase: Client, from: string, to: string) {
   return fetchAll<PaymentRow>((a, b) =>
     supabase
       .from("payments")
-      .select("id, amount, paid_at, cash_manager_id, payment_allocations(amount, payment_schedules(fee_structures(fee_type)))")
+      .select(
+        "id, amount, paid_at, cash_manager_id, payment_allocations(amount, payment_schedules(fee_structures(fee_type, class_id)))"
+      )
       .gte("paid_at", from)
       .lt("paid_at", dayAfter(to))
       .order("id")
@@ -167,7 +169,17 @@ const REVENUE_LABELS: Record<string, string> = {
 const REVENUE_ORDER = ["inscription", "mensualite", "uniforme"];
 
 export async function computeFinancialReport(supabase: Client, from: string, to: string): Promise<FinancialReport> {
-  const [payments, expenses] = await Promise.all([fetchPayments(supabase, from, to), fetchExpenses(supabase, from, to)]);
+  const [payments, expenses, { data: attachedClasses }] = await Promise.all([
+    fetchPayments(supabase, from, to),
+    fetchExpenses(supabase, from, to),
+    supabase.from("classes").select("id").eq("internat", true),
+  ]);
+  // Ce qui est payé pour une classe rattachée à l'internat (« Coran
+  // spécial ») compte en Internat, comme dans le bilan de l'internat : sinon
+  // « Internat encaissé » ne retrouverait pas les recettes du bilan. Si la
+  // colonne manque (SQL 0044 pas encore passé), aucune classe n'est
+  // rattachée : le tableau de bord ne doit pas tomber pour autant.
+  const attached = new Set((attachedClasses ?? []).map((c) => c.id));
 
   // Chaque paiement est ventilé selon les échéances qu'il a réglées ; ce qui
   // n'a trouvé aucune échéance (avance au-delà de tout l'échéancier) reste
@@ -178,8 +190,11 @@ export async function computeFinancialReport(supabase: Client, from: string, to:
     let allocated = 0;
     for (const allocation of (payment.payment_allocations ?? []) as { amount: number; payment_schedules: unknown }[]) {
       const schedule = one(allocation.payment_schedules as { fee_structures: unknown } | null);
-      const fee = one(schedule?.fee_structures as { fee_type: string } | null);
-      add(revenueKey(fee?.fee_type), Number(allocation.amount));
+      const fee = one(schedule?.fee_structures as { fee_type: string; class_id: string | null } | null);
+      add(
+        fee?.class_id && attached.has(fee.class_id) ? "internat" : revenueKey(fee?.fee_type),
+        Number(allocation.amount)
+      );
       allocated += Number(allocation.amount);
     }
     const unallocated = Number(payment.amount) - allocated;

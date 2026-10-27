@@ -88,6 +88,31 @@ export function InternatView({
         ))}
       </div>
 
+      {/* Seulement s'il y a une classe rattachée : sinon la seule ligne
+          répéterait les recettes. */}
+      {report.sources.length > 1 && (
+        <section className="rounded-lg border border-slate-200 bg-white p-4">
+          <h2 className="text-sm font-semibold text-slate-900">{t.sourcesTitle}</h2>
+          <p className="mt-1 text-xs text-slate-500">{t.sourcesHint}</p>
+          <table className="mt-3 w-full text-left text-sm">
+            <tbody>
+              {report.sources.map((source) => (
+                <tr key={source.classId ?? "internat"} className="border-t border-slate-100">
+                  <td className="py-1.5 text-slate-900">
+                    {source.className ? t.sourceClass(source.className) : t.sourceFees}
+                  </td>
+                  <td className="py-1.5 text-right tabular-nums text-green-700">{money(source.amount)}</td>
+                </tr>
+              ))}
+              <tr className="border-t-2 border-slate-900 font-semibold">
+                <td className="py-1.5 text-slate-900">{t.total}</td>
+                <td className="py-1.5 text-right tabular-nums text-green-700">{money(report.collected)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      )}
+
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">{t.byMonthTitle}</h2>
         <div className="mt-3 overflow-x-auto">

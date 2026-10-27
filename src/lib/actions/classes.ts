@@ -67,6 +67,9 @@ export async function updateClass(formData: FormData) {
       name,
       level: level as SchoolClassCycle,
       sort_order: Number.isFinite(sortOrder) ? sortOrder : 0,
+      // Classe rattachée à l'internat : ses paiements comptent dans le bilan
+      // de l'internat (voir lib/reports/internat.ts).
+      internat: formData.get("internat") === "on",
     })
     .eq("id", id);
 
