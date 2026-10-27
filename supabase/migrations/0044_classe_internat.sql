@@ -14,8 +14,8 @@
 -- ABANDONNE le meme jour : la classe « Coran special » est une classe comme
 -- les autres, ou chaque eleve est interne OU externe (regime de l'eleve) ;
 -- seuls les internes relevent de l'internat, via le frais « Internat » de
--- la grille Internat. Le code ne lit plus classes.internat ; la colonne,
--- deja creee en production, reste sans effet.
+-- la grille Internat. Le code ne lit plus classes.internat ; la colonne est
+-- supprimee par 0046_supprimer_classe_internat.sql.
 -- =========================================================================
 
 alter table public.classes
