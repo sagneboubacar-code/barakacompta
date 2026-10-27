@@ -168,12 +168,20 @@ export async function updateStudent(formData: FormData) {
     fail(base, "Merci de renseigner au minimum le prénom, le nom, le sexe, le régime et le statut.");
   }
 
+  // Début de l'internat saisi sur la fiche d'un interne (0047) ; sans ce
+  // champ, la base garde sa règle (inscription, ou jour du passage).
+  const internatSince = String(formData.get("internat_since") ?? "").trim();
+  const update =
+    fields.regime === "internat" && internatSince && !isNaN(Date.parse(internatSince))
+      ? { ...fields, internat_since: internatSince }
+      : fields;
+
   const { familyId, createdFamilyId } = await resolveFamily(supabase, formData, appUser.school_id ?? "", fields, base);
 
   // Un formulaire sans champ famille ne doit pas détacher l'élève de la sienne.
   const { error } = await supabase
     .from("students")
-    .update(formData.has("family_choice") ? { ...fields, family_id: familyId } : fields)
+    .update(formData.has("family_choice") ? { ...update, family_id: familyId } : update)
     .eq("id", id);
 
   if (error) {

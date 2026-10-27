@@ -260,6 +260,7 @@ export interface Database {
           subscribes_renforcement: boolean;
           subscribes_transport: boolean;
           transport_zone: number | null;
+          internat_since: string | null;
           family_id: string | null;
           created_at: string;
           updated_at: string;
@@ -285,6 +286,7 @@ export interface Database {
           subscribes_renforcement?: boolean;
           subscribes_transport?: boolean;
           transport_zone?: number | null;
+          internat_since?: string | null;
           family_id?: string | null;
           created_at?: string;
           updated_at?: string;

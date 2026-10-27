@@ -11,6 +11,7 @@ import { getLanguage } from "@/lib/i18n/get-language";
 import { dashboardStudentDetailDict } from "@/lib/i18n/dictionaries/dashboard-student-detail";
 import { studentFamilyFieldDict } from "@/lib/i18n/dictionaries/dashboard-families";
 import { formatDate } from "@/lib/format";
+import { RegimeField } from "@/components/RegimeField";
 import { effectiveScheduleStatus } from "@/lib/schedules";
 
 export default async function StudentDetailPage({
@@ -29,7 +30,7 @@ export default async function StudentDetailPage({
   const { data: student } = await supabase
     .from("students")
     .select(
-      "id, first_name, last_name, matricule, gender, date_of_birth, place_of_birth, class_id, regime, guardian_name, guardian_phone, address, enrolled_at, status, subscribes_cantine, subscribes_transport, transport_zone, subscribes_renforcement, family_id"
+      "id, first_name, last_name, matricule, gender, date_of_birth, place_of_birth, class_id, regime, guardian_name, guardian_phone, address, enrolled_at, status, subscribes_cantine, subscribes_transport, transport_zone, subscribes_renforcement, family_id, internat_since"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -207,20 +208,12 @@ export default async function StudentDetailPage({
               ))}
             </select>
           </label>
-          <label className="space-y-1 text-sm">
-            <span className="text-slate-600">{t.formRegime}</span>
-            <select
-              name="regime"
-              defaultValue={student.regime}
-              className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
-            >
-              {REGIMES.map((regime) => (
-                <option key={regime.key} value={regime.key}>
-                  {regimeLabel(regime.key, language)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <RegimeField
+            options={REGIMES.map((regime) => ({ key: regime.key, label: regimeLabel(regime.key, language) }))}
+            defaultRegime={student.regime}
+            defaultSince={student.internat_since ?? student.enrolled_at}
+            labels={{ regime: t.formRegime, since: t.formInternatSince, sinceHint: t.formInternatSinceHint }}
+          />
           <label className="space-y-1 text-sm">
             <span className="text-slate-600">{t.formGuardianName}</span>
             <input
