@@ -36,6 +36,8 @@ export const dashboardExpensesDict = {
     internatCheckbox: "Dépense de l'internat",
     internatHint: "Cochez pour la compter dans le bilan de l'internat. Elle reste dans les dépenses de l'école.",
     internatTag: "Internat",
+    fixedLink: "Dépenses fixes du mois (salaires, loyers)",
+    fixedTag: "Dépense fixe",
   },
   ar: {
     title: "المصاريف",
@@ -73,5 +75,7 @@ export const dashboardExpensesDict = {
     internatCheckbox: "مصروف الداخلي",
     internatHint: "ضع علامة ليُحتسب في حصيلة الداخلي. يبقى ضمن مصاريف المدرسة.",
     internatTag: "الداخلي",
+    fixedLink: "المصاريف الثابتة للشهر (رواتب، إيجارات)",
+    fixedTag: "مصروف ثابت",
   },
 };

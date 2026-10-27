@@ -632,6 +632,11 @@ export interface Database {
           receipt_path: string | null;
           // Dépense de l'internat (0043_internat_mensuel.sql).
           internat: boolean;
+          // Dépense fixe du mois (0045_depenses_fixes.sql) : la ligne de la
+          // liste, le mois concerné ("2026-10") et les heures si à l'heure.
+          recurring_expense_id: string | null;
+          period: string | null;
+          hours: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -656,6 +661,9 @@ export interface Database {
           cash_manager_id?: string | null;
           receipt_path?: string | null;
           internat?: boolean;
+          recurring_expense_id?: string | null;
+          period?: string | null;
+          hours?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -673,6 +681,71 @@ export interface Database {
             columns: ["cash_manager_id"];
             isOneToOne: false;
             referencedRelation: "cash_managers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "expenses_recurring_expense_id_fkey";
+            columns: ["recurring_expense_id"];
+            isOneToOne: false;
+            referencedRelation: "recurring_expenses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      recurring_expenses: {
+        Row: {
+          id: string;
+          school_id: string;
+          label: string;
+          category:
+            | "salaires"
+            | "location"
+            | "fournitures"
+            | "eau"
+            | "electricite"
+            | "internet"
+            | "cantine"
+            | "transport"
+            | "entretien"
+            | "autres";
+          pay_mode: "fixed" | "hourly";
+          amount: number;
+          hourly_rate: number | null;
+          internat: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          school_id: string;
+          label: string;
+          category?:
+            | "salaires"
+            | "location"
+            | "fournitures"
+            | "eau"
+            | "electricite"
+            | "internet"
+            | "cantine"
+            | "transport"
+            | "entretien"
+            | "autres";
+          pay_mode?: "fixed" | "hourly";
+          amount?: number;
+          hourly_rate?: number | null;
+          internat?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["recurring_expenses"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "recurring_expenses_school_id_fkey";
+            columns: ["school_id"];
+            isOneToOne: false;
+            referencedRelation: "schools";
             referencedColumns: ["id"];
           },
         ];

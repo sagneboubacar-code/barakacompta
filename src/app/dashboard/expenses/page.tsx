@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireRole } from "@/lib/auth/guard";
 import { createClient } from "@/lib/supabase/server";
 import { createExpense, deleteExpense, updateExpense } from "@/lib/actions/expenses";
@@ -27,7 +28,7 @@ export default async function ExpensesPage({
 
   let query = supabase
     .from("expenses")
-    .select("id, label, category, amount, expense_date, receipt_path, cash_manager_id, internat")
+    .select("id, label, category, amount, expense_date, receipt_path, cash_manager_id, internat, recurring_expense_id, hours")
     .order("expense_date", { ascending: false });
 
   const q = searchParams.q?.trim().replace(/[,()%]/g, "");
@@ -78,9 +79,17 @@ export default async function ExpensesPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-slate-900">{t.title}</h1>
-        <p className="text-sm text-slate-500">{t.totalDisplayed(total)}</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-900">{t.title}</h1>
+          <p className="text-sm text-slate-500">{t.totalDisplayed(total)}</p>
+        </div>
+        <Link
+          href="/dashboard/expenses/fixed"
+          className="rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
+        >
+          {t.fixedLink}
+        </Link>
       </div>
 
       {searchParams.error && (
@@ -181,6 +190,12 @@ export default async function ExpensesPage({
                   {expense.internat && (
                     <span className="ms-2 whitespace-nowrap rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700">
                       {t.internatTag}
+                    </span>
+                  )}
+                  {expense.recurring_expense_id && (
+                    <span className="ms-2 whitespace-nowrap rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                      {t.fixedTag}
+                      {expense.hours != null && ` · ${expense.hours} h`}
                     </span>
                   )}
                 </td>
