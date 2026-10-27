@@ -10,6 +10,12 @@
 -- compte alors les paiements de la classe dans ses recettes, ses eleves
 -- parmi les internes et leurs retards dans le reste a payer. Rien ne change
 -- pour l'echeancier ni pour les totaux de l'ecole.
+--
+-- ABANDONNE le meme jour : la classe « Coran special » est une classe comme
+-- les autres, ou chaque eleve est interne OU externe (regime de l'eleve) ;
+-- seuls les internes relevent de l'internat, via le frais « Internat » de
+-- la grille Internat. Le code ne lit plus classes.internat ; la colonne,
+-- deja creee en production, reste sans effet.
 -- =========================================================================
 
 alter table public.classes

@@ -32,7 +32,7 @@ export default async function SettingsPage({
     supabase.from("users").select("id, full_name, email, role").order("role"),
     supabase
       .from("classes")
-      .select("id, name, level, sort_order, academic_year, internat")
+      .select("id, name, level, sort_order, academic_year")
       .order("level")
       .order("sort_order"),
     supabase.from("cash_managers").select("id, name, sort_order").order("sort_order"),
@@ -218,7 +218,6 @@ export default async function SettingsPage({
         <p className="text-xs text-slate-500">
           {t.classesByCycleDesc(school?.school_year_label ?? "")}
         </p>
-        <p className="mt-1 text-xs text-slate-500">{t.classInternatHint}</p>
 
         <div className="mt-4 space-y-6">
           {classesByCycle.map((cycle) => (
@@ -227,7 +226,7 @@ export default async function SettingsPage({
               <div className="mt-2 space-y-2">
                 {cycle.classes.map((klass) => (
                   <div key={klass.id} className="flex items-center gap-2">
-                    <form action={updateClass} className="flex flex-1 flex-wrap items-center gap-2">
+                    <form action={updateClass} className="flex flex-1 items-center gap-2">
                       <input type="hidden" name="id" value={klass.id} />
                       <input type="hidden" name="level" value={cycle.key} />
                       <input
@@ -241,10 +240,6 @@ export default async function SettingsPage({
                         defaultValue={klass.sort_order}
                         className="w-16 rounded-md border border-slate-300 px-2 py-1 text-sm"
                       />
-                      <label className="flex items-center gap-1 text-xs text-slate-600">
-                        <input type="checkbox" name="internat" defaultChecked={klass.internat} />
-                        {t.classInternat}
-                      </label>
                       <button
                         type="submit"
                         className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"

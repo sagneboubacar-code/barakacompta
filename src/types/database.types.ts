@@ -141,7 +141,6 @@ export interface Database {
           level: "prescolaire" | "elementaire" | "college" | "lycee" | null;
           academic_year: string;
           sort_order: number;
-          internat: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -152,7 +151,6 @@ export interface Database {
           level?: "prescolaire" | "elementaire" | "college" | "lycee" | null;
           academic_year: string;
           sort_order?: number;
-          internat?: boolean;
           created_at?: string;
           updated_at?: string;
         };
