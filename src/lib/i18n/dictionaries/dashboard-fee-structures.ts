@@ -21,7 +21,7 @@ export const dashboardFeeStructuresDict = {
     noClassMatch: "Aucune classe ne correspond à ce filtre.",
     saveButton: "Enregistrer",
     emptyCellHint:
-      "Laissez une case vide pour supprimer le tarif correspondant. Chaque ligne s'enregistre indépendamment.",
+      "Laissez une case vide pour supprimer le tarif correspondant. Chaque ligne s'enregistre indépendamment. La première mensualité de l'année n'est à remplir que pour les classes qui commencent les cours dès ce mois-là (ex. Coran spécial) : laissée vide, ce mois reste réservé à l'inscription.",
     otherFeesTitle: "Autres frais (cantine, internat, transport…)",
     noOtherFees: "Aucun autre frais pour cette classe.",
     installmentAllowed: "Échelonnable",
@@ -52,7 +52,7 @@ export const dashboardFeeStructuresDict = {
     noClassMatch: "لا يوجد قسم مطابق لهذا الفلتر.",
     saveButton: "حفظ",
     emptyCellHint:
-      "اترك الخانة فارغة لحذف الرسم المقابل. يُحفظ كل صف بشكل مستقل.",
+      "اترك الخانة فارغة لحذف الرسم المقابل. يُحفظ كل صف بشكل مستقل. لا تملأ الشهرية الأولى من السنة إلا للأقسام التي تبدأ الدروس في ذلك الشهر (مثل القرآن الخاص)، وإن تُركت فارغة يبقى هذا الشهر مخصصًا للتسجيل.",
     otherFeesTitle: "رسوم أخرى (المطعم، الداخلي، النقل…)",
     noOtherFees: "لا توجد رسوم أخرى لهذا القسم.",
     installmentAllowed: "قابل للتقسيط",

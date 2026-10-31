@@ -32,24 +32,30 @@ const FEE_TYPE_LABELS_AR: Record<string, string> = {
   autre: "أخرى",
 };
 
-// Les mois de mensualité courent du mois SUIVANT le "mois de début" de
-// l'année scolaire jusqu'au mois suivant son "mois de fin" (le premier mois
-// de l'année scolaire est réservé à l'inscription, pas à une mensualité) —
-// même règle que generate_student_schedule() côté SQL. Ex. début=septembre,
-// fin=juin → mensualités d'octobre à juillet.
+// Les mois de mensualité proposés courent du "mois de début" de l'année
+// scolaire jusqu'au mois suivant son "mois de fin" — même règle que
+// generate_student_schedule() côté SQL. Ex. début=septembre, fin=juin →
+// colonnes de septembre à juillet.
+//
+// Le premier mois (septembre) est facultatif : la plupart des classes
+// commencent les cours le mois suivant et le laissent vide (pas de
+// mensualité, septembre reste réservé à l'inscription). Une classe qui
+// commence les cours dès le premier mois (ex. Coran spécial) y saisit un
+// montant, et ses élèves doivent alors aussi septembre.
 export function mensualiteMonthsForSchoolYear(
   startMonth: number,
   endMonth: number,
   language: Language = "fr"
 ): { month: number; label: string }[] {
   const names = monthNames(language);
-  const first = (startMonth % 12) + 1;
   const last = (endMonth % 12) + 1;
   const months: { month: number; label: string }[] = [];
-  let m = first;
+  let m = startMonth;
   for (let i = 0; i < 12; i++) {
     months.push({ month: m, label: names[m - 1] });
-    if (m === last) break;
+    // i > 0 : si le mois suivant la fin retombe sur le mois de début, l'année
+    // scolaire couvre 12 mois pleins (même règle que la fonction SQL).
+    if (m === last && i > 0) break;
     m = (m % 12) + 1;
   }
   return months;

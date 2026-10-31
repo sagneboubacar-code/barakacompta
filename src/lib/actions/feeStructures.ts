@@ -120,6 +120,25 @@ export async function upsertClassFees(formData: FormData) {
     if (error) fail(base, "Impossible d'enregistrer le tarif : " + error.message);
   }
 
+  // Les élèves déjà inscrits dans cette classe reçoivent les échéances des
+  // mois nouvellement tarifés (ex. une mensualité de septembre ajoutée après
+  // coup). generate_student_schedule() est idempotent : il n'ajoute que les
+  // lignes manquantes et ne touche ni aux montants ni aux paiements existants.
+  const { data: students } = await supabase
+    .from("students")
+    .select("id")
+    .eq("class_id", classId)
+    .eq("regime", regime as FeeRegime)
+    .eq("status", "active");
+
+  for (const student of students ?? []) {
+    const { error } = await supabase.rpc("generate_student_schedule", {
+      p_student_id: student.id,
+      p_academic_year: academicYear,
+    });
+    if (error) fail(base, "Tarifs enregistrés, mais l'échéancier des élèves n'a pas pu être mis à jour : " + error.message);
+  }
+
   ok(base, "Tarifs mis à jour.");
 }
 
