@@ -60,9 +60,10 @@ function ok(base: string, message: string): never {
   redirect(`${base}${base.includes("?") ? "&" : "?"}success=${encodeURIComponent(message)}`);
 }
 
-// Enregistre en une fois les 12 colonnes du tableau (Inscription, Uniforme,
-// 10 mensualités) pour une classe+régime+année : une case remplie est
-// upsertée, une case vidée supprime le tarif correspondant s'il existait.
+// Enregistre en une fois toutes les colonnes du tableau (Inscription,
+// Uniforme, une mensualité par mois) pour une classe+régime+année : une case
+// remplie est upsertée, une case vidée supprime le tarif correspondant s'il
+// existait.
 export async function upsertClassFees(formData: FormData) {
   const appUser = await requireRole(["owner", "admin"]);
   const base = targetPath(formData);
@@ -118,6 +119,35 @@ export async function upsertClassFees(formData: FormData) {
     );
 
     if (error) fail(base, "Impossible d'enregistrer le tarif : " + error.message);
+  }
+
+  // Les élèves déjà inscrits reçoivent tout de suite les mois nouvellement
+  // tarifés (ex. un septembre ajouté pour Coran spécial), comme avec le
+  // bouton « Générer / actualiser » de leur fiche : la fonction n'ajoute que
+  // les lignes manquantes, sans rien modifier ni supprimer. Année en cours
+  // seulement : les tarifs de l'année prochaine ne concernent pas encore les
+  // élèves.
+  const { data: school } = await supabase
+    .from("schools")
+    .select("school_year_label")
+    .eq("id", appUser.school_id ?? "")
+    .maybeSingle();
+
+  if (school?.school_year_label === academicYear) {
+    const { data: students } = await supabase
+      .from("students")
+      .select("id")
+      .eq("class_id", classId)
+      .eq("regime", regime as FeeRegime)
+      .eq("status", "active");
+
+    for (const student of students ?? []) {
+      const { error } = await supabase.rpc("generate_student_schedule", {
+        p_student_id: student.id,
+        p_academic_year: null,
+      });
+      if (error) fail(base, "Tarifs enregistrés, mais l'échéancier des élèves n'a pas pu être mis à jour : " + error.message);
+    }
   }
 
   ok(base, "Tarifs mis à jour.");

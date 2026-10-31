@@ -190,9 +190,12 @@ export default async function FeeStructuresPage({
                 <th className="py-1 pr-2 font-medium">{t.mainTable.class}</th>
                 <th className="py-1 pr-2 font-medium">{t.mainTable.inscription}</th>
                 <th className="py-1 pr-2 font-medium">{t.mainTable.uniforme}</th>
-                {mensualiteMonths.map((m) => (
+                {mensualiteMonths.map((m, index) => (
                   <th key={m.month} className="py-1 pr-2 font-medium">
                     {t.mainTable.mensualite(m.label)}
+                    {index === 0 && (
+                      <span className="block text-xs font-normal text-slate-400">{t.mainTable.optional}</span>
+                    )}
                   </th>
                 ))}
                 <th className="py-1 pr-2 font-medium"></th>
@@ -259,7 +262,7 @@ export default async function FeeStructuresPage({
               })}
               {classesInScope.length === 0 && (
                 <tr>
-                  <td colSpan={13} className="py-4 text-center text-xs text-slate-400">
+                  <td colSpan={mensualiteMonths.length + 4} className="py-4 text-center text-xs text-slate-400">
                     {t.noClassMatch}
                   </td>
                 </tr>

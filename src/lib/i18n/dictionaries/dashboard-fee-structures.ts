@@ -17,11 +17,12 @@ export const dashboardFeeStructuresDict = {
       inscription: "Inscription",
       uniforme: "Uniforme",
       mensualite: (label: string) => `Mensualité ${label}`,
+      optional: "si cours dès la rentrée",
     },
     noClassMatch: "Aucune classe ne correspond à ce filtre.",
     saveButton: "Enregistrer",
     emptyCellHint:
-      "Laissez une case vide pour supprimer le tarif correspondant. Chaque ligne s'enregistre indépendamment.",
+      "Laissez une case vide pour supprimer le tarif correspondant. Chaque ligne s'enregistre indépendamment, et les élèves de la classe reçoivent aussitôt les mois ajoutés. Chaque mois se paie le 5 du mois suivant. Le premier mois n'est à remplir que pour les classes qui ont cours dès la rentrée (ex. Coran spécial) : laissé vide, rien n'est demandé pour ce mois.",
     otherFeesTitle: "Autres frais (cantine, internat, transport…)",
     otherFeesHint:
       "Cantine, transport et cours de renforcement : montant PAR MOIS, payé d'avance au début de chaque mois par les élèves abonnés. Internat : montant PAR MOIS, payé par les internes les 12 mois de l'année, sans pause. Les autres frais se paient une seule fois.",
@@ -50,11 +51,12 @@ export const dashboardFeeStructuresDict = {
       inscription: "التسجيل",
       uniforme: "الزي الموحد",
       mensualite: (label: string) => `شهرية ${label}`,
+      optional: "إذا بدأت الدروس مع الدخول",
     },
     noClassMatch: "لا يوجد قسم مطابق لهذا الفلتر.",
     saveButton: "حفظ",
     emptyCellHint:
-      "اترك الخانة فارغة لحذف الرسم المقابل. يُحفظ كل صف بشكل مستقل.",
+      "اترك الخانة فارغة لحذف الرسم المقابل. يُحفظ كل صف بشكل مستقل، ويحصل تلاميذ القسم فوراً على الأشهر المضافة. يُدفع كل شهر في 5 من الشهر الموالي. لا تملأ الشهر الأول إلا للأقسام التي تبدأ الدروس مع الدخول المدرسي (مثل القرآن الخاص): إن تُرك فارغاً لا يُطلب شيء عن هذا الشهر.",
     otherFeesTitle: "رسوم أخرى (المطعم، الداخلي، النقل…)",
     otherFeesHint:
       "المطعم والنقل ودروس الدعم: مبلغ شهري يُدفع مسبقاً في بداية كل شهر من طرف التلاميذ المشتركين. الداخلي: مبلغ شهري يدفعه التلاميذ الداخليون طوال 12 شهراً دون انقطاع. الرسوم الأخرى تُدفع مرة واحدة.",

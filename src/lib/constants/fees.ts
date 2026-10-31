@@ -45,28 +45,33 @@ const FEE_TYPE_LABELS_AR: Record<string, string> = {
 };
 
 // Grille des tarifs : tous les mois de mensualité possibles de l'année
-// scolaire, du mois SUIVANT le "mois de début" jusqu'au mois suivant le
-// "mois de fin". Un élève paie sa première mensualité le mois d'après son
-// inscription — celui qui arrive à la rentrée (septembre) paie donc à
-// partir d'octobre, et le dernier mois payé est juillet.
+// scolaire, du "mois de début" (la rentrée) jusqu'au mois suivant le "mois
+// de fin". Ex. début=septembre, fin=juin → septembre à juillet.
+//
+// Seuls les mois remplis sont facturés (0032) : chaque mois tarifé donne une
+// échéance le 5 du mois suivant, si l'élève était là ce mois-là. Le premier
+// mois est donc facultatif : la plupart des classes commencent les cours le
+// mois suivant et le laissent vide ; une classe qui commence dès la rentrée
+// (ex. 3e, CM1, CM2, Coran spécial) y met un montant.
 //
 // C'est bien la liste des mois *facturables par l'école*, pas celle d'un
 // élève donné : un élève inscrit en cours d'année n'est facturé qu'à partir
-// du mois suivant son arrivée, filtrage fait par generate_student_schedule()
-// côté SQL à partir de sa date d'inscription.
+// de son mois d'arrivée, filtrage fait par generate_student_schedule() côté
+// SQL à partir de sa date d'inscription.
 export function mensualiteMonthsForSchoolYear(
   startMonth: number,
   endMonth: number,
   language: Language = "fr"
 ): { month: number; label: string }[] {
   const names = monthNames(language);
-  const first = (startMonth % 12) + 1;
   const last = (endMonth % 12) + 1;
   const months: { month: number; label: string }[] = [];
-  let m = first;
+  let m = startMonth;
   for (let i = 0; i < 12; i++) {
     months.push({ month: m, label: names[m - 1] });
-    if (m === last) break;
+    // i > 0 : quand le mois suivant la fin retombe sur la rentrée, l'année
+    // compte 12 mois pleins.
+    if (m === last && i > 0) break;
     m = (m % 12) + 1;
   }
   return months;
