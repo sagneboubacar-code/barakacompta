@@ -24,8 +24,15 @@ export function InternatView({
   const money = (amount: number) => formatCurrency(amount, currency, language);
   const isWholeYear = report.from === yearFrom && report.to === yearTo;
 
-  const tiles = [
-    { label: t.tileBoarders, value: String(report.boarders), tone: "text-slate-900" },
+  const tiles: { label: string; value: string; tone: string; href?: string; hint?: string }[] = [
+    {
+      label: t.tileBoarders,
+      value: String(report.boarders),
+      tone: "text-slate-900",
+      // Les mêmes élèves que ce nombre : inscrits, au régime internat.
+      href: "/dashboard/students?regime=internat&status=active",
+      hint: t.seeBoarders,
+    },
     { label: t.tileCollected, value: money(report.collected), tone: "text-green-700" },
     { label: t.tileSpent, value: money(report.spent), tone: "text-red-700" },
     {
@@ -79,13 +86,28 @@ export function InternatView({
         </p>
       </form>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {tiles.map((tile) => (
-          <div key={tile.label} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
-            <p className="text-xs text-slate-500 sm:text-sm">{tile.label}</p>
-            <p className={`mt-1 text-lg font-semibold sm:text-xl ${tile.tone}`}>{tile.value}</p>
-          </div>
-        ))}
+      {/* Trois cases par ligne au plus : avec des montants comme
+          « +392 250 F CFA », six cases côte à côte débordaient de leur cadre. */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {tiles.map((tile) => {
+          const content = (
+            <>
+              <p className="text-xs text-slate-500 sm:text-sm">{tile.label}</p>
+              <p className={`mt-1 text-base font-semibold tabular-nums sm:text-xl ${tile.tone}`}>{tile.value}</p>
+              {tile.hint && <p className="mt-1 text-[11px] leading-snug text-slate-400">{tile.hint}</p>}
+            </>
+          );
+          const className = "rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:p-4";
+          return tile.href ? (
+            <Link key={tile.label} href={tile.href} className={`${className} block hover:border-slate-400`}>
+              {content}
+            </Link>
+          ) : (
+            <div key={tile.label} className={className}>
+              {content}
+            </div>
+          );
+        })}
       </div>
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">
