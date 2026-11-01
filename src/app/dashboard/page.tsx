@@ -108,10 +108,25 @@ export default async function DashboardHomePage() {
   // Le bilan de l'internat est réservé à la direction (comme les rapports).
   const canSeeInternat = appUser.role === "owner" || appUser.role === "admin";
 
-  // Première ligne : les recettes de l'année puis leur détail, qui
-  // s'additionnent pour la retrouver.
-  const kpis: Kpi[] = [
+  // Première ligne : l'essentiel, en commençant par le nombre d'élèves
+  // (demandé par l'école).
+  const summaryKpis: Kpi[] = [
+    { label: t.kpiStudents, value: studentCount ?? 0, tone: "neutral" as const },
     { label: t.kpiYearRevenue, value: yearReport.totalCollected, tone: "positive" as const, hint: t.kpiYearRevenueHint },
+    { label: t.kpiYearExpenses, value: yearReport.totalExpenses, tone: "neutral" as const },
+    {
+      label: t.kpiBalance,
+      value: yearReport.balance,
+      tone: yearReport.balance >= 0 ? ("positive" as const) : ("negative" as const),
+    },
+    { label: t.kpiReceivable, value: totalReceivable, tone: "warning" as const },
+    { label: t.kpiOverdueStudents, value: overdueStudentCount, tone: "negative" as const },
+  ];
+  // Deuxième ligne : le détail des recettes de l'année, qui s'additionnent
+  // pour la retrouver. Une grille à part, à cinq colonnes, pour qu'elle soit
+  // pleine elle aussi : à la suite de la première, elle laissait un trou au
+  // bout de la ligne.
+  const revenueDetailKpis: Kpi[] = [
     { label: t.kpiInscription, value: inscriptionCollected, tone: "positive" as const },
     { label: t.kpiUniform, value: uniformeCollected, tone: "positive" as const },
     { label: t.kpiMonthly, value: mensualiteCollected, tone: "positive" as const },
@@ -123,15 +138,6 @@ export default async function DashboardHomePage() {
       href: canSeeInternat ? "/dashboard/internat" : undefined,
     },
     { label: t.kpiOtherRevenue, value: otherCollected, tone: "positive" as const, hint: t.kpiOtherRevenueHint },
-    { label: t.kpiYearExpenses, value: yearReport.totalExpenses, tone: "neutral" as const },
-    {
-      label: t.kpiBalance,
-      value: yearReport.balance,
-      tone: yearReport.balance >= 0 ? ("positive" as const) : ("negative" as const),
-    },
-    { label: t.kpiReceivable, value: totalReceivable, tone: "warning" as const },
-    { label: t.kpiOverdueStudents, value: overdueStudentCount, tone: "negative" as const },
-    { label: t.kpiStudents, value: studentCount ?? 0, tone: "neutral" as const },
   ];
 
   return (
@@ -143,7 +149,10 @@ export default async function DashboardHomePage() {
         </p>
       </div>
 
-      <KpiGrid kpis={kpis} />
+      <div className="space-y-3">
+        <KpiGrid kpis={summaryKpis} />
+        <KpiGrid kpis={revenueDetailKpis} columns={5} />
+      </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <section className="rounded-lg border border-slate-200 bg-white p-4">
