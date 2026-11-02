@@ -56,6 +56,7 @@ export async function FamilyPaymentSection({
   const family = (families ?? []).find((f) => f.id === familyId);
   const children = family ? childrenOf(family.id) : [];
   const childName = new Map(children.map((c) => [c.id, `${c.last_name} ${c.first_name}`]));
+  const childFirstName = new Map(children.map((c) => [c.id, c.first_name]));
 
   const { data: schedules } =
     children.length > 0
@@ -90,6 +91,19 @@ export async function FamilyPaymentSection({
   for (const item of due) periodTotals.set(item.periodKey, (periodTotals.get(item.periodKey) ?? 0) + item.amount);
   const periods = Array.from(periodTotals.keys()).sort((a, b) => a.localeCompare(b));
   const periodLabel = (key: string) => formatMonthLabel(key, language);
+
+  // Ce que contient chaque mois, et pour quels enfants : la ligne « Juillet
+  // 2027 » porte la mensualité de JUIN (terme échu, payée début juillet), pas
+  // une mensualité de juillet. Sans ce détail, on la lit de travers.
+  const periodContents = new Map<string, Map<string, string[]>>();
+  for (const item of due) {
+    const byLabel = periodContents.get(item.periodKey) ?? new Map<string, string[]>();
+    const names = byLabel.get(item.label) ?? [];
+    const name = childFirstName.get(item.studentId);
+    if (name && !names.includes(name)) names.push(name);
+    byLabel.set(item.label, names);
+    periodContents.set(item.periodKey, byLabel);
+  }
 
   const selectedPeriod = period && periodTotals.has(period) ? period : undefined;
   const lines: FamilyPaymentLine[] = selectedPeriod
@@ -165,7 +179,15 @@ export async function FamilyPaymentSection({
                     key={key}
                     className={`border-t border-slate-100 ${key === selectedPeriod ? "bg-emerald-50" : ""}`}
                   >
-                    <td className="py-1.5 pe-3 text-slate-900">{periodLabel(key)}</td>
+                    <td className="py-1.5 pe-3 text-slate-900">
+                      {periodLabel(key)}
+                      {Array.from(periodContents.get(key) ?? []).map(([label, names]) => (
+                        <span key={label} className="block text-xs text-slate-500">
+                          {label}
+                          {names.length > 0 ? ` — ${names.join(", ")}` : ""}
+                        </span>
+                      ))}
+                    </td>
                     <td className="py-1.5 pe-3 text-end tabular-nums text-slate-900">
                       {money(periodTotals.get(key) ?? 0)}
                     </td>
