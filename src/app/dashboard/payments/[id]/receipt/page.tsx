@@ -8,6 +8,7 @@ import { PrintButton } from "@/components/PrintButton";
 import { getLanguage } from "@/lib/i18n/get-language";
 import { dashboardReceiptDict } from "@/lib/i18n/dictionaries/dashboard-receipt";
 import { formatDate } from "@/lib/format";
+import { loadOwedToDate } from "@/lib/receipts/data";
 
 export default async function ReceiptPage({
   params,
@@ -23,7 +24,7 @@ export default async function ReceiptPage({
 
   const { data: payment } = await supabase
     .from("payments")
-    .select("id, amount, payment_method, reference, paid_at, notes, students(first_name, last_name)")
+    .select("id, amount, payment_method, reference, paid_at, notes, student_id, students(first_name, last_name)")
     .eq("id", params.id)
     .maybeSingle();
 
@@ -31,7 +32,7 @@ export default async function ReceiptPage({
     redirect("/unauthorized");
   }
 
-  const [{ data: school }, { data: allocations }] = await Promise.all([
+  const [{ data: school }, { data: allocations }, owedToDate] = await Promise.all([
     supabase
       .from("schools")
       .select("name, address, phone")
@@ -42,6 +43,8 @@ export default async function ReceiptPage({
       .select("id, amount, payment_schedules(due_date, fee_structures(fee_type))")
       .eq("payment_id", payment.id)
       .order("id"),
+    // Ce que l'élève doit encore, échéances de ce reçu ou non (comme le PDF).
+    loadOwedToDate(supabase, { studentId: payment.student_id }),
   ]);
 
   const student = Array.isArray(payment.students) ? payment.students[0] : payment.students;
@@ -112,6 +115,13 @@ export default async function ReceiptPage({
                 );
               })}
             </ul>
+          </div>
+        )}
+
+        {owedToDate.amount > 0 && (
+          <div className="flex justify-between gap-4 border-t border-slate-200 pt-3 text-sm font-medium text-red-700">
+            <span>{t.studentRemainingToday}</span>
+            <span className="tabular-nums">{owedToDate.amount}</span>
           </div>
         )}
 

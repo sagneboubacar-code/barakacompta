@@ -1,7 +1,7 @@
 import { Document, Font, Page, Text, View, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
 import { paymentMethodLabel } from "@/lib/constants/payments";
 import { pdfLongDate, pdfMoney, pdfShortDate } from "@/lib/pdf/format";
-import { familyRemainingToShow, type ReceiptData } from "@/lib/receipts/data";
+import { owedToDateToShow, type ReceiptData } from "@/lib/receipts/data";
 
 // Reçu remis au parent (élève ou famille), au format A5 : il s'imprime à deux
 // par feuille A4 et s'envoie tel quel sur WhatsApp. Même parti pris que le
@@ -81,7 +81,7 @@ function ReceiptDocument({ receipt }: { receipt: ReceiptData }) {
   const isFamily = receipt.kind === "family";
   const contactLine = [receipt.school.phone, receipt.school.email].filter(Boolean).join("  ·  ");
   const title = isFamily ? "Reçu de paiement — famille" : "Reçu de paiement";
-  const familyRemaining = familyRemainingToShow(receipt);
+  const owedToDate = owedToDateToShow(receipt);
 
   const info: [string, string][] = [
     [isFamily ? "Famille" : "Élève", receipt.payerName],
@@ -158,12 +158,14 @@ function ReceiptDocument({ receipt }: { receipt: ReceiptData }) {
             <Text style={styles.remainingValue}>{m(receipt.totalRemaining)}</Text>
           </View>
         ) : null}
-        {familyRemaining !== null && receipt.familyRemaining ? (
+        {owedToDate !== null ? (
           <View style={styles.remainingRow}>
             <Text style={styles.remainingLabel}>
-              {`Reste à payer par la famille, toutes échéances (au ${pdfShortDate(receipt.familyRemaining.asOf)})`}
+              {`Reste à payer par ${isFamily ? "la famille" : "l'élève"}, toutes échéances (au ${pdfShortDate(
+                receipt.owedToDate.asOf
+              )})`}
             </Text>
-            <Text style={styles.remainingValue}>{m(familyRemaining)}</Text>
+            <Text style={styles.remainingValue}>{m(owedToDate)}</Text>
           </View>
         ) : null}
         {receipt.freeChildName ? (
