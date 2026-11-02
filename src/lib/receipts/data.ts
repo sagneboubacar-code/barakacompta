@@ -41,6 +41,10 @@ export interface ReceiptData {
   children: ReceiptChild[];
   total: number;
   totalRemaining: number;
+  // Reçu famille : tout ce que la famille doit encore à la date `asOf`,
+  // tous enfants et toutes échéances échues confondus, qu'elles soient sur
+  // ce reçu ou non. null pour un reçu d'élève.
+  familyRemaining: { amount: number; asOf: string } | null;
   receivedBy: string | null;
   cashManager: string | null;
   freeChildName: string | null;
@@ -50,6 +54,15 @@ export interface ReceiptData {
 type Client = SupabaseClient<Database>;
 
 const one = <T,>(value: T | T[] | null | undefined): T | null => (Array.isArray(value) ? value[0] ?? null : value ?? null);
+
+// Le reste de la famille ne s'affiche que s'il apprend quelque chose au
+// parent : quand il dépasse le reste des seules lignes du reçu. Sinon le
+// reçu disait « reste 29 000 » alors que la famille devait 39 000 (un
+// uniforme non réglé, absent du reçu).
+export function familyRemainingToShow(receipt: ReceiptData): number | null {
+  const amount = receipt.familyRemaining?.amount ?? 0;
+  return amount > receipt.totalRemaining ? amount : null;
+}
 
 // « Mensualité Septembre 2026 », « Cantine Octobre 2026 » plutôt qu'une date
 // d'échéance : c'est ainsi que l'école et les parents parlent des mois.
@@ -153,6 +166,7 @@ export async function loadStudentReceipt(
     children: [{ name, klass: one(student?.classes)?.name ?? null, items }],
     total: Number(payment.amount),
     totalRemaining: items.reduce((sum, item) => sum + item.remaining, 0),
+    familyRemaining: null,
     ...names,
     freeChildName: null,
     familyPaymentId: payment.family_payment_id,
@@ -173,21 +187,34 @@ export async function loadFamilyReceipt(
     .maybeSingle();
   if (!receipt) return null;
 
-  const [{ school, schoolYear }, names, { data: payments }, { data: family }] = await Promise.all([
-    loadSchool(supabase, schoolId),
-    loadNames(supabase, receipt.received_by, receipt.cash_manager_id),
-    supabase
-      .from("payments")
-      .select(`id, amount, students(first_name, last_name, classes(name)), ${ALLOCATIONS}` as const)
-      .eq("family_payment_id", receipt.id),
-    receipt.family_id
-      ? supabase
-          .from("families")
-          .select("guardian_name, free_student_id, free_year")
-          .eq("id", receipt.family_id)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-  ]);
+  const today = new Date().toISOString().slice(0, 10);
+  const [{ school, schoolYear }, names, { data: payments }, { data: family }, { data: familySchedules }] =
+    await Promise.all([
+      loadSchool(supabase, schoolId),
+      loadNames(supabase, receipt.received_by, receipt.cash_manager_id),
+      supabase
+        .from("payments")
+        .select(`id, amount, students(first_name, last_name, classes(name)), ${ALLOCATIONS}` as const)
+        .eq("family_payment_id", receipt.id),
+      receipt.family_id
+        ? supabase
+            .from("families")
+            .select("guardian_name, free_student_id, free_year")
+            .eq("id", receipt.family_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      // Mêmes échéances ouvertes que « Ce que la famille doit » (onglet Par
+      // famille des Paiements), limitées à celles déjà échues.
+      receipt.family_id
+        ? supabase
+            .from("payment_schedules")
+            .select("amount_remaining, students!inner(family_id)")
+            .eq("students.family_id", receipt.family_id)
+            .in("status", ["pending", "partial", "overdue"])
+            .gt("amount_remaining", 0)
+            .lte("due_date", today)
+        : Promise.resolve({ data: null }),
+    ]);
 
   // Une ligne par échéance réglée, regroupées par enfant.
   const byChild = new Map<string, ReceiptChild>();
@@ -231,6 +258,12 @@ export async function loadFamilyReceipt(
     // deletePayment) doit se retrouver dans le total du reçu.
     total: (payments ?? []).reduce((sum, payment) => sum + Number(payment.amount), 0),
     totalRemaining,
+    familyRemaining: receipt.family_id
+      ? {
+          amount: (familySchedules ?? []).reduce((sum, schedule) => sum + Number(schedule.amount_remaining), 0),
+          asOf: today,
+        }
+      : null,
     ...names,
     freeChildName,
     familyPaymentId: receipt.id,

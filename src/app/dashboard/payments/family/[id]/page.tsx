@@ -8,7 +8,7 @@ import { PrintButton } from "@/components/PrintButton";
 import { getLanguage } from "@/lib/i18n/get-language";
 import { dashboardReceiptDict } from "@/lib/i18n/dictionaries/dashboard-receipt";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { loadFamilyReceipt } from "@/lib/receipts/data";
+import { familyRemainingToShow, loadFamilyReceipt } from "@/lib/receipts/data";
 
 // Reçu unique remis au parent quand la famille règle pour tous ses enfants
 // (voir record_family_payment, 0037/0038). Mêmes données que le PDF
@@ -30,6 +30,7 @@ export default async function FamilyReceiptPage({
   }
 
   const money = (amount: number) => formatCurrency(amount, receipt.school.currency, language);
+  const familyRemaining = familyRemainingToShow(receipt);
 
   return (
     <div className="space-y-4">
@@ -151,6 +152,16 @@ export default async function FamilyReceiptPage({
                 </td>
                 <td className="pt-1 text-end text-sm font-medium tabular-nums text-red-700">
                   {money(receipt.totalRemaining)}
+                </td>
+              </tr>
+            )}
+            {familyRemaining !== null && (
+              <tr>
+                <td colSpan={2} className="pt-1 text-sm font-medium text-red-700">
+                  {t.familyRemainingToday}
+                </td>
+                <td className="pt-1 text-end text-sm font-semibold tabular-nums text-red-700">
+                  {money(familyRemaining)}
                 </td>
               </tr>
             )}
