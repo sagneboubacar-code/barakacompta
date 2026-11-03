@@ -5,36 +5,11 @@ import { paymentMethodLabel } from "@/lib/constants/payments";
 import { expenseCategoryLabel } from "@/lib/constants/expenses";
 import { formatCurrency, formatDate, formatSignedCurrency } from "@/lib/format";
 import { PrintButton } from "@/components/PrintButton";
-
-export interface ManagerPaymentRow {
-  id: string;
-  amount: number;
-  paymentMethod: string;
-  paidAt: string;
-  studentId: string | null;
-  studentName: string | null;
-  className: string | null;
-  familyPaymentId: string | null;
-  familyName: string | null;
-}
-
-export interface ManagerExpenseRow {
-  id: string;
-  date: string;
-  category: string;
-  label: string;
-  amount: number;
-}
-
-export interface ManagerTransferRow {
-  id: string;
-  date: string;
-  // true : reçu d'un autre responsable ; false : remis à un autre.
-  received: boolean;
-  otherName: string;
-  notes: string | null;
-  amount: number;
-}
+import {
+  managerStatementTotals,
+  type ManagerPaymentRow,
+  type ManagerStatement,
+} from "@/lib/reports/manager-statement";
 
 // En-tête de section, comme le rapport financier : petite étiquette capitale
 // + filet.
@@ -56,10 +31,7 @@ export function ManagerPaymentsView({
   from,
   to,
   currency,
-  rows,
-  expenses,
-  transfers,
-  openingBalance,
+  statement,
   canEdit,
   fromReport,
 }: {
@@ -70,11 +42,7 @@ export function ManagerPaymentsView({
   from: string;
   to: string;
   currency: string;
-  rows: ManagerPaymentRow[];
-  expenses: ManagerExpenseRow[];
-  transfers: ManagerTransferRow[];
-  // Solde la veille de la période (tout ce qui précède `from`).
-  openingBalance: number;
+  statement: ManagerStatement;
   canEdit: boolean;
   fromReport: boolean;
 }) {
@@ -82,14 +50,18 @@ export function ManagerPaymentsView({
   const money = (amount: number) => formatCurrency(amount, currency, language);
   const name = managerName ?? t.unassigned;
 
-  const total = rows.reduce((sum, row) => sum + row.amount, 0);
-  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const received = transfers.filter((transfer) => transfer.received);
-  const sent = transfers.filter((transfer) => !transfer.received);
-  const totalReceived = received.reduce((sum, transfer) => sum + transfer.amount, 0);
-  const totalSent = sent.reduce((sum, transfer) => sum + transfer.amount, 0);
-  const solde = total + totalReceived - totalExpenses - totalSent;
-  const closingBalance = openingBalance + solde;
+  const { rows, expenses, transfers, openingBalance } = statement;
+  const {
+    collected: total,
+    spent: totalExpenses,
+    receivedCount,
+    sentCount,
+    totalReceived,
+    totalSent,
+    solde,
+    closingBalance,
+  } = managerStatementTotals(statement);
+  const pdfHref = `/api/reports/manager/pdf?manager=${managerId}&from=${from}&to=${to}`;
   const dayBefore = new Date(`${from}T00:00:00Z`);
   dayBefore.setUTCDate(dayBefore.getUTCDate() - 1);
 
@@ -107,14 +79,14 @@ export function ManagerPaymentsView({
   const summaryLines = [
     { label: t.summaryRevenue(rows.length), amount: total, sign: "+", tone: "text-emerald-700", show: true },
     {
-      label: t.summaryReceived(received.length),
+      label: t.summaryReceived(receivedCount),
       amount: totalReceived,
       sign: "+",
       tone: "text-emerald-700",
-      show: received.length > 0,
+      show: receivedCount > 0,
     },
     { label: t.summaryExpenses(expenses.length), amount: totalExpenses, sign: "−", tone: "text-rose-700", show: true },
-    { label: t.summarySent(sent.length), amount: totalSent, sign: "−", tone: "text-rose-700", show: sent.length > 0 },
+    { label: t.summarySent(sentCount), amount: totalSent, sign: "−", tone: "text-rose-700", show: sentCount > 0 },
   ].filter((line) => line.show);
 
   return (
@@ -127,8 +99,18 @@ export function ManagerPaymentsView({
           <h1 className="text-xl font-semibold text-slate-900">{t.title(name)}</h1>
           <p className="text-sm text-slate-500">{t.period(formatDate(from, language), formatDate(to, language))}</p>
         </div>
-        <div className="print:hidden">
+        <div className="flex gap-2 print:hidden">
           <PrintButton />
+          {/* Le PDF s'ouvre dans un onglet, comme celui du rapport : l'école le
+              relit avant de l'imprimer ou de l'envoyer. */}
+          <a
+            href={pdfHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-md border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          >
+            {t.exportPdf}
+          </a>
         </div>
       </div>
 
