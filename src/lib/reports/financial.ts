@@ -83,6 +83,9 @@ export interface CashManagerTotal {
   name: string;
   collected: number;
   spent: number;
+  // Transferts reçus moins transferts remis : sans cette colonne, le solde
+  // ne se retrouvait pas en faisant Recette − Dépense.
+  transfers: number;
   solde: number;
 }
 
@@ -332,14 +335,14 @@ export async function computeCashManagerBreakdown(supabase: Client, from: string
   // (ex. Directeur 2 n'a encore rien encaissé) — seule une activité non
   // attribuée fait apparaître la ligne "Non attribué".
   for (const manager of managers ?? []) {
-    totals.set(manager.id, { cashManagerId: manager.id, name: manager.name, collected: 0, spent: 0, solde: 0 });
+    totals.set(manager.id, { cashManagerId: manager.id, name: manager.name, collected: 0, spent: 0, transfers: 0, solde: 0 });
   }
 
   function bucket(cashManagerId: string | null): CashManagerTotal {
     const key = cashManagerId ?? "__none__";
     let entry = totals.get(key);
     if (!entry) {
-      entry = { cashManagerId, name: "Non attribué", collected: 0, spent: 0, solde: 0 };
+      entry = { cashManagerId, name: "Non attribué", collected: 0, spent: 0, transfers: 0, solde: 0 };
       totals.set(key, entry);
     }
     return entry;
@@ -359,8 +362,14 @@ export async function computeCashManagerBreakdown(supabase: Client, from: string
   for (const transfer of transfers ?? []) {
     const fromEntry = totals.get(transfer.from_manager_id);
     const toEntry = totals.get(transfer.to_manager_id);
-    if (fromEntry) fromEntry.solde -= Number(transfer.amount);
-    if (toEntry) toEntry.solde += Number(transfer.amount);
+    if (fromEntry) {
+      fromEntry.transfers -= Number(transfer.amount);
+      fromEntry.solde -= Number(transfer.amount);
+    }
+    if (toEntry) {
+      toEntry.transfers += Number(transfer.amount);
+      toEntry.solde += Number(transfer.amount);
+    }
   }
 
   return result.sort((a, b) => (a.cashManagerId === null ? 1 : b.cashManagerId === null ? -1 : 0));

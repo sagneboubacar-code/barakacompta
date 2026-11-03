@@ -85,6 +85,7 @@ export default async function ReportsPage({
   // lib/reports/financial.ts) ; montant à recouvrir et élèves impayés suivent
   // les règles de l'état de recouvrement.
   const collectedOf = (key: string) => report.revenueByType.find((r) => r.key === key)?.collected ?? 0;
+  const hasTransfers = cashManagerBreakdown.some((manager) => manager.transfers !== 0);
   const summaryTiles = [
     {
       label: t.tileStudents,
@@ -314,6 +315,7 @@ export default async function ReportsPage({
       {cashManagerBreakdown.length > 0 && (
         <section className="break-inside-avoid space-y-3">
           <SectionHeading>{t.sectionByManager}</SectionHeading>
+          <p className="text-xs text-slate-500 print:hidden">{t.byManagerHint}</p>
           {/* Le tableau défile horizontalement dans sa carte plutôt que de pousser
               toute la page : sur un écran de téléphone, les colonnes de montants
               sortaient de l'écran. L'impression, elle, reste intacte. */}
@@ -324,6 +326,7 @@ export default async function ReportsPage({
                   <th className="py-2 font-medium">{t.colManager}</th>
                   <th className="py-2 text-right font-medium">{t.colRevenue}</th>
                   <th className="py-2 text-right font-medium">{t.colExpense}</th>
+                  {hasTransfers && <th className="py-2 text-right font-medium">{t.colTransfers}</th>}
                   <th className="py-2 text-right font-medium">{t.colBalance}</th>
                 </tr>
               </thead>
@@ -350,6 +353,11 @@ export default async function ReportsPage({
                     <td className="py-2 text-right font-mono tabular-nums text-rose-700">
                       {money(manager.spent)}
                     </td>
+                    {hasTransfers && (
+                      <td className="py-2 text-right font-mono tabular-nums text-slate-700">
+                        {manager.transfers === 0 ? "—" : formatSignedCurrency(manager.transfers, currency, language)}
+                      </td>
+                    )}
                     <td
                       className={`py-2 text-right font-mono font-medium tabular-nums ${
                         manager.solde >= 0 ? "text-emerald-700" : "text-rose-700"
@@ -367,6 +375,8 @@ export default async function ReportsPage({
                   <td className="py-2 text-right font-mono tabular-nums text-rose-700">
                     {money(report.totalExpenses)}
                   </td>
+                  {/* Entre responsables, l'argent change de mains sans entrer ni sortir. */}
+                  {hasTransfers && <td className="py-2 text-right font-mono tabular-nums text-slate-400">—</td>}
                   <td
                     className={`py-2 text-right font-mono tabular-nums ${
                       report.balance >= 0 ? "text-emerald-700" : "text-rose-700"

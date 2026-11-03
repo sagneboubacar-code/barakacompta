@@ -120,6 +120,7 @@ function FinancialReportDocument(input: FinancialPdfInput) {
   const { school, currency, from, to, report, studentCount, receivables, dailyBreakdown, cashManagerBreakdown, generatedAt } =
     input;
   const m = (amount: number) => pdfMoney(amount, currency);
+  const hasTransfers = cashManagerBreakdown.some((manager) => manager.transfers !== 0);
   const contactLine = [school.address, school.phone, school.email].filter(Boolean).join("  ·  ");
   const periodLabel = `Du ${pdfLongDate(from)} au ${pdfLongDate(to)}`;
   const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
@@ -257,7 +258,8 @@ function FinancialReportDocument(input: FinancialPdfInput) {
                 <Text style={[styles.thText, { flex: 3 }]}>RESPONSABLE</Text>
                 <Text style={[styles.thText, { flex: 2, textAlign: "right" }]}>RECETTES</Text>
                 <Text style={[styles.thText, { flex: 2, textAlign: "right" }]}>DÉPENSES</Text>
-                <Text style={[styles.thText, { flex: 2, textAlign: "right" }]}>SOLDE EN MAIN</Text>
+                {hasTransfers && <Text style={[styles.thText, { flex: 2, textAlign: "right" }]}>TRANSFERTS</Text>}
+                <Text style={[styles.thText, { flex: 2, textAlign: "right" }]}>SOLDE</Text>
               </View>
               {cashManagerBreakdown.map((manager, index) => {
                 const quiet = manager.collected === 0 && manager.spent === 0 && manager.solde === 0;
@@ -269,6 +271,11 @@ function FinancialReportDocument(input: FinancialPdfInput) {
                     <Text style={[styles.cell, { flex: 3 }, quiet ? { color: FAINT } : {}]}>{manager.name}</Text>
                     <Text style={[styles.cellNum, { flex: 2 }, quiet ? { color: FAINT } : {}]}>{m(manager.collected)}</Text>
                     <Text style={[styles.cellNum, { flex: 2 }, quiet ? { color: FAINT } : {}]}>{m(manager.spent)}</Text>
+                    {hasTransfers && (
+                      <Text style={[styles.cellNum, { flex: 2 }, manager.transfers === 0 ? { color: FAINT } : {}]}>
+                        {manager.transfers === 0 ? "—" : `${manager.transfers > 0 ? "+" : "-"}${m(Math.abs(manager.transfers))}`}
+                      </Text>
+                    )}
                     <Text style={[styles.cellNum, styles.bold, { flex: 2 }, quiet ? { color: FAINT } : {}]}>
                       {m(manager.solde)}
                     </Text>
@@ -279,6 +286,7 @@ function FinancialReportDocument(input: FinancialPdfInput) {
                 <Text style={[styles.cell, styles.bold, { flex: 3, color: INK }]}>COMPTA FINALE - ÉCOLE</Text>
                 <Text style={[styles.cellNum, styles.bold, { flex: 2 }]}>{m(report.totalCollected)}</Text>
                 <Text style={[styles.cellNum, styles.bold, { flex: 2 }]}>{m(report.totalExpenses)}</Text>
+                {hasTransfers && <Text style={[styles.cellNum, { flex: 2, color: FAINT }]}>—</Text>}
                 <Text style={[styles.cellNum, styles.bold, { flex: 2, color: report.balance >= 0 ? INK : ROSE }]}>
                   {m(report.balance)}
                 </Text>

@@ -67,12 +67,12 @@ export async function GET(request: NextRequest) {
 
   if (cashManagerBreakdown.length > 0) {
     lines.push(toCsvRow(["Par responsable"]));
-    lines.push(toCsvRow(["Responsable", "Recette", "Dépense", "Solde"]));
+    lines.push(toCsvRow(["Responsable", "Recette", "Dépense", "Transferts", "Solde"]));
     for (const manager of cashManagerBreakdown) {
-      lines.push(toCsvRow([manager.name, manager.collected, manager.spent, manager.solde]));
+      lines.push(toCsvRow([manager.name, manager.collected, manager.spent, manager.transfers, manager.solde]));
     }
     lines.push(
-      toCsvRow(["Compta finale — école", report.totalCollected, report.totalExpenses, report.balance])
+      toCsvRow(["Compta finale — école", report.totalCollected, report.totalExpenses, 0, report.balance])
     );
     lines.push("");
   }

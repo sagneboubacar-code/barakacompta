@@ -39,9 +39,11 @@ export const dashboardReportsDict = {
     colDescription: "Description",
 
     sectionByManager: "Par responsable",
+    byManagerHint: "Cliquez sur un responsable pour voir le détail de ses recettes, dépenses et transferts, à pointer avec sa caisse.",
     colManager: "Responsable",
     colRevenue: "Recette",
     colExpense: "Dépense",
+    colTransfers: "Transferts",
     colBalance: "Solde",
     finalAccounting: "Compta finale — école",
     unassigned: "Non attribué",
@@ -109,9 +111,11 @@ export const dashboardReportsDict = {
     colDescription: "الوصف",
 
     sectionByManager: "حسب المسؤول",
+    byManagerHint: "انقروا على مسؤول لعرض تفاصيل إيراداته ومصاريفه وتحويلاته، لمطابقتها مع صندوقه.",
     colManager: "المسؤول",
     colRevenue: "الإيراد",
     colExpense: "المصروف",
+    colTransfers: "التحويلات",
     colBalance: "الرصيد",
     finalAccounting: "المحاسبة النهائية — المدرسة",
     unassigned: "غير مسند",
