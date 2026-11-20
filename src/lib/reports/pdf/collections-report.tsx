@@ -48,9 +48,12 @@ const styles = StyleSheet.create({
   // Synthèse
   tiles: { flexDirection: "row", gap: 8, marginTop: 14 },
   tile: { flex: 1, borderWidth: 0.8, borderColor: LINE, borderLeftWidth: 3, borderRadius: 3, paddingVertical: 8, paddingHorizontal: 9 },
-  tileLabel: { fontSize: 6.5, letterSpacing: 0.7, color: MUTED, fontFamily: "Helvetica-Bold" },
-  tileValue: { fontSize: 12.5, fontFamily: "Helvetica-Bold", marginTop: 4 },
-  tileHint: { fontSize: 6.5, color: MUTED, marginTop: 2 },
+  // lineHeight explicite : sans lui, l'étiquette et la valeur peuvent se
+  // chevaucher selon les métriques de police du lecteur PDF (voir le même
+  // correctif dans financial-report.tsx).
+  tileLabel: { fontSize: 6.5, letterSpacing: 0.7, color: MUTED, fontFamily: "Helvetica-Bold", lineHeight: 1.3 },
+  tileValue: { fontSize: 12.5, fontFamily: "Helvetica-Bold", marginTop: 6, lineHeight: 1.3 },
+  tileHint: { fontSize: 6.5, color: MUTED, marginTop: 4, lineHeight: 1.3 },
 
   gauge: { marginTop: 12 },
   gaugeHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" },

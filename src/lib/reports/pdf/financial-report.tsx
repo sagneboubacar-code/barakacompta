@@ -45,10 +45,15 @@ const styles = StyleSheet.create({
 
   tiles: { flexDirection: "row", gap: 8, marginTop: 8 },
   tile: { flex: 1, borderWidth: 0.8, borderColor: LINE, borderLeftWidth: 3, borderRadius: 3, paddingVertical: 8, paddingHorizontal: 9 },
-  tileLabel: { fontSize: 6.5, letterSpacing: 0.7, color: MUTED, fontFamily: "Helvetica-Bold" },
+  // lineHeight explicite sur les trois lignes de la tuile : sans lui, la
+  // hauteur de chaque ligne dépend des métriques de la police telles que les
+  // calcule le lecteur PDF, qui ne sont pas toujours celles d'Helvetica
+  // (lecteur mobile, police de secours) — étiquette et valeur pouvaient alors
+  // se chevaucher selon le lecteur, bien que corrects dans le PDF généré.
+  tileLabel: { fontSize: 6.5, letterSpacing: 0.7, color: MUTED, fontFamily: "Helvetica-Bold", lineHeight: 1.3 },
   // 12 pt : « 1 478 000 F CFA » tient sur une ligne, quatre tuiles de front.
-  tileValue: { fontSize: 12, fontFamily: "Helvetica-Bold", marginTop: 4 },
-  tileHint: { fontSize: 6.5, color: MUTED, marginTop: 2 },
+  tileValue: { fontSize: 12, fontFamily: "Helvetica-Bold", marginTop: 6, lineHeight: 1.3 },
+  tileHint: { fontSize: 6.5, color: MUTED, marginTop: 4, lineHeight: 1.3 },
 
   twoCols: { flexDirection: "row", gap: 18 },
   col: { flex: 1 },
