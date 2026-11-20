@@ -31,7 +31,7 @@ export default async function PaymentsPage({
   const supabase = createClient();
   const familyMode = searchParams.mode === "family";
   // Corriger ou supprimer un paiement : direction seulement (voir updatePayment).
-  const canEdit = appUser.role === "owner" || appUser.role === "admin";
+  const canEdit = appUser.role === "owner" || appUser.role === "admin" || appUser.role === "super_admin";
 
   let studentsQuery = supabase
     .from("students")

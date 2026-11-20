@@ -48,7 +48,7 @@ export default async function ReceiptPage({
   ]);
 
   const student = Array.isArray(payment.students) ? payment.students[0] : payment.students;
-  const canEdit = appUser.role === "owner" || appUser.role === "admin";
+  const canEdit = appUser.role === "owner" || appUser.role === "admin" || appUser.role === "super_admin";
 
   return (
     <div className="mx-auto max-w-lg space-y-4">

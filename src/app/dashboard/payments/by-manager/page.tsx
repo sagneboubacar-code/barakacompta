@@ -23,7 +23,7 @@ export default async function ManagerPaymentsPage({
   const appUser = await requireRole(["owner", "admin", "accountant"]);
   const language = getLanguage();
   const supabase = createClient();
-  const canEdit = appUser.role === "owner" || appUser.role === "admin";
+  const canEdit = appUser.role === "owner" || appUser.role === "admin" || appUser.role === "super_admin";
 
   const managerParam = searchParams.manager ?? "";
   const unassigned = managerParam === "none";

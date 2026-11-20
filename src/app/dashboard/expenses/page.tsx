@@ -289,7 +289,7 @@ export default async function ExpensesPage({
                         </button>
                       </form>
                     </details>
-                    {(appUser.role === "owner" || appUser.role === "admin") && (
+                    {(appUser.role === "owner" || appUser.role === "admin" || appUser.role === "super_admin") && (
                       <form action={deleteExpense}>
                         <input type="hidden" name="id" value={expense.id} />
                         <button

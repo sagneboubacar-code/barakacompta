@@ -71,7 +71,7 @@ export default async function FixedExpensesPage({
       periods={options.map((key) => ({ key, label: formatMonthLabel(key, language) }))}
       rows={rows}
       cashManagers={cashManagers ?? []}
-      canManage={appUser.role === "owner" || appUser.role === "admin"}
+      canManage={appUser.role === "owner" || appUser.role === "admin" || appUser.role === "super_admin"}
       today={today}
       error={searchParams.error}
       success={searchParams.success}

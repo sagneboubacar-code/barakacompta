@@ -74,7 +74,9 @@ export async function middleware(request: NextRequest) {
     }
 
     const rule = findRouteRule(pathname);
-    if (rule && !rule.roles.includes(appUser.role)) {
+    // super_admin (équipe Baraka) passe toujours : rôle le plus privilégié,
+    // jamais bloqué par les règles par page pensées pour owner/admin/accountant.
+    if (rule && appUser.role !== "super_admin" && !rule.roles.includes(appUser.role)) {
       return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
 

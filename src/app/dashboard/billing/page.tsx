@@ -37,7 +37,7 @@ export default async function BillingPage({
 
   const currentPlan = getPlan(school?.plan ?? "trial");
   const currentPlanLabel = t.planLabels[currentPlan.key] ?? currentPlan.label;
-  const isOwner = appUser.role === "owner";
+  const isOwner = appUser.role === "owner" || appUser.role === "super_admin";
 
   const { data: history } = isOwner
     ? await supabase

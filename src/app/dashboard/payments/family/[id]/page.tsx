@@ -39,7 +39,7 @@ export default async function FamilyReceiptPage({
           {t.backToPayments}
         </Link>
         <div className="flex flex-wrap gap-2">
-          {(appUser.role === "owner" || appUser.role === "admin") && (
+          {(appUser.role === "owner" || appUser.role === "admin" || appUser.role === "super_admin") && (
             <Link
               href={`/dashboard/payments/family/${params.id}/edit`}
               className="rounded-md border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"

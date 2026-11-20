@@ -106,7 +106,7 @@ export default async function DashboardHomePage() {
   const otherCollected =
     yearReport.totalCollected - inscriptionCollected - uniformeCollected - mensualiteCollected - internatCollected;
   // Le bilan de l'internat est réservé à la direction (comme les rapports).
-  const canSeeInternat = appUser.role === "owner" || appUser.role === "admin";
+  const canSeeInternat = appUser.role === "owner" || appUser.role === "admin" || appUser.role === "super_admin";
 
   // Première ligne : l'essentiel, en commençant par le nombre d'élèves
   // (demandé par l'école).

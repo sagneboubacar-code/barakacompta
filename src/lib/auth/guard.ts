@@ -27,7 +27,10 @@ export async function requireUser(): Promise<AppUser> {
 
 export async function requireRole(roles: UserRole[]): Promise<AppUser> {
   const appUser = await requireUser();
-  if (!roles.includes(appUser.role)) {
+  // super_admin (équipe Baraka, hors école) passe toujours : c'est le rôle le
+  // plus privilégié, il ne doit jamais perdre l'accès aux pages d'une école
+  // (dashboard, paiements, rapports…) réservées à owner/admin/accountant.
+  if (appUser.role !== "super_admin" && !roles.includes(appUser.role)) {
     redirect("/unauthorized");
   }
   return appUser;

@@ -21,7 +21,8 @@ export default async function DashboardLayout({
     .eq("id", appUser.school_id ?? "")
     .maybeSingle();
 
-  const visibleNav = NAV_ITEMS.filter((item) => item.roles.includes(appUser.role));
+  // super_admin voit tout le menu d'une école (rôle le plus privilégié).
+  const visibleNav = appUser.role === "super_admin" ? NAV_ITEMS : NAV_ITEMS.filter((item) => item.roles.includes(appUser.role));
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 lg:flex-row">
